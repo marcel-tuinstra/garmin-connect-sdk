@@ -1,6 +1,6 @@
 # garmin-connect-sdk
 
-Unofficial Node 20+ TypeScript SDK for reading a user's own Garmin Connect data. Garmin does not
+Unofficial Node 24+ TypeScript SDK for reading a user's own Garmin Connect data. Garmin does not
 publish or support these private Connect endpoints, so they may change without notice.
 
 This project is not affiliated with, endorsed by, or supported by Garmin. Use it conservatively,

@@ -1,4 +1,5 @@
 node_modules/
+.air/
 .pnpm-store/
 dist/
 coverage/
