@@ -27,10 +27,16 @@ export const activityDetailPayload = {
 
 export const activityDetailsPayload = {
   activityId: 123456789,
+  measurementCount: 2,
+  metricsCount: 1,
+  totalMetricsCount: 1,
+  metricDescriptors: [
+    { metricsIndex: 0, key: 'directHeartRate', unit: { key: 'bpm' } },
+    { metricsIndex: 1, key: 'directLatitude', unit: { key: 'dd' } },
+  ],
   activityDetailMetrics: [
     {
-      metricsIndex: 0,
-      metricDescriptors: [],
+      metrics: [142, 52.1],
     },
   ],
 };

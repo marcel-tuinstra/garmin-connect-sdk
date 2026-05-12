@@ -9,3 +9,4 @@ coverage/
 .garmin-tokens/
 garmin-tokens.json
 *.log
+*.tgz

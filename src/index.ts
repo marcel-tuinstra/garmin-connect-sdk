@@ -35,3 +35,16 @@ export type {
 export type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from './types/health.js';
 export type { DailySleep, SleepRange } from './types/sleep.js';
 export type { Device, DeviceList, SocialProfile } from './types/user.js';
+export {
+  decodeActivityMetricRow,
+  normalizeMetricDescriptors,
+  summarizeActivityDetails,
+  summarizeActivitySplits,
+} from './utils/activityMetrics.js';
+export type {
+  ActivityDetailsSummary,
+  ActivityMetricDescriptor,
+  ActivitySplitsSummary,
+  DecodedActivityMetricRow,
+  DecodeActivityMetricOptions,
+} from './utils/activityMetrics.js';

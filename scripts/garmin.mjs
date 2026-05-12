@@ -8,6 +8,7 @@ import {
   parseArgs,
   writeJson,
 } from './garmin-cli-utils.mjs';
+import { summarizeActivityDetails, summarizeActivitySplits } from '../dist/index.js';
 
 const rl = createPrompt();
 
@@ -104,7 +105,7 @@ try {
               }
             : null,
           details: details ? summarizeActivityDetails(details) : undefined,
-          splits: splits ? summarizeSplits(splits) : undefined,
+          splits: splits ? summarizeActivitySplits(splits) : undefined,
           raw: flags.raw ? { activity, details, splits } : undefined,
         },
       });
@@ -162,118 +163,4 @@ Auth:
 Output:
   JSON summaries by default. Raw Garmin payloads are printed only with --raw.
 `);
-}
-
-function summarizeActivityDetails(details) {
-  if (!isObject(details)) return { type: typeof details };
-
-  const metrics = arrayValue(details.activityDetailMetrics);
-  const descriptors = arrayValue(details.metricDescriptors).concat(
-    metrics.flatMap((metric) => arrayValue(metric.metricDescriptors)),
-  );
-  const metricDescriptors = descriptors
-    .map((descriptor) => ({
-      index: numberValue(descriptor.metricsIndex),
-      key: stringValue(descriptor.key) ?? stringValue(descriptor.metricsKey) ?? null,
-      unit: isObject(descriptor.unit) ? stringValue(descriptor.unit.key) ?? null : null,
-    }))
-    .filter((descriptor) => descriptor.key);
-
-  const geoPolyline = arrayValue(details.geoPolylineDTO?.polyline);
-  const heartRateValues = arrayValue(details.heartRateDTO?.heartRateValues).concat(
-    arrayValue(details.heartRateDTOs).flatMap((dto) => arrayValue(dto.heartRateValues)),
-  );
-  const powerValues = arrayValue(details.powerDTO?.powerValues).concat(
-    arrayValue(details.powerDTOs).flatMap((dto) => arrayValue(dto.powerValues)),
-  );
-  const speedValues = arrayValue(details.speedDTO?.speedValues).concat(
-    arrayValue(details.speedDTOs).flatMap((dto) => arrayValue(dto.speedValues)),
-  );
-  const firstMetric = isObject(metrics[0]) ? arrayValue(metrics[0].metrics) : [];
-
-  return {
-    detailsAvailable: booleanValue(details.detailsAvailable),
-    measurementCount: numberValue(details.measurementCount),
-    metricsCount: numberValue(details.metricsCount),
-    totalMetricsCount: numberValue(details.totalMetricsCount),
-    metricRows: metrics.length,
-    metricDescriptorCount: metricDescriptors.length,
-    metricDescriptors,
-    firstMetricRow: firstMetric.length > 0 ? mapMetricRow(firstMetric, metricDescriptors) : null,
-    hasPolyline: geoPolyline.length > 0,
-    polylinePoints: geoPolyline.length,
-    heartRateSamples: heartRateValues.length,
-    powerSamples: powerValues.length,
-    speedSamples: speedValues.length,
-    topLevelKeys: Object.keys(details).sort(),
-  };
-}
-
-function summarizeSplits(splits) {
-  if (Array.isArray(splits)) {
-    return {
-      count: splits.length,
-      splitTypes: uniqueStrings(splits.map((split) => stringValue(split.splitType))),
-    };
-  }
-
-  if (!isObject(splits)) return { type: typeof splits };
-
-  const typedSplits = arrayValue(splits.typedSplits);
-  const splitSummaries = arrayValue(splits.splitSummaries);
-  const splitsArray = arrayValue(splits.splits);
-  return {
-    count: typedSplits.length || splitSummaries.length || splitsArray.length,
-    typedSplits: typedSplits.length,
-    splitSummaries: splitSummaries.length,
-    splits: splitsArray.length,
-    splitTypes: uniqueStrings(
-      typedSplits
-        .concat(splitSummaries)
-        .concat(splitsArray)
-        .map((split) => stringValue(split.splitType) ?? stringValue(split.type)),
-    ),
-    topLevelKeys: Object.keys(splits).sort(),
-  };
-}
-
-function mapMetricRow(values, descriptors) {
-  const output = {};
-  for (const descriptor of descriptors) {
-    if (descriptor.index === undefined || !descriptor.key) continue;
-    if (isLocationMetric(descriptor.key)) {
-      output[descriptor.key] = '[REDACTED]';
-      continue;
-    }
-    output[descriptor.key] = values[descriptor.index] ?? null;
-  }
-  return output;
-}
-
-function isLocationMetric(key) {
-  return key.toLowerCase().includes('latitude') || key.toLowerCase().includes('longitude');
-}
-
-function arrayValue(value) {
-  return Array.isArray(value) ? value : [];
-}
-
-function isObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function stringValue(value) {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
-
-function numberValue(value) {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function booleanValue(value) {
-  return typeof value === 'boolean' ? value : undefined;
-}
-
-function uniqueStrings(values) {
-  return [...new Set(values.filter(Boolean))];
 }
