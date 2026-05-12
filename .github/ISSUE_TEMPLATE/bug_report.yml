@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible SDK bug.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste Garmin credentials, tokens, cookies, email addresses, full profile payloads, raw activity locations, or raw health payloads.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Minimal code or CLI command that reproduces the issue. Redact private values.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SDK version
+      placeholder: 1.0.0-alpha.1
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: 24.x
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error output
+      description: Paste stack traces or validation paths only. Redact private data.
+      render: text

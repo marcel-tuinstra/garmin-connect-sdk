@@ -29,9 +29,15 @@
   "files": [
     "dist",
     "scripts",
+    "examples",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
+  "bin": {
+    "garmin-connect": "./scripts/garmin.mjs",
+    "garmin-connect-smoke": "./scripts/garmin-smoke.mjs"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

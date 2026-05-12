@@ -1,0 +1,41 @@
+name: Garmin auth drift
+description: Report Garmin login, MFA, refresh, or session restore drift.
+title: "auth: "
+labels: ["auth", "garmin-drift"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste passwords, tokens, cookies, authorization headers, MFA codes, or full response payloads.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Auth phase
+      options:
+        - login
+        - MFA
+        - token exchange
+        - refresh
+        - restore session
+    validations:
+      required: true
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: Symptoms
+      description: What error class/message/status did you see?
+    validations:
+      required: true
+  - type: textarea
+    id: safe_details
+    attributes:
+      label: Safe details
+      description: Include status codes, endpoint path, and redacted validation/error paths only.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: SDK version
+      placeholder: 1.0.0-alpha.1
+    validations:
+      required: true

@@ -45,6 +45,7 @@ login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 ## Endpoints
 
 - `garmin.activities.list({ start, limit, activityType })`
+- `garmin.activities.listAll({ pageSize, maxPages, activityType })`
 - `garmin.activities.get(activityId)`
 - `garmin.activities.getDetails(activityId)`
 - `garmin.activities.getSplits(activityId)`
@@ -56,6 +57,38 @@ login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 - `garmin.health.getHrvStatus(date)`
 - `garmin.user.getProfile()`
 - `garmin.devices.list()`
+
+## Activity Metrics
+
+Garmin activity details expose metric rows as arrays plus descriptors. Use
+`summarizeActivityDetails()` or `decodeActivityMetricRow()` to map those rows into keyed objects.
+Location metrics are redacted by default.
+
+```ts
+import {
+  FileTokenStorage,
+  GarminConnectSDK,
+  summarizeActivityDetails,
+} from 'garmin-connect-sdk';
+
+const garmin = new GarminConnectSDK({
+  storage: new FileTokenStorage('./.garmin-tokens'),
+});
+
+await garmin.restoreSession();
+
+const [activity] = await garmin.activities.list({ limit: 1 });
+const details = await garmin.activities.getDetails(activity.activityId, {
+  maxChartSize: 1000,
+  maxPolylineSize: 1000,
+});
+
+const summary = summarizeActivityDetails(details);
+console.log(summary);
+```
+
+If you intentionally need latitude/longitude values in a private local process, pass
+`{ redactLocation: false }` to `summarizeActivityDetails()` or `decodeActivityMetricRow()`.
 
 ## Rate Limits And Privacy
 
@@ -100,6 +133,14 @@ pnpm garmin -- body-battery --date 2026-05-12
 ```
 
 The CLI also restores tokens first and prints JSON summaries only.
+
+After installing the package, the same CLI is available through package binaries:
+
+```bash
+pnpm exec garmin-connect activities --limit 10
+pnpm exec garmin-connect activity --id 123456789 --details
+pnpm exec garmin-connect-smoke
+```
 
 Integration tests are opt-in and use live Garmin credentials:
 
