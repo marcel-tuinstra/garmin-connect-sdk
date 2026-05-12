@@ -32,7 +32,9 @@ import {
 describe('schemas', () => {
   it('parses representative Garmin-like activity payloads', () => {
     expect(activityListSchema.parse(activityListPayload)).toHaveLength(1);
-    expect(activityDetailSchema.parse(activityDetailPayload).activityId).toBe(123456789);
+    const activityDetail = activityDetailSchema.parse(activityDetailPayload);
+    expect(activityDetail.activityId).toBe(123456789);
+    expect(activityDetail.summaryDTO?.averageHR).toBe(142);
     expect(activityDetailsPayloadSchema.parse(activityDetailsPayload)).toMatchObject({
       activityId: 123456789,
     });

@@ -15,6 +15,11 @@ export interface ListActivitiesOptions {
   activityType?: string;
 }
 
+export interface ListAllActivitiesOptions extends Omit<ListActivitiesOptions, 'start' | 'limit'> {
+  pageSize?: number;
+  maxPages?: number;
+}
+
 export interface ActivityDetailsOptions {
   maxChartSize?: number;
   maxPolylineSize?: number;

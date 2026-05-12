@@ -39,6 +39,31 @@ describe('endpoints', () => {
     expect(http.calls[3]?.path).toBe('/activity-service/activity/123/typedsplits');
   });
 
+  it('paginates activity lists with conservative bounds', async () => {
+    class PaginatedHttp extends MockHttp {
+      override async request(
+        path: string,
+        options: { query?: Record<string, unknown> } = {},
+      ): Promise<any> {
+        this.calls.push({ path, query: options.query });
+        return options.query?.start === 0
+          ? [{ activityId: 1 }, { activityId: 2 }]
+          : [{ activityId: 3 }];
+      }
+    }
+
+    const http = new PaginatedHttp();
+    const endpoint = new ActivitiesEndpoint(http as any);
+
+    const activities = await endpoint.listAll({ pageSize: 2, maxPages: 3 });
+
+    expect(activities.map((activity) => activity.activityId)).toEqual([1, 2, 3]);
+    expect(http.calls.map((call) => call.query)).toEqual([
+      { start: 0, limit: 2, activityType: undefined },
+      { start: 2, limit: 2, activityType: undefined },
+    ]);
+  });
+
   it('builds sleep, health, user, and device paths', async () => {
     const http = new MockHttp();
     const user = new UserEndpoint(http as any);

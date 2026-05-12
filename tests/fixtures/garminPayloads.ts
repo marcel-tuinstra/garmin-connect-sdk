@@ -17,6 +17,11 @@ export const activityDetailPayload = {
   summaryDTO: {
     distance: 10000.4,
     duration: 2700.12,
+    startTimeLocal: '2026-05-12 07:10:00',
+    averageHR: 142,
+    maxHR: 176,
+    averageSpeed: 3.7,
+    calories: 720,
   },
 };
 

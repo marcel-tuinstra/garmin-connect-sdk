@@ -76,6 +76,17 @@ pnpm lint
 pnpm build
 ```
 
+Manual smoke test after a build:
+
+```bash
+pnpm build
+pnpm smoke
+```
+
+The smoke tool restores `GARMIN_TOKEN_PATH` or `./.garmin-tokens` first. If no valid session exists,
+it prompts for email, password, and MFA when needed. It prints endpoint summaries only, not raw
+profile, activity, sleep, health, or device payloads.
+
 Integration tests are opt-in and use live Garmin credentials:
 
 ```bash

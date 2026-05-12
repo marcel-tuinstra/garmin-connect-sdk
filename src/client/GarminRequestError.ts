@@ -34,6 +34,8 @@ export class GarminSessionExpiredError extends GarminAuthError {}
 
 export class GarminMfaRequiredError extends GarminAuthError {}
 
+export class GarminTimeoutError extends GarminRequestError {}
+
 export class GarminValidationError extends GarminRequestError {
   readonly issues: string[];
 

@@ -26,6 +26,20 @@ export const activityDetailSchema = z
     activityId: numberOrStringSchema,
     activityName: z.string().optional(),
     activityType: activityTypeSchema.optional(),
+    summaryDTO: z
+      .object({
+        distance: z.number().nullable().optional(),
+        duration: z.number().nullable().optional(),
+        startTimeLocal: z.string().nullable().optional(),
+        averageHR: z.number().nullable().optional(),
+        maxHR: z.number().nullable().optional(),
+        averageSpeed: z.number().nullable().optional(),
+        maxSpeed: z.number().nullable().optional(),
+        calories: z.number().nullable().optional(),
+        trainingEffect: z.number().nullable().optional(),
+      })
+      .passthrough()
+      .optional(),
   })
   .passthrough();
 

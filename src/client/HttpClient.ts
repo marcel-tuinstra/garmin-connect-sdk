@@ -1,6 +1,6 @@
-import type { ZodType } from 'zod';
+import type { ZodIssue, ZodType } from 'zod';
 
-import { errorFromResponse, GarminValidationError } from './GarminRequestError.js';
+import { errorFromResponse, GarminTimeoutError, GarminValidationError } from './GarminRequestError.js';
 import type { AuthService } from '../auth/AuthService.js';
 import { noopLogger, summarizePayload, type Logger } from '../utils/logger.js';
 import { withRetry, type RetryOptions } from '../utils/retry.js';
@@ -11,6 +11,8 @@ export interface RequestOptions<T> {
   body?: unknown;
   schema?: ZodType<T>;
   skipAuth?: boolean;
+  retry?: RetryOptions;
+  timeoutMs?: number;
 }
 
 export interface HttpClientOptions {
@@ -19,6 +21,7 @@ export interface HttpClientOptions {
   logger?: Logger;
   retry?: RetryOptions;
   baseUrl?: string;
+  timeoutMs?: number;
 }
 
 export class HttpClient {
@@ -27,12 +30,14 @@ export class HttpClient {
   #fetch: typeof fetch;
   #logger: Logger;
   #retry: RetryOptions;
+  #timeoutMs?: number;
 
   constructor(options: HttpClientOptions) {
     this.#auth = options.auth;
     this.#fetch = options.fetch ?? fetch;
     this.#logger = options.logger ?? noopLogger;
     this.#retry = options.retry ?? {};
+    this.#timeoutMs = options.timeoutMs;
     this.baseUrl = options.baseUrl ?? 'https://connectapi.garmin.com';
   }
 
@@ -57,10 +62,12 @@ export class HttpClient {
         body = JSON.stringify(options.body);
       }
 
-      const response = await this.#fetch(new URL(endpoint, this.baseUrl), {
+      const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
         method: options.method ?? 'GET',
         headers,
         body,
+        timeoutMs: options.timeoutMs,
+        endpoint,
       });
 
       if (!response.ok) throw errorFromResponse(response, endpoint);
@@ -73,13 +80,39 @@ export class HttpClient {
         throw new GarminValidationError({
           message: 'Garmin response validation failed.',
           endpoint,
-          issues: result.error.issues.map((issue) => issue.path.join('.') || '<root>'),
+          issues: formatZodIssues(result.error.issues),
           cause: result.error,
         });
       }
 
       return result.data;
-    }, this.#retry);
+    }, { ...this.#retry, ...options.retry });
+  }
+
+  async #fetchWithTimeout(
+    url: URL,
+    options: RequestInit & { timeoutMs?: number; endpoint: string },
+  ): Promise<Response> {
+    const timeoutMs = options.timeoutMs ?? this.#timeoutMs;
+    if (!timeoutMs) return this.#fetch(url, options);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await this.#fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw new GarminTimeoutError({
+          message: `Garmin request timed out after ${timeoutMs}ms.`,
+          endpoint: options.endpoint,
+          cause: error,
+        });
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 }
 
@@ -100,4 +133,39 @@ async function parseJson(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) return undefined;
   return JSON.parse(text) as unknown;
+}
+
+export function formatZodIssues(issues: ZodIssue[]): string[] {
+  const paths = new Set<string>();
+
+  for (const issue of issues) {
+    collectIssuePaths(issue, paths);
+  }
+
+  return [...paths];
+}
+
+function collectIssuePaths(issue: ZodIssue, paths: Set<string>): void {
+  if ('unionErrors' in issue) {
+    for (const unionError of issue.unionErrors) {
+      for (const unionIssue of unionError.issues) {
+        collectIssuePaths(unionIssue, paths);
+      }
+    }
+    return;
+  }
+
+  paths.add(formatPath(issue.path));
+}
+
+function formatPath(path: Array<string | number>): string {
+  if (path.length === 0) return '<root>';
+  return path.map((part) => String(part)).join('.');
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof DOMException ||
+    (typeof error === 'object' && error !== null && 'name' in error)
+  ) && (error as { name?: string }).name === 'AbortError';
 }

@@ -9,6 +9,7 @@ export {
   GarminValidationError,
   errorFromResponse,
   parseRetryAfter,
+  GarminTimeoutError,
 } from './client/GarminRequestError.js';
 
 export { AuthService } from './auth/AuthService.js';
@@ -28,6 +29,7 @@ export type {
   ActivityDetailsOptions,
   ActivityList,
   ActivitySummary,
+  ListAllActivitiesOptions,
   ListActivitiesOptions,
 } from './types/activity.js';
 export type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from './types/health.js';

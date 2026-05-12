@@ -29,6 +29,7 @@ export interface GarminConnectSDKOptions {
   fetch?: typeof fetch;
   retry?: RetryOptions;
   maxRetries?: number;
+  timeoutMs?: number;
 }
 
 export interface AuthTokensResponse {

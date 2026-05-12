@@ -29,6 +29,7 @@ export class GarminConnectSDK {
       fetch: options.fetch,
       logger: options.logger,
       retry,
+      timeoutMs: options.timeoutMs,
     });
     this.user = new UserEndpoint(this.http);
     this.activities = new ActivitiesEndpoint(this.http);

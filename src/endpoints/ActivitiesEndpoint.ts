@@ -9,6 +9,7 @@ import type {
   ActivityDetail,
   ActivityDetailsOptions,
   ActivityList,
+  ListAllActivitiesOptions,
   ListActivitiesOptions,
 } from '../types/activity.js';
 
@@ -28,6 +29,24 @@ export class ActivitiesEndpoint {
       },
       schema: activityListSchema,
     });
+  }
+
+  async listAll(options: ListAllActivitiesOptions = {}): Promise<ActivityList> {
+    const pageSize = options.pageSize ?? 100;
+    const maxPages = options.maxPages ?? 10;
+    const activities: ActivityList = [];
+
+    for (let page = 0; page < maxPages; page += 1) {
+      const batch = await this.list({
+        activityType: options.activityType,
+        start: page * pageSize,
+        limit: pageSize,
+      });
+      activities.push(...batch);
+      if (batch.length < pageSize) break;
+    }
+
+    return activities;
   }
 
   get(activityId: string | number): Promise<ActivityDetail> {
