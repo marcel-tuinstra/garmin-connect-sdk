@@ -1,0 +1,11 @@
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.garmin-tokens
+.garmin-tokens/
+garmin-tokens.json
+*.log
