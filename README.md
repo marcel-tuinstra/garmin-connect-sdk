@@ -1,5 +1,7 @@
 # garmin-connect-sdk
 
+[![CI](https://github.com/marcel-tuinstra/garmin-connect-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/marcel-tuinstra/garmin-connect-sdk/actions/workflows/ci.yml)
+
 Unofficial Node 24+ TypeScript SDK for reading a user's own Garmin Connect data. Garmin does not
 publish or support these private Connect endpoints, so they may change without notice.
 
@@ -8,8 +10,16 @@ respect rate limits, and keep credentials and tokens private.
 
 ## Install
 
+Alpha releases are published under the `alpha` dist tag:
+
 ```bash
-pnpm add garmin-connect-sdk
+pnpm add garmin-connect-sdk@alpha
+```
+
+Until the npm alpha has been published, install directly from the GitHub tag:
+
+```bash
+pnpm add github:marcel-tuinstra/garmin-connect-sdk#v1.0.0-alpha.1
 ```
 
 ## Quickstart
@@ -65,11 +75,7 @@ Garmin activity details expose metric rows as arrays plus descriptors. Use
 Location metrics are redacted by default.
 
 ```ts
-import {
-  FileTokenStorage,
-  GarminConnectSDK,
-  summarizeActivityDetails,
-} from 'garmin-connect-sdk';
+import { FileTokenStorage, GarminConnectSDK, summarizeActivityDetails } from 'garmin-connect-sdk';
 
 const garmin = new GarminConnectSDK({
   storage: new FileTokenStorage('./.garmin-tokens'),
