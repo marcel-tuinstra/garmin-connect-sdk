@@ -92,6 +92,11 @@ export class AuthService {
         }),
       });
 
+      this.#logger.debug('Garmin SSO login response received.', {
+        endpoint: '/mobile/api/login',
+        statusCode: loginResponse.status,
+      });
+
       if (loginResponse.status === 429) throw rateLimit(loginResponse, '/mobile/api/login');
       if (loginResponse.status === 401 || loginResponse.status === 403) {
         throw new GarminAuthError({
@@ -108,6 +113,10 @@ export class AuthService {
         });
       }
       if (!loginResponse.ok) {
+        const errorPayload = await readJsonObject(loginResponse);
+        const mappedError = authErrorFromLoginPayload(errorPayload, loginResponse.status);
+        if (mappedError) throw mappedError;
+
         throw new GarminRequestError({
           message: `Garmin login failed (${loginResponse.status}).`,
           statusCode: loginResponse.status,
@@ -115,7 +124,7 @@ export class AuthService {
         });
       }
 
-      const loginPayload = (await loginResponse.json()) as Record<string, unknown>;
+      const loginPayload = await readJsonObject(loginResponse);
       const ticket = await this.#extractTicketOrHandleMfa(
         loginPayload,
         options.mfaCode,
@@ -173,6 +182,11 @@ export class AuthService {
       }),
     });
 
+    this.#logger.debug('Garmin token refresh response received.', {
+      endpoint: '/di-oauth2-service/oauth/token',
+      statusCode: response.status,
+    });
+
     if (response.status === 429) throw rateLimit(response, '/di-oauth2-service/oauth/token');
     if (response.status === 401 || response.status === 403) {
       await this.logout();
@@ -212,15 +226,8 @@ export class AuthService {
 
     const responseStatus = objectValue(payload, 'responseStatus');
     const responseType = typeof responseStatus?.type === 'string' ? responseStatus.type : undefined;
-    if (responseType === 'INVALID_USERNAME_PASSWORD') {
-      throw new GarminAuthError({ message: 'Garmin login failed. Check credentials.' });
-    }
-    if (objectValue(payload, 'error')?.['status-code'] === '429') {
-      throw new GarminRateLimitError({
-        message: 'Garmin rate limit exceeded.',
-        endpoint: '/mobile/api/login',
-      });
-    }
+    const mappedError = authErrorFromLoginPayload(payload);
+    if (mappedError) throw mappedError;
 
     const mfaRequired =
       payload.mfaRequired === true ||
@@ -305,6 +312,12 @@ export class AuthService {
         }),
       });
 
+      this.#logger.debug('Garmin DI OAuth exchange response received.', {
+        endpoint: '/di-oauth2-service/oauth/token',
+        statusCode: response.status,
+        clientId,
+      });
+
       if (response.status === 429) throw rateLimit(response, '/di-oauth2-service/oauth/token');
       if (!response.ok) continue;
 
@@ -364,6 +377,53 @@ function objectValue(payload: Record<string, unknown>, key: string): Record<stri
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined;
+}
+
+async function readJsonObject(response: Response): Promise<Record<string, unknown>> {
+  try {
+    const payload = (await response.json()) as unknown;
+    return payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function authErrorFromLoginPayload(
+  payload: Record<string, unknown>,
+  statusCode?: number,
+): GarminAuthError | GarminRateLimitError | undefined {
+  const responseStatus = objectValue(payload, 'responseStatus');
+  const responseType = typeof responseStatus?.type === 'string' ? responseStatus.type : undefined;
+  const error = objectValue(payload, 'error');
+  const errorCode = typeof error?.['status-code'] === 'string' ? error['status-code'] : undefined;
+
+  if (responseType === 'INVALID_USERNAME_PASSWORD') {
+    return new GarminAuthError({
+      message: 'Garmin login failed. Check credentials.',
+      statusCode,
+      endpoint: '/mobile/api/login',
+    });
+  }
+
+  if (responseType === 'RATE_LIMITED' || errorCode === '429') {
+    return new GarminRateLimitError({
+      message: 'Garmin rate limit exceeded.',
+      statusCode: statusCode ?? 429,
+      endpoint: '/mobile/api/login',
+    });
+  }
+
+  if (responseType === 'ACCOUNT_LOCKED') {
+    return new GarminAuthError({
+      message: 'Garmin account is locked or requires action in Garmin Connect.',
+      statusCode,
+      endpoint: '/mobile/api/login',
+    });
+  }
+
+  return undefined;
 }
 
 function buildBasicAuth(clientId: string): string {

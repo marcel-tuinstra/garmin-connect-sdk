@@ -7,5 +7,9 @@ Store token files in a protected directory. On POSIX systems, `FileTokenStorage`
 owner-only permissions where supported. On other platforms, protect the directory with OS-level file
 permissions.
 
+When sharing bug reports, redact Garmin profile data, activity IDs, device IDs, email addresses,
+locations, authorization headers, cookies, token files, and raw health/activity payloads. Prefer
+minimal reproduction steps and sanitized response shapes.
+
 Report vulnerabilities privately to the maintainer. Do not include live Garmin credentials or tokens
 in reports.
