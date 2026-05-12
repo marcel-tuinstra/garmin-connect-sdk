@@ -87,6 +87,20 @@ The smoke tool restores `GARMIN_TOKEN_PATH` or `./.garmin-tokens` first. If no v
 it prompts for email, password, and MFA when needed. It prints endpoint summaries only, not raw
 profile, activity, sleep, health, or device payloads.
 
+Manual CLI checks:
+
+```bash
+pnpm build
+pnpm garmin -- activities --limit 10
+pnpm garmin -- activity --id 123456789
+pnpm garmin -- profile
+pnpm garmin -- devices
+pnpm garmin -- sleep --date 2026-05-12
+pnpm garmin -- body-battery --date 2026-05-12
+```
+
+The CLI also restores tokens first and prints JSON summaries only.
+
 Integration tests are opt-in and use live Garmin credentials:
 
 ```bash
