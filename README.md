@@ -85,7 +85,9 @@ GARMIN_PASSWORD="your-password" \
 pnpm test tests/integration/garmin.integration.test.ts
 ```
 
-If MFA is enabled, add `GARMIN_MFA_CODE`. Never commit `.garmin-tokens/` or environment files.
+If `.garmin-tokens/` already contains a valid session, credentials are not required for the live
+test. Set `GARMIN_TOKEN_PATH` to use a different token file or directory. If MFA is enabled during a
+fresh login, add `GARMIN_MFA_CODE`. Never commit `.garmin-tokens/` or environment files.
 
 ## Roadmap
 

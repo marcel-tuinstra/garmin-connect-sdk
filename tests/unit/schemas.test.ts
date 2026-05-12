@@ -1,22 +1,59 @@
 import { describe, expect, it } from 'vitest';
 
 import { GarminValidationError } from '../../src/client/GarminRequestError.js';
-import { activityListSchema } from '../../src/schemas/activity.schema.js';
+import {
+  activityDetailSchema,
+  activityDetailsPayloadSchema,
+  activityListSchema,
+  activitySplitsSchema,
+} from '../../src/schemas/activity.schema.js';
+import {
+  bodyBatterySchema,
+  heartRateSchema,
+  hrvStatusSchema,
+  stressSchema,
+} from '../../src/schemas/health.schema.js';
 import { dailySleepSchema } from '../../src/schemas/sleep.schema.js';
-import { socialProfileSchema } from '../../src/schemas/user.schema.js';
+import { devicesSchema, socialProfileSchema } from '../../src/schemas/user.schema.js';
+import {
+  activityDetailPayload,
+  activityDetailsPayload,
+  activityListPayload,
+  activitySplitsPayload,
+  bodyBatteryPayload,
+  dailySleepPayload,
+  devicesPayload,
+  heartRatePayload,
+  hrvStatusPayload,
+  socialProfilePayload,
+  stressPayload,
+} from '../fixtures/garminPayloads.js';
 
 describe('schemas', () => {
-  it('parses representative Garmin-like payloads', () => {
-    expect(activityListSchema.parse([{ activityId: 1, extra: true }])).toHaveLength(1);
-    expect(
-      dailySleepSchema.parse({
-        dailySleepDTO: { calendarDate: '2026-05-12' },
-        unexpected: 'ok',
-      }),
-    ).toMatchObject({ dailySleepDTO: { calendarDate: '2026-05-12' } });
-    expect(socialProfileSchema.parse({ displayName: 'runner', private: true }).displayName).toBe(
-      'runner',
-    );
+  it('parses representative Garmin-like activity payloads', () => {
+    expect(activityListSchema.parse(activityListPayload)).toHaveLength(1);
+    expect(activityDetailSchema.parse(activityDetailPayload).activityId).toBe(123456789);
+    expect(activityDetailsPayloadSchema.parse(activityDetailsPayload)).toMatchObject({
+      activityId: 123456789,
+    });
+    expect(activitySplitsSchema.parse(activitySplitsPayload)).toHaveLength(1);
+  });
+
+  it('parses representative Garmin-like sleep and health payloads', () => {
+    expect(dailySleepSchema.parse(dailySleepPayload)).toMatchObject({
+      dailySleepDTO: { calendarDate: '2026-05-12' },
+    });
+    expect(heartRateSchema.parse(heartRatePayload).heartRateValues).toHaveLength(2);
+    expect(stressSchema.parse(stressPayload).stressValues).toHaveLength(2);
+    expect(bodyBatterySchema.parse(bodyBatteryPayload)).toHaveLength(1);
+    expect(hrvStatusSchema.parse(hrvStatusPayload).hrvSummary).toMatchObject({
+      status: 'BALANCED',
+    });
+  });
+
+  it('parses representative Garmin-like user and device payloads', () => {
+    expect(socialProfileSchema.parse(socialProfilePayload).displayName).toBe('runner');
+    expect(devicesSchema.parse(devicesPayload)).toHaveLength(1);
   });
 
   it('reports validation paths without private payloads', () => {
