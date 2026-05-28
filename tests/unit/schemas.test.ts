@@ -16,17 +16,29 @@ import {
 import { dailySleepSchema } from '../../src/schemas/sleep.schema.js';
 import { devicesSchema, socialProfileSchema } from '../../src/schemas/user.schema.js';
 import {
+  calendarMonthSchema,
+  workoutListSchema,
+  workoutScheduleSchema,
+  workoutSchema,
+  workoutTypesSchema,
+} from '../../src/schemas/workout.schema.js';
+import {
   activityDetailPayload,
   activityDetailsPayload,
   activityListPayload,
   activitySplitsPayload,
   bodyBatteryPayload,
+  calendarMonthPayload,
   dailySleepPayload,
   devicesPayload,
   heartRatePayload,
   hrvStatusPayload,
   socialProfilePayload,
   stressPayload,
+  workoutListPayload,
+  workoutPayload,
+  workoutSchedulePayload,
+  workoutTypesPayload,
 } from '../fixtures/garminPayloads.js';
 
 describe('schemas', () => {
@@ -45,6 +57,7 @@ describe('schemas', () => {
     expect(dailySleepSchema.parse(dailySleepPayload)).toMatchObject({
       dailySleepDTO: { calendarDate: '2026-05-12' },
     });
+    expect(dailySleepSchema.parse({ ...dailySleepPayload, sleepLevels: null }).sleepLevels).toBeNull();
     expect(heartRateSchema.parse(heartRatePayload).heartRateValues).toHaveLength(2);
     expect(stressSchema.parse(stressPayload).stressValues).toHaveLength(2);
     expect(bodyBatterySchema.parse(bodyBatteryPayload)).toHaveLength(1);
@@ -56,6 +69,14 @@ describe('schemas', () => {
   it('parses representative Garmin-like user and device payloads', () => {
     expect(socialProfileSchema.parse(socialProfilePayload).displayName).toBe('runner');
     expect(devicesSchema.parse(devicesPayload)).toHaveLength(1);
+  });
+
+  it('parses representative Garmin-like workout and calendar payloads', () => {
+    expect(workoutListSchema.parse(workoutListPayload)).toHaveLength(1);
+    expect(workoutSchema.parse(workoutPayload).workoutSegments).toHaveLength(1);
+    expect(workoutTypesSchema.parse(workoutTypesPayload).workoutSportTypes).toHaveLength(1);
+    expect(workoutScheduleSchema.parse(workoutSchedulePayload).workoutScheduleId).toBe(3003);
+    expect(calendarMonthSchema.parse(calendarMonthPayload).calendarItems).toHaveLength(1);
   });
 
   it('reports validation paths without private payloads', () => {

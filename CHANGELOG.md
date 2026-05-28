@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.0-alpha.2
+
+Adds experimental Garmin Connect workout creation and calendar scheduling support.
+
+### Highlights
+
+- Experimental workouts namespace for listing, reading, creating, scheduling, unscheduling, and
+  deleting workouts.
+- Experimental calendar namespace for month/week reads and workout schedule add/remove helpers.
+- High-level running/cycling workout payload builder with repeat-group support.
+- Raw Garmin-shaped workout creation escape hatch for trusted local builders.
+- Tolerant workout schemas, unit coverage, and opt-in destructive live integration coverage.
+- Sleep schema tolerance for live Garmin responses where `sleepLevels` can be `null`.
+
+### Notes
+
+Workout writes mutate a Garmin account. Keep this experimental, prefer a test account for validation,
+and keep app-specific mapping in the consuming application.
+
 ## 1.0.0-alpha.1
 
 Initial alpha release of `garmin-connect-sdk`, an unofficial Node 24+ TypeScript SDK for reading a

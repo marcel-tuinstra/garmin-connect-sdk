@@ -23,7 +23,7 @@ export const dailySleepSchema = z
       })
       .passthrough()
       .optional(),
-    sleepLevels: z.array(sleepLevelSchema).optional(),
+    sleepLevels: z.array(sleepLevelSchema).nullable().optional(),
   })
   .passthrough();
 

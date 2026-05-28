@@ -35,6 +35,29 @@ export type {
 export type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from './types/health.js';
 export type { DailySleep, SleepRange } from './types/sleep.js';
 export type { Device, DeviceList, SocialProfile } from './types/user.js';
+export type {
+  CalendarItem,
+  CalendarMonth,
+  CreateWorkoutInput,
+  GarminWorkoutPayload,
+  GetWeekOptions,
+  ListWorkoutsOptions,
+  ScheduleWorkoutOptions,
+  Workout,
+  WorkoutCreateRequest,
+  WorkoutExecutableStepInput,
+  WorkoutList,
+  WorkoutRepeatStepInput,
+  WorkoutSchedule,
+  WorkoutSport,
+  WorkoutSportType,
+  WorkoutStepInput,
+  WorkoutStepKind,
+  WorkoutStepTarget,
+  WorkoutSummary,
+  WorkoutTypes,
+} from './types/workout.js';
+export { buildWorkoutPayload } from './utils/workoutPayload.js';
 export {
   decodeActivityMetricRow,
   normalizeMetricDescriptors,

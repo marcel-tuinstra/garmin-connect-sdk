@@ -1,10 +1,12 @@
 import { AuthService } from '../auth/AuthService.js';
 import type { LoginOptions, GarminConnectSDKOptions } from '../auth/types.js';
 import { ActivitiesEndpoint } from '../endpoints/ActivitiesEndpoint.js';
+import { CalendarEndpoint } from '../endpoints/CalendarEndpoint.js';
 import { DevicesEndpoint } from '../endpoints/DevicesEndpoint.js';
 import { HealthEndpoint } from '../endpoints/HealthEndpoint.js';
 import { SleepEndpoint } from '../endpoints/SleepEndpoint.js';
 import { UserEndpoint } from '../endpoints/UserEndpoint.js';
+import { WorkoutsEndpoint } from '../endpoints/WorkoutsEndpoint.js';
 import { HttpClient } from './HttpClient.js';
 
 export class GarminConnectSDK {
@@ -15,6 +17,8 @@ export class GarminConnectSDK {
   readonly health: HealthEndpoint;
   readonly user: UserEndpoint;
   readonly devices: DevicesEndpoint;
+  readonly workouts: WorkoutsEndpoint;
+  readonly calendar: CalendarEndpoint;
 
   constructor(options: GarminConnectSDKOptions = {}) {
     const retry = { maxRetries: options.maxRetries ?? 3, ...options.retry };
@@ -36,6 +40,8 @@ export class GarminConnectSDK {
     this.sleep = new SleepEndpoint(this.http, this.user);
     this.health = new HealthEndpoint(this.http, this.user);
     this.devices = new DevicesEndpoint(this.http);
+    this.workouts = new WorkoutsEndpoint(this.http);
+    this.calendar = new CalendarEndpoint(this.http);
   }
 
   async login(options: LoginOptions): Promise<void> {
