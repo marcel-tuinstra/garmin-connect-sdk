@@ -17,7 +17,9 @@ export class GarminConnectSDK {
   readonly health: HealthEndpoint;
   readonly user: UserEndpoint;
   readonly devices: DevicesEndpoint;
+  /** Experimental account-mutating workout APIs. These may change before v1. */
   readonly workouts: WorkoutsEndpoint;
+  /** Experimental account-mutating calendar scheduling APIs. These may change before v1. */
   readonly calendar: CalendarEndpoint;
 
   constructor(options: GarminConnectSDKOptions = {}) {

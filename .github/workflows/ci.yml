@@ -48,3 +48,6 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Package smoke
+        run: pnpm package:smoke

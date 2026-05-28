@@ -20,10 +20,10 @@ Alpha releases are published under the `alpha` dist tag:
 pnpm add garmin-connect-sdk@alpha
 ```
 
-Until the npm alpha has been published, install directly from the GitHub tag:
+Release candidates will use the `rc` dist tag:
 
 ```bash
-pnpm add github:marcel-tuinstra/garmin-connect-sdk#v1.0.0-alpha.2
+pnpm add garmin-connect-sdk@rc
 ```
 
 ## Quickstart
@@ -59,6 +59,9 @@ login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 ## Endpoints
 
 Only implemented namespaces are listed here.
+
+Read-only endpoints are release-candidate stable. Workout and calendar write helpers are still
+experimental and may change before `v1.0.0`.
 
 - `garmin.activities.list({ start, limit, activityType })`
 - `garmin.activities.listAll({ pageSize, maxPages, activityType })`
@@ -160,6 +163,7 @@ pnpm test
 pnpm typecheck
 pnpm lint
 pnpm build
+pnpm package:smoke
 ```
 
 Manual smoke test after a build:
@@ -168,6 +172,9 @@ Manual smoke test after a build:
 pnpm build
 pnpm smoke
 ```
+
+`pnpm package:smoke` packs the package, installs it into a temporary consumer project, verifies the
+public runtime exports and type declarations, and checks the installed CLI help command.
 
 The smoke tool restores `GARMIN_TOKEN_PATH` or `./.garmin-tokens` first. If no valid session exists,
 it prompts for email, password, and MFA when needed. It prints endpoint summaries only, not raw
@@ -221,7 +228,7 @@ calendar, and then attempts to remove both schedules and workouts.
 
 ## Roadmap
 
-- Broader Garmin payload schemas.
-- More endpoint namespaces.
-- Live integration validation when maintainers opt in with test credentials.
-- Hardening experimental workout helpers.
+- `1.0.0-rc.1`: freeze read-only API surface, keep workout/calendar writes experimental, and require
+  package smoke verification in CI.
+- `1.0.0`: promote after downstream use confirms no breaking API changes are needed.
+- Later: broader Garmin payload schemas and more endpoint namespaces.

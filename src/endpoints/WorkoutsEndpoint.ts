@@ -18,6 +18,12 @@ import type {
 import { formatDate } from '../utils/dates.js';
 import { buildWorkoutPayload, isCreateWorkoutInput } from '../utils/workoutPayload.js';
 
+/**
+ * Experimental Garmin workout APIs.
+ *
+ * Methods on this endpoint can create, schedule, unschedule, and delete workouts in the Garmin
+ * account. Treat this namespace as unstable until it graduates from the v1 release candidate cycle.
+ */
 export class WorkoutsEndpoint {
   #http: HttpClient;
 

@@ -8,6 +8,12 @@ import type {
 } from '../types/workout.js';
 import { formatDate } from '../utils/dates.js';
 
+/**
+ * Experimental Garmin calendar APIs.
+ *
+ * Month/week reads are safe, but workout scheduling helpers mutate the Garmin account. Treat this
+ * namespace as unstable until it graduates from the v1 release candidate cycle.
+ */
 export class CalendarEndpoint {
   #http: HttpClient;
 

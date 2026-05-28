@@ -52,6 +52,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
+    "package:smoke": "node scripts/package-smoke.mjs",
     "smoke": "node scripts/garmin-smoke.mjs",
     "garmin": "node scripts/garmin.mjs"
   },
