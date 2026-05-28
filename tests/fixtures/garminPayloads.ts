@@ -120,3 +120,74 @@ export const devicesPayload = [
     productDisplayName: 'Forerunner',
   },
 ];
+
+export const workoutListPayload = [
+  {
+    workoutId: 1001,
+    ownerId: 2002,
+    workoutName: 'Example Run',
+    description: null,
+    createdDate: '2026-05-28T12:00:00.0',
+    updateDate: '2026-05-28T12:00:00.0',
+    sportType: { sportTypeId: 1, sportTypeKey: 'running', displayOrder: 1 },
+    estimatedDurationInSecs: 1800,
+    estimatedDistanceInMeters: null,
+  },
+];
+
+export const workoutPayload = {
+  workoutId: 1001,
+  ownerId: 2002,
+  workoutName: 'Example Run',
+  description: null,
+  updatedDate: '2026-05-28T12:00:00.0',
+  createdDate: '2026-05-28T12:00:00.0',
+  sportType: { sportTypeId: 1, sportTypeKey: 'running', displayOrder: 1 },
+  workoutSegments: [
+    {
+      segmentOrder: 1,
+      sportType: { sportTypeId: 1, sportTypeKey: 'running', displayOrder: 1 },
+      workoutSteps: [
+        {
+          stepId: 1,
+          stepOrder: 1,
+          type: 'ExecutableStepDTO',
+          stepType: { stepTypeId: 1, stepTypeKey: 'warmup' },
+          endCondition: { conditionTypeId: 2, conditionTypeKey: 'time' },
+          endConditionValue: 600,
+          targetType: { workoutTargetTypeId: 1, workoutTargetTypeKey: 'no.target' },
+        },
+      ],
+    },
+  ],
+};
+
+export const workoutTypesPayload = {
+  workoutStepTypes: [{ stepTypeId: 1, stepTypeKey: 'warmup', displayOrder: 1 }],
+  workoutSportTypes: [{ sportTypeId: 1, sportTypeKey: 'running', displayOrder: 1 }],
+  workoutConditionTypes: [{ conditionTypeId: 2, conditionTypeKey: 'time', displayOrder: 2 }],
+  workoutTargetTypes: [{ workoutTargetTypeId: 1, workoutTargetTypeKey: 'no.target' }],
+};
+
+export const workoutSchedulePayload = {
+  workoutScheduleId: 3003,
+  workoutId: 1001,
+  date: '2026-06-15',
+};
+
+export const calendarMonthPayload = {
+  startDayOfMonth: 1,
+  numOfDaysInMonth: 30,
+  month: 5,
+  year: 2026,
+  calendarItems: [
+    {
+      id: 3003,
+      itemType: 'workout',
+      date: '2026-06-15',
+      title: 'Example Run',
+      workoutId: 1001,
+      workoutScheduleId: 3003,
+    },
+  ],
+};

@@ -2,11 +2,15 @@
 
 [![CI](https://github.com/marcel-tuinstra/garmin-connect-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/marcel-tuinstra/garmin-connect-sdk/actions/workflows/ci.yml)
 
-Unofficial Node 24+ TypeScript SDK for reading a user's own Garmin Connect data. Garmin does not
-publish or support these private Connect endpoints, so they may change without notice.
+Unofficial Node 24+ TypeScript SDK for a user's own Garmin Connect data, including read endpoints
+and experimental workout creation/scheduling helpers. Garmin does not publish or support these
+private Connect endpoints, so they may change without notice.
 
 This project is not affiliated with, endorsed by, or supported by Garmin. Use it conservatively,
 respect rate limits, and keep credentials and tokens private.
+
+Workout creation and calendar scheduling are experimental account-mutating methods. Prefer Garmin's
+official APIs for supported production integrations.
 
 ## Install
 
@@ -19,7 +23,7 @@ pnpm add garmin-connect-sdk@alpha
 Until the npm alpha has been published, install directly from the GitHub tag:
 
 ```bash
-pnpm add github:marcel-tuinstra/garmin-connect-sdk#v1.0.0-alpha.1
+pnpm add github:marcel-tuinstra/garmin-connect-sdk#v1.0.0-alpha.2
 ```
 
 ## Quickstart
@@ -54,6 +58,8 @@ login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 
 ## Endpoints
 
+Only implemented namespaces are listed here.
+
 - `garmin.activities.list({ start, limit, activityType })`
 - `garmin.activities.listAll({ pageSize, maxPages, activityType })`
 - `garmin.activities.get(activityId)`
@@ -67,6 +73,47 @@ login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 - `garmin.health.getHrvStatus(date)`
 - `garmin.user.getProfile()`
 - `garmin.devices.list()`
+- `garmin.workouts.list({ start, limit, myWorkoutsOnly })`
+- `garmin.workouts.get(workoutId)`
+- `garmin.workouts.getTypes()`
+- `garmin.workouts.create({ name, sport, steps })`
+- `garmin.workouts.createRaw(payload)`
+- `garmin.workouts.schedule({ workoutId, date })`
+- `garmin.workouts.unschedule(scheduleId)`
+- `garmin.workouts.delete(workoutId)`
+- `garmin.calendar.getMonth(year, month)`
+- `garmin.calendar.getWeek(date, { start })`
+- `garmin.calendar.addWorkout({ workoutId, date })`
+- `garmin.calendar.removeWorkout(scheduleId)`
+
+## Experimental Workouts
+
+Workout writes mutate the Garmin account. Keep names identifiable, prefer a test account, schedule
+future test dates only, and clean up test schedules/workouts immediately.
+
+```ts
+const workout = await garmin.workouts.create({
+  name: 'SDK Zone 2 Run',
+  sport: 'running',
+  steps: [
+    { type: 'warmup', durationSeconds: 600 },
+    { type: 'interval', durationSeconds: 2400, target: { type: 'heart_rate_zone', zone: 2 } },
+    { type: 'cooldown', durationSeconds: 300 },
+  ],
+});
+
+const schedule = await garmin.workouts.schedule({
+  workoutId: workout.workoutId,
+  date: '2026-06-15',
+});
+
+await garmin.workouts.unschedule(schedule.workoutScheduleId ?? schedule.id!);
+await garmin.workouts.delete(workout.workoutId);
+```
+
+Use `createRaw(payload)` when you already have a Garmin-shaped workout payload from a trusted local
+builder. Application-specific mappers should live in the consuming app. Do not log raw workout
+payloads from live accounts.
 
 ## Activity Metrics
 
@@ -161,9 +208,20 @@ If `.garmin-tokens/` already contains a valid session, credentials are not requi
 test. Set `GARMIN_TOKEN_PATH` to use a different token file or directory. If MFA is enabled during a
 fresh login, add `GARMIN_MFA_CODE`. Never commit `.garmin-tokens/` or environment files.
 
+Workout write integration tests are separately gated:
+
+```bash
+GARMIN_RUN_INTEGRATION=1 \
+GARMIN_RUN_WORKOUT_WRITE=1 \
+pnpm test tests/integration/garmin.integration.test.ts
+```
+
+This creates temporary running and cycling workouts, schedules them to a future date, checks the
+calendar, and then attempts to remove both schedules and workouts.
+
 ## Roadmap
 
 - Broader Garmin payload schemas.
 - More endpoint namespaces.
 - Live integration validation when maintainers opt in with test credentials.
-- Read-only workout data helpers for downstream analysis tools.
+- Hardening experimental workout helpers.

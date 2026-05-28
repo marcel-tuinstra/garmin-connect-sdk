@@ -1,7 +1,7 @@
 {
   "name": "garmin-connect-sdk",
-  "version": "1.0.0-alpha.1",
-  "description": "Unofficial Node.js TypeScript SDK for reading a user's own Garmin Connect data.",
+  "version": "1.0.0-alpha.2",
+  "description": "Unofficial Node.js TypeScript SDK for a user's own Garmin Connect data.",
   "type": "module",
   "packageManager": "pnpm@11.1.1",
   "license": "MIT",
