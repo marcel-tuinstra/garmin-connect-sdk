@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.0.0-alpha.3
+
+Release-candidate hardening release focused on test quality, package verification, and read-only API
+stability.
+
+### Highlights
 
 - Added package smoke verification for packed-package install, runtime exports, declarations, and
   CLI help.
@@ -11,6 +16,7 @@
 - Documented the `1.0.0-rc.1` readiness checklist and release process.
 - Clarified that read-only endpoints are release-candidate stable while workout/calendar writes stay
   experimental.
+- Fixed duplicated SSO cookie forwarding during MFA verification in Node.
 
 ## 1.0.0-alpha.2
 
