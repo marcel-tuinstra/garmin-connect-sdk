@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
-import type { GarminTokens } from '../../src/auth/types.js';
 import { GarminConnectSDK } from '../../src/client/GarminConnectSDK.js';
+import { fetchCall, jsonResponse, tokenResponse, tokens } from '../helpers/garmin.js';
 
 const TEST_LOGIN = { email: 'runner@example.com', password: 'secret' };
 
@@ -67,49 +67,3 @@ describe('GarminConnectSDK', () => {
     expect(restored).toBe(false);
   });
 });
-
-function fetchCall(fetchMock: ReturnType<typeof vi.fn<typeof fetch>>, index: number) {
-  const call = fetchMock.mock.calls[index];
-  if (!call) throw new Error(`Missing fetch call at index ${index}.`);
-  return { url: call[0], init: call[1] };
-}
-
-function tokens(overrides: Partial<GarminTokens> = {}): GarminTokens {
-  return {
-    accessToken: 'access-token',
-    refreshToken: 'refresh-token',
-    accessTokenExpiresAt: new Date(Date.now() + 120_000).toISOString(),
-    ...overrides,
-  };
-}
-
-function tokenResponse(): Response {
-  return jsonResponse({
-    access_token: jwt({ exp: futureSeconds(), client_id: 'GARMIN_CONNECT_MOBILE_ANDROID_DI' }),
-    refresh_token: 'refresh-token',
-    token_type: 'Bearer',
-    expires_in: 3600,
-  });
-}
-
-function jsonResponse(payload: unknown, init: ResponseInit = {}): Response {
-  return new Response(JSON.stringify(payload), {
-    status: init.status ?? 200,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  });
-}
-
-function jwt(payload: Record<string, unknown>): string {
-  return [base64Url({ alg: 'none', typ: 'JWT' }), base64Url(payload), 'signature'].join('.');
-}
-
-function base64Url(payload: Record<string, unknown>): string {
-  return Buffer.from(JSON.stringify(payload)).toString('base64url');
-}
-
-function futureSeconds(): number {
-  return Math.floor(Date.now() / 1000) + 3600;
-}

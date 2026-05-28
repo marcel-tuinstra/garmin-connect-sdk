@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
-import type { GarminTokens } from '../../src/auth/types.js';
 import { AuthService } from '../../src/auth/AuthService.js';
 import {
   GarminSessionExpiredError,
@@ -10,6 +9,7 @@ import {
   GarminValidationError,
 } from '../../src/client/GarminRequestError.js';
 import { buildPath, formatZodIssues, HttpClient } from '../../src/client/HttpClient.js';
+import { jsonResponse, tokens } from '../helpers/garmin.js';
 
 describe('HttpClient', () => {
   it('supports per-request retry overrides', async () => {
@@ -163,18 +163,4 @@ function httpClient(fetchMock: typeof fetch, retry: { maxRetries: number }): Htt
     fetch: fetchMock,
     retry,
   });
-}
-
-function jsonResponse(payload: unknown): Response {
-  return new Response(JSON.stringify(payload), {
-    headers: { 'content-type': 'application/json' },
-  });
-}
-
-function tokens(): GarminTokens {
-  return {
-    accessToken: 'access-token',
-    refreshToken: 'refresh-token',
-    accessTokenExpiresAt: new Date(Date.now() + 120_000).toISOString(),
-  };
 }

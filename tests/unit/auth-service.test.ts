@@ -2,16 +2,25 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AuthService } from '../../src/auth/AuthService.js';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
-import type { GarminTokens } from '../../src/auth/types.js';
 import {
   GarminAuthError,
   GarminMfaRequiredError,
   GarminRateLimitError,
   GarminSessionExpiredError,
 } from '../../src/client/GarminRequestError.js';
+import {
+  DI_CLIENT_ID,
+  expiredTokens,
+  fetchCall,
+  futureSeconds,
+  jsonResponse,
+  jwt,
+  textResponse,
+  tokenResponse,
+  type FetchMock,
+} from '../helpers/garmin.js';
 
 const TEST_LOGIN = { email: 'runner@example.com', password: 'secret' };
-const DI_CLIENT_ID = 'GARMIN_CONNECT_MOBILE_ANDROID_DI';
 const DI_GRANT_TYPE = 'https://connectapi.garmin.com/di-oauth2-service/oauth/grant/service_ticket';
 
 describe('AuthService', () => {
@@ -214,7 +223,7 @@ describe('AuthService', () => {
 
 interface AuthFixture {
   auth: AuthService;
-  fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+  fetchMock: FetchMock;
   storage: MemoryTokenStorage;
 }
 
@@ -235,12 +244,6 @@ async function setupAuthWithExpiredSession(responses: Response[]): Promise<AuthF
   return fixture;
 }
 
-function fetchCall(fetchMock: ReturnType<typeof vi.fn<typeof fetch>>, index: number) {
-  const call = fetchMock.mock.calls[index];
-  if (!call) throw new Error(`Missing fetch call at index ${index}.`);
-  return { url: call[0], init: call[1] };
-}
-
 function ssoTicketResponse(serviceTicketId: string): Response {
   return jsonResponse({ serviceTicketId });
 }
@@ -251,58 +254,4 @@ function ssoStatusResponse(
   init: ResponseInit = {},
 ): Response {
   return jsonResponse({ responseStatus: { type }, ...extra }, init);
-}
-
-function tokenResponse(refreshToken: string, clientId = DI_CLIENT_ID): Response {
-  return jsonResponse({
-    access_token: jwt({ exp: futureSeconds(), client_id: clientId }),
-    refresh_token: refreshToken,
-    token_type: 'Bearer',
-    expires_in: 3600,
-  });
-}
-
-function textResponse(payload: string, init: ResponseInit = {}): Response {
-  return new Response(payload, {
-    status: init.status ?? 200,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  });
-}
-
-function jsonResponse(payload: unknown, init: ResponseInit = {}): Response {
-  return new Response(JSON.stringify(payload), {
-    status: init.status ?? 200,
-    headers: {
-      'content-type': 'application/json',
-      ...init.headers,
-    },
-  });
-}
-
-function expiredTokens(): GarminTokens {
-  return {
-    accessToken: jwt({ exp: pastSeconds(), client_id: DI_CLIENT_ID }),
-    refreshToken: 'old-refresh-token',
-    accessTokenExpiresAt: new Date(Date.now() - 60_000).toISOString(),
-    clientId: DI_CLIENT_ID,
-  };
-}
-
-function jwt(payload: Record<string, unknown>): string {
-  return [base64Url({ alg: 'none', typ: 'JWT' }), base64Url(payload), 'signature'].join('.');
-}
-
-function base64Url(payload: Record<string, unknown>): string {
-  return Buffer.from(JSON.stringify(payload)).toString('base64url');
-}
-
-function futureSeconds(): number {
-  return Math.floor(Date.now() / 1000) + 3600;
-}
-
-function pastSeconds(): number {
-  return Math.floor(Date.now() / 1000) - 3600;
 }
