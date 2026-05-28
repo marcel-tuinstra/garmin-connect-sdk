@@ -4,8 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import type { GarminTokens } from '../../src/auth/types.js';
 import { AuthService } from '../../src/auth/AuthService.js';
-import { GarminTimeoutError, GarminValidationError } from '../../src/client/GarminRequestError.js';
-import { formatZodIssues, HttpClient } from '../../src/client/HttpClient.js';
+import {
+  GarminSessionExpiredError,
+  GarminTimeoutError,
+  GarminValidationError,
+} from '../../src/client/GarminRequestError.js';
+import { buildPath, formatZodIssues, HttpClient } from '../../src/client/HttpClient.js';
 
 describe('HttpClient', () => {
   it('supports per-request retry overrides', async () => {
@@ -26,6 +30,58 @@ describe('HttpClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('builds query strings, serializes JSON bodies, and supports skipAuth requests', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ saved: true }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const result = await http.request('/write', {
+      method: 'POST',
+      query: { start: 0, limit: 20, includePrivate: false, omitted: undefined },
+      body: { name: 'Workout' },
+      skipAuth: true,
+    });
+
+    // Assert
+    expect(result).toEqual({ saved: true });
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(String(url)).toBe(
+      'https://connectapi.garmin.com/write?start=0&limit=20&includePrivate=false',
+    );
+    expect(init?.method).toBe('POST');
+    expect(new Headers(init?.headers).get('authorization')).toBeNull();
+    expect(new Headers(init?.headers).get('content-type')).toBe('application/json');
+    expect(init?.body).toBe(JSON.stringify({ name: 'Workout' }));
+  });
+
+  it('returns undefined for 204 and empty JSON responses', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const result = await http.request('/empty', { skipAuth: true });
+
+    // Assert
+    expect(result).toBeUndefined();
+  });
+
+  it('maps unauthorized API responses to session expiration errors', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 401 }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await http
+      .request('/private', { skipAuth: true })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminSessionExpiredError);
+    expect((error as GarminSessionExpiredError).endpoint).toBe('/private');
+  });
+
   it('throws a timeout error when the request is aborted', async () => {
     // Arrange
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(
@@ -38,10 +94,13 @@ describe('HttpClient', () => {
     );
     const http = httpClient(fetchMock, { maxRetries: 0 });
 
-    // Act / Assert
-    await expect(http.request('/slow', { skipAuth: true, timeoutMs: 1 })).rejects.toThrow(
-      GarminTimeoutError,
-    );
+    // Act
+    const error = await http
+      .request('/slow', { skipAuth: true, timeoutMs: 1 })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminTimeoutError);
   });
 
   it('formats nested union validation issue paths', async () => {
@@ -49,7 +108,9 @@ describe('HttpClient', () => {
     const schema = z
       .array(z.object({ startTimestampGMT: z.string(), endTimestampGMT: z.string() }))
       .or(z.object({ calendarDate: z.string() }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse([{ startTimestampGMT: null }]));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse([{ startTimestampGMT: null }]));
     const http = httpClient(fetchMock, { maxRetries: 0 });
 
     // Act
@@ -65,14 +126,28 @@ describe('HttpClient', () => {
   });
 
   it('formats standalone Zod issue paths', () => {
+    // Arrange
     const result = z.object({ dailySleepDTO: z.object({ calendarDate: z.string() }) }).safeParse({
       dailySleepDTO: {},
     });
 
+    // Act
+    const issues = result.success ? [] : formatZodIssues(result.error.issues);
+
+    // Assert
     expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(formatZodIssues(result.error.issues)).toEqual(['dailySleepDTO.calendarDate']);
-    }
+    expect(issues).toEqual(['dailySleepDTO.calendarDate']);
+  });
+
+  it('omits undefined query values while preserving false and zero', () => {
+    // Arrange
+    const query = { start: 0, includePrivate: false, omitted: undefined };
+
+    // Act
+    const path = buildPath('/activities', query);
+
+    // Assert
+    expect(path).toBe('/activities?start=0&includePrivate=false');
   });
 });
 

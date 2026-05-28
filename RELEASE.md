@@ -6,7 +6,8 @@ The release candidate should freeze the read-only SDK surface and keep workout/c
 explicitly experimental.
 
 - `garmin-connect-sdk@alpha` is installed and exercised by at least one downstream application.
-- CI passes on Node 24, including package smoke verification from a packed tarball.
+- CI passes on Node 24, including 70%+ runtime SDK coverage and package smoke verification from a
+  packed tarball.
 - Read-only smoke passes with a persisted session: profile, devices, activities, activity details,
   sleep, and body battery.
 - Optional live integration passes with `GARMIN_RUN_INTEGRATION=1`.
@@ -23,6 +24,7 @@ pnpm install
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm coverage
 pnpm build
 pnpm package:smoke
 ```

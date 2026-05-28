@@ -160,11 +160,15 @@ location and health metrics. Examples should summarize data instead of printing 
 ```bash
 pnpm install
 pnpm test
+pnpm coverage
 pnpm typecheck
 pnpm lint
 pnpm build
 pnpm package:smoke
 ```
+
+Unit tests are written in Arrange/Act/Assert style and should cover meaningful behavior, including
+edge cases and failure paths. Coverage is enforced at 70% minimum for runtime SDK code.
 
 Manual smoke test after a build:
 

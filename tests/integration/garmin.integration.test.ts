@@ -30,45 +30,60 @@ describe.skipIf(!enabled)('Garmin integration', () => {
   });
 
   it('fetches profile', async () => {
+    // Act
     const profile = await garmin.user.getProfile();
 
+    // Assert
     expect(profile.displayName).toBeTruthy();
   });
 
   it('fetches devices', async () => {
+    // Act
     const devices = await garmin.devices.list();
 
+    // Assert
     expect(Array.isArray(devices)).toBe(true);
   });
 
   it('fetches recent activities and the latest activity detail when available', async () => {
+    // Act
     const activities = await garmin.activities.list({ limit: 1 });
 
+    // Assert
     expect(Array.isArray(activities)).toBe(true);
     const activityId = activities[0]?.activityId;
     if (!activityId) return;
 
+    // Act
     const activity = await garmin.activities.get(activityId);
+
+    // Assert
     expect(String(activity.activityId)).toBe(String(activityId));
   });
 
   it('fetches today sleep and body battery summaries', async () => {
+    // Arrange
     const today = formatDate(new Date());
+
+    // Act
     const [sleep, bodyBattery] = await Promise.all([
       garmin.sleep.getDailySleep(today),
       garmin.health.getBodyBattery(today),
     ]);
 
+    // Assert
     expect(sleep).toBeTypeOf('object');
     expect(bodyBattery).toBeTruthy();
   });
 
   it('fetches workout metadata without mutating the account', async () => {
+    // Act
     const [workouts, types] = await Promise.all([
       garmin.workouts.list({ limit: 1 }),
       garmin.workouts.getTypes(),
     ]);
 
+    // Assert
     expect(Array.isArray(workouts)).toBe(true);
     expect(types).toBeTypeOf('object');
   });
@@ -76,11 +91,13 @@ describe.skipIf(!enabled)('Garmin integration', () => {
   it.skipIf(process.env.GARMIN_RUN_WORKOUT_WRITE !== '1')(
     'creates, schedules, unschedules, and deletes temporary workouts',
     async () => {
+      // Arrange
       const createdWorkoutIds: Array<string | number> = [];
       const scheduleIds: Array<string | number> = [];
       const scheduleDate = formatDate(new Date(Date.now() + 35 * 24 * 60 * 60 * 1000));
 
       try {
+        // Act
         for (const sport of ['running', 'cycling'] as const) {
           const workout = await garmin.workouts.create({
             name: `garmin-connect-sdk temporary ${sport} probe`,
@@ -111,6 +128,7 @@ describe.skipIf(!enabled)('Garmin integration', () => {
             .map((item) => String(item.workoutId ?? item.workout?.workoutId ?? '')),
         );
 
+        // Assert
         expect(createdWorkoutIds.every((id) => scheduledWorkoutIds.has(String(id)))).toBe(true);
       } finally {
         for (const scheduleId of scheduleIds) {

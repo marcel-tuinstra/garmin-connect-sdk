@@ -4,6 +4,8 @@
 
 - Added package smoke verification for packed-package install, runtime exports, declarations, and
   CLI help.
+- Added enforced runtime SDK coverage thresholds and expanded edge-case coverage for auth, HTTP,
+  endpoints, token storage, dates, workout payloads, logging, and SDK composition.
 - Documented the `1.0.0-rc.1` readiness checklist and release process.
 - Clarified that read-only endpoints are release-candidate stable while workout/calendar writes stay
   experimental.

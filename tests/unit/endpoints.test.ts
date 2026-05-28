@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { GarminAuthError } from '../../src/client/GarminRequestError.js';
 import { ActivitiesEndpoint } from '../../src/endpoints/ActivitiesEndpoint.js';
 import { CalendarEndpoint } from '../../src/endpoints/CalendarEndpoint.js';
 import { DevicesEndpoint } from '../../src/endpoints/DevicesEndpoint.js';
@@ -39,13 +40,17 @@ class MockHttp {
 
 describe('endpoints', () => {
   it('builds activity paths and queries', async () => {
+    // Arrange
     const http = new MockHttp();
     const endpoint = new ActivitiesEndpoint(http as any);
+
+    // Act
     await endpoint.list({ limit: 20 });
     await endpoint.get(123);
     await endpoint.getDetails(123);
     await endpoint.getSplits(123);
 
+    // Assert
     expect(http.calls[0]).toEqual({
       path: '/activitylist-service/activities/search/activities',
       query: { start: 0, limit: 20, activityType: undefined },
@@ -56,13 +61,14 @@ describe('endpoints', () => {
   });
 
   it('paginates activity lists with conservative bounds', async () => {
+    // Arrange
     class PaginatedHttp extends MockHttp {
-    override async request(
-      path: string,
-      options: { query?: Record<string, unknown> } = {},
-    ): Promise<any> {
-      this.calls.push({ path, query: options.query });
-      return options.query?.start === 0
+      override async request(
+        path: string,
+        options: { query?: Record<string, unknown> } = {},
+      ): Promise<any> {
+        this.calls.push({ path, query: options.query });
+        return options.query?.start === 0
           ? [{ activityId: 1 }, { activityId: 2 }]
           : [{ activityId: 3 }];
       }
@@ -71,8 +77,10 @@ describe('endpoints', () => {
     const http = new PaginatedHttp();
     const endpoint = new ActivitiesEndpoint(http as any);
 
+    // Act
     const activities = await endpoint.listAll({ pageSize: 2, maxPages: 3 });
 
+    // Assert
     expect(activities.map((activity) => activity.activityId)).toEqual([1, 2, 3]);
     expect(http.calls.map((call) => call.query)).toEqual([
       { start: 0, limit: 2, activityType: undefined },
@@ -81,6 +89,7 @@ describe('endpoints', () => {
   });
 
   it('builds sleep, health, user, and device paths', async () => {
+    // Arrange
     const http = new MockHttp();
     const user = new UserEndpoint(http as any);
     const sleep = new SleepEndpoint(http as any, user);
@@ -89,6 +98,7 @@ describe('endpoints', () => {
     const workouts = new WorkoutsEndpoint(http as any);
     const calendar = new CalendarEndpoint(http as any);
 
+    // Act
     await user.getProfile();
     await sleep.getDailySleep('2026-05-12');
     await health.getHeartRate('2026-05-12');
@@ -102,6 +112,7 @@ describe('endpoints', () => {
     await calendar.getMonth(2026, 6);
     await calendar.getWeek('2026-06-15', { start: 0 });
 
+    // Assert
     expect(http.calls[1]).toEqual({
       path: '/wellness-service/wellness/dailySleepData/runner',
       method: undefined,
@@ -136,10 +147,12 @@ describe('endpoints', () => {
   });
 
   it('builds workout create, schedule, unschedule, and delete requests', async () => {
+    // Arrange
     const http = new MockHttp();
     const workouts = new WorkoutsEndpoint(http as any);
     const calendar = new CalendarEndpoint(http as any);
 
+    // Act
     await workouts.create({
       name: 'SDK Test Run',
       sport: 'running',
@@ -154,6 +167,7 @@ describe('endpoints', () => {
     await calendar.addWorkout({ workoutId: 456, date: '2026-06-16' });
     await calendar.removeWorkout(790);
 
+    // Assert
     expect(http.calls[0]?.path).toBe('/workout-service/workout');
     expect(http.calls[0]?.method).toBe('POST');
     expect(http.calls[0]?.body).toMatchObject({
@@ -196,5 +210,52 @@ describe('endpoints', () => {
       path: '/workout-service/schedule/790',
       method: 'DELETE',
     });
+  });
+
+  it('splits sleep ranges into daily requests', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const user = new UserEndpoint(http as any);
+    const sleep = new SleepEndpoint(http as any, user);
+
+    // Act
+    const range = await sleep.getSleepRange('2026-05-10', '2026-05-12');
+
+    // Assert
+    expect(range).toHaveLength(3);
+    expect(http.calls.filter((call) => call.path.includes('dailySleepData'))).toHaveLength(3);
+    expect(http.calls.map((call) => call.query?.date).filter(Boolean)).toEqual([
+      '2026-05-10',
+      '2026-05-11',
+      '2026-05-12',
+    ]);
+  });
+
+  it('rejects invalid calendar months before making a request', () => {
+    // Arrange
+    const http = new MockHttp();
+    const calendar = new CalendarEndpoint(http as any);
+
+    // Act
+    const getMonth = () => calendar.getMonth(2026, 13);
+
+    // Assert
+    expect(getMonth).toThrow(TypeError);
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it('throws a clear auth error when displayName is unavailable', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const user = new UserEndpoint(http as any);
+    user.setCachedProfile({} as any);
+    const sleep = new SleepEndpoint(http as any, user);
+
+    // Act
+    const error = await sleep.getDailySleep('2026-05-12').catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminAuthError);
+    expect(http.calls).toHaveLength(0);
   });
 });

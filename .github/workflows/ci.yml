@@ -46,6 +46,9 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Coverage
+        run: pnpm coverage
+
       - name: Build
         run: pnpm build
 

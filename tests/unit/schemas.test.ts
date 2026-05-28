@@ -43,54 +43,83 @@ import {
 
 describe('schemas', () => {
   it('parses representative Garmin-like activity payloads', () => {
-    expect(activityListSchema.parse(activityListPayload)).toHaveLength(1);
+    // Act
+    const activityList = activityListSchema.parse(activityListPayload);
     const activityDetail = activityDetailSchema.parse(activityDetailPayload);
+    const activityDetails = activityDetailsPayloadSchema.parse(activityDetailsPayload);
+    const activitySplits = activitySplitsSchema.parse(activitySplitsPayload);
+
+    // Assert
+    expect(activityList).toHaveLength(1);
     expect(activityDetail.activityId).toBe(123456789);
     expect(activityDetail.summaryDTO?.averageHR).toBe(142);
-    expect(activityDetailsPayloadSchema.parse(activityDetailsPayload)).toMatchObject({
+    expect(activityDetails).toMatchObject({
       activityId: 123456789,
     });
-    expect(activitySplitsSchema.parse(activitySplitsPayload)).toHaveLength(1);
+    expect(activitySplits).toHaveLength(1);
   });
 
   it('parses representative Garmin-like sleep and health payloads', () => {
-    expect(dailySleepSchema.parse(dailySleepPayload)).toMatchObject({
-      dailySleepDTO: { calendarDate: '2026-05-12' },
-    });
-    expect(dailySleepSchema.parse({ ...dailySleepPayload, sleepLevels: null }).sleepLevels).toBeNull();
-    expect(heartRateSchema.parse(heartRatePayload).heartRateValues).toHaveLength(2);
-    expect(stressSchema.parse(stressPayload).stressValues).toHaveLength(2);
-    expect(bodyBatterySchema.parse(bodyBatteryPayload)).toHaveLength(1);
-    expect(hrvStatusSchema.parse(hrvStatusPayload).hrvSummary).toMatchObject({
-      status: 'BALANCED',
-    });
+    // Act
+    const sleep = dailySleepSchema.parse(dailySleepPayload);
+    const sleepWithNullLevels = dailySleepSchema.parse({ ...dailySleepPayload, sleepLevels: null });
+    const heartRate = heartRateSchema.parse(heartRatePayload);
+    const stress = stressSchema.parse(stressPayload);
+    const bodyBattery = bodyBatterySchema.parse(bodyBatteryPayload);
+    const hrvStatus = hrvStatusSchema.parse(hrvStatusPayload);
+
+    // Assert
+    expect(sleep).toMatchObject({ dailySleepDTO: { calendarDate: '2026-05-12' } });
+    expect(sleepWithNullLevels.sleepLevels).toBeNull();
+    expect(heartRate.heartRateValues).toHaveLength(2);
+    expect(stress.stressValues).toHaveLength(2);
+    expect(bodyBattery).toHaveLength(1);
+    expect(hrvStatus.hrvSummary).toMatchObject({ status: 'BALANCED' });
   });
 
   it('parses representative Garmin-like user and device payloads', () => {
-    expect(socialProfileSchema.parse(socialProfilePayload).displayName).toBe('runner');
-    expect(devicesSchema.parse(devicesPayload)).toHaveLength(1);
+    // Act
+    const profile = socialProfileSchema.parse(socialProfilePayload);
+    const devices = devicesSchema.parse(devicesPayload);
+
+    // Assert
+    expect(profile.displayName).toBe('runner');
+    expect(devices).toHaveLength(1);
   });
 
   it('parses representative Garmin-like workout and calendar payloads', () => {
-    expect(workoutListSchema.parse(workoutListPayload)).toHaveLength(1);
-    expect(workoutSchema.parse(workoutPayload).workoutSegments).toHaveLength(1);
-    expect(workoutTypesSchema.parse(workoutTypesPayload).workoutSportTypes).toHaveLength(1);
-    expect(workoutScheduleSchema.parse(workoutSchedulePayload).workoutScheduleId).toBe(3003);
-    expect(calendarMonthSchema.parse(calendarMonthPayload).calendarItems).toHaveLength(1);
+    // Act
+    const workoutList = workoutListSchema.parse(workoutListPayload);
+    const workout = workoutSchema.parse(workoutPayload);
+    const workoutTypes = workoutTypesSchema.parse(workoutTypesPayload);
+    const workoutSchedule = workoutScheduleSchema.parse(workoutSchedulePayload);
+    const calendarMonth = calendarMonthSchema.parse(calendarMonthPayload);
+
+    // Assert
+    expect(workoutList).toHaveLength(1);
+    expect(workout.workoutSegments).toHaveLength(1);
+    expect(workoutTypes.workoutSportTypes).toHaveLength(1);
+    expect(workoutSchedule.workoutScheduleId).toBe(3003);
+    expect(calendarMonth.calendarItems).toHaveLength(1);
   });
 
   it('reports validation paths without private payloads', () => {
+    // Arrange
     const result = socialProfileSchema.safeParse({ displayName: '' });
+
+    // Act
+    const error = result.success
+      ? null
+      : new GarminValidationError({
+          message: 'bad',
+          endpoint: '/profile',
+          issues: result.error.issues.map((issue) => issue.path.join('.')),
+          cause: result.error,
+        });
+
+    // Assert
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const error = new GarminValidationError({
-        message: 'bad',
-        endpoint: '/profile',
-        issues: result.error.issues.map((issue) => issue.path.join('.')),
-        cause: result.error,
-      });
-      expect(error.issues).toEqual(['displayName']);
-      expect(error.message).not.toContain('runner');
-    }
+    expect(error?.issues).toEqual(['displayName']);
+    expect(error?.message).not.toContain('runner');
   });
 });

@@ -221,7 +221,12 @@ export class AuthService {
     mfaCode?: string | MfaCodeProvider,
     cookies?: string,
   ): Promise<string> {
-    const ticket = firstString(payload, ['serviceTicketId', 'ticket', 'serviceTicket', 'oauth_token']);
+    const ticket = firstString(payload, [
+      'serviceTicketId',
+      'ticket',
+      'serviceTicket',
+      'oauth_token',
+    ]);
     if (ticket) return ticket;
 
     const responseStatus = objectValue(payload, 'responseStatus');
@@ -290,7 +295,8 @@ export class AuthService {
       'serviceTicket',
       'oauth_token',
     ]);
-    if (!verifiedTicket) throw new GarminAuthError({ message: 'Garmin MFA did not return a ticket.' });
+    if (!verifiedTicket)
+      throw new GarminAuthError({ message: 'Garmin MFA did not return a ticket.' });
     return verifiedTicket;
   }
 
@@ -323,7 +329,11 @@ export class AuthService {
 
       try {
         const payload = (await response.json()) as AuthTokensResponse;
-        return normalizeTokenResponse(payload, undefined, extractClientId(payload.access_token) ?? clientId);
+        return normalizeTokenResponse(
+          payload,
+          undefined,
+          extractClientId(payload.access_token) ?? clientId,
+        );
       } catch {
         continue;
       }
@@ -372,7 +382,10 @@ function firstString(payload: Record<string, unknown>, keys: string[]): string |
   return undefined;
 }
 
-function objectValue(payload: Record<string, unknown>, key: string): Record<string, unknown> | undefined {
+function objectValue(
+  payload: Record<string, unknown>,
+  key: string,
+): Record<string, unknown> | undefined {
   const value = payload[key];
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -471,12 +484,14 @@ function decodeJwtPayload(token: string): Record<string, unknown> | undefined {
 function cookieHeader(headers: Headers): string | undefined {
   const maybeHeaders = headers as Headers & { getSetCookie?: () => string[] };
   const setCookies = maybeHeaders.getSetCookie?.() ?? [];
-  const cookieParts = setCookies
-    .map((cookie) => cookie.split(';')[0])
-    .filter((cookie): cookie is string => typeof cookie === 'string' && cookie.length > 0);
+  const cookieParts = new Set(
+    setCookies
+      .map((cookie) => cookie.split(';')[0])
+      .filter((cookie): cookie is string => typeof cookie === 'string' && cookie.length > 0),
+  );
   const singleCookie = headers.get('set-cookie')?.split(';')[0];
-  if (singleCookie) cookieParts.push(singleCookie);
-  return cookieParts.length > 0 ? cookieParts.join('; ') : undefined;
+  if (singleCookie) cookieParts.add(singleCookie);
+  return cookieParts.size > 0 ? [...cookieParts].join('; ') : undefined;
 }
 
 function rateLimit(response: Response, endpoint: string): GarminRateLimitError {
