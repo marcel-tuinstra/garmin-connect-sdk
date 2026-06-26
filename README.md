@@ -8,7 +8,8 @@ private Connect endpoints, so they may change without notice.
 
 This project is not affiliated with, endorsed by, or supported by Garmin. Use it conservatively,
 respect rate limits, and keep credentials and tokens private. You are responsible for Garmin's terms
-and any laws or policies that apply to your use.
+and any laws or policies that apply to your use. Read the [disclaimer](./DISCLAIMER.md) before using
+the package.
 
 Workout creation and calendar scheduling are experimental account-mutating methods. Prefer Garmin's
 official APIs for supported production integrations.
@@ -344,6 +345,7 @@ published in the npm package. Consumer examples should import from `garmin-conne
 
 ## Project Docs
 
+- [Disclaimer](./DISCLAIMER.md)
 - [Security policy](./SECURITY.md)
 - [Contributing guide](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
