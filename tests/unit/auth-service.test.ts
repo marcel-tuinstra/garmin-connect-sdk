@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import { mkdtemp } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { AuthService } from '../../src/auth/AuthService.js';
+import { FileTokenStorage } from '../../src/auth/FileTokenStorage.js';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import {
   GarminAuthError,
   GarminMfaRequiredError,
   GarminRateLimitError,
+  GarminRequestError,
   GarminSessionExpiredError,
 } from '../../src/client/GarminRequestError.js';
 import {
@@ -17,6 +22,7 @@ import {
   jwt,
   textResponse,
   tokenResponse,
+  tokens as storedTokens,
   type FetchMock,
 } from '../helpers/garmin.js';
 
@@ -206,6 +212,141 @@ describe('AuthService', () => {
     expect(body.get('refresh_token')).toBe('old-refresh-token');
   });
 
+  it('shares one in-flight refresh across concurrent callers', async () => {
+    // Arrange
+    let resolveRefresh: (response: Response) => void = () => undefined;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const storage = new MemoryTokenStorage();
+    await storage.save(expiredTokens());
+    const fetchMock = vi.fn<typeof fetch>().mockReturnValue(refreshResponse);
+    const auth = new AuthService({ fetch: fetchMock, storage });
+
+    // Act
+    const first = auth.refreshIfNeeded();
+    const second = auth.refreshIfNeeded();
+    await Promise.resolve();
+    resolveRefresh(tokenResponse('new-refresh-token'));
+    const tokens = await Promise.all([first, second]);
+
+    // Assert
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(tokens.map((token) => token.refreshToken)).toEqual([
+      'new-refresh-token',
+      'new-refresh-token',
+    ]);
+    expect((await storage.load())?.refreshToken).toBe('new-refresh-token');
+  });
+
+  it('reloads fresh tokens after another service refreshes shared storage', async () => {
+    // Arrange
+    let resolveRefresh: (response: Response) => void = () => undefined;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const storage = new MemoryTokenStorage();
+    await storage.save(expiredTokens());
+    const fetchMock = vi.fn<typeof fetch>().mockReturnValue(refreshResponse);
+    const firstAuth = new AuthService({ fetch: fetchMock, storage });
+    const secondAuth = new AuthService({ fetch: fetchMock, storage });
+
+    // Act
+    const first = firstAuth.refreshIfNeeded();
+    const second = secondAuth.refreshIfNeeded();
+    await Promise.resolve();
+    resolveRefresh(tokenResponse('shared-refresh-token'));
+    const tokens = await Promise.all([first, second]);
+
+    // Assert
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(tokens.map((token) => token.refreshToken)).toEqual([
+      'shared-refresh-token',
+      'shared-refresh-token',
+    ]);
+    expect(secondAuth.tokens?.refreshToken).toBe('shared-refresh-token');
+    expect((await storage.load())?.refreshToken).toBe('shared-refresh-token');
+  });
+
+  it('serializes refreshes across services sharing file storage', async () => {
+    // Arrange
+    let resolveRefresh: (response: Response) => void = () => undefined;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const dir = await mkdtemp(join(tmpdir(), 'garmin-auth-file-refresh-'));
+    const firstStorage = new FileTokenStorage(dir);
+    const secondStorage = new FileTokenStorage(dir);
+    await firstStorage.save(expiredTokens());
+    const fetchMock = vi.fn<typeof fetch>().mockReturnValue(refreshResponse);
+    const firstAuth = new AuthService({ fetch: fetchMock, storage: firstStorage });
+    const secondAuth = new AuthService({ fetch: fetchMock, storage: secondStorage });
+
+    // Act
+    const first = firstAuth.refreshIfNeeded();
+    const second = secondAuth.refreshIfNeeded();
+    await Promise.resolve();
+    resolveRefresh(tokenResponse('file-refresh-token'));
+    const tokens = await Promise.all([first, second]);
+
+    // Assert
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(tokens.map((token) => token.refreshToken)).toEqual([
+      'file-refresh-token',
+      'file-refresh-token',
+    ]);
+    expect(secondAuth.tokens?.refreshToken).toBe('file-refresh-token');
+    expect((await firstStorage.load())?.refreshToken).toBe('file-refresh-token');
+  });
+
+  it('keeps valid refreshed tokens when a queued duplicate would have failed', async () => {
+    // Arrange
+    const { auth, fetchMock, storage } = await setupAuthWithSession({
+      tokens: storedTokens({ refreshToken: 'old-refresh-token', clientId: DI_CLIENT_ID }),
+      responses: [
+        tokenResponse('new-refresh-token'),
+        new Response('', { status: 401 }),
+      ],
+    });
+    await auth.restoreSession();
+
+    // Act
+    const tokens = await Promise.all([auth.refresh(), auth.refresh()]);
+
+    // Assert
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(tokens.map((token) => token.refreshToken)).toEqual([
+      'new-refresh-token',
+      'new-refresh-token',
+    ]);
+    expect((await storage.load())?.refreshToken).toBe('new-refresh-token');
+  });
+
+  it('clears the in-flight refresh after shared failures', async () => {
+    // Arrange
+    const { auth, fetchMock } = await setupAuthWithSession({
+      tokens: storedTokens({ refreshToken: 'old-refresh-token', clientId: DI_CLIENT_ID }),
+      responses: [
+        new Response('', { status: 503 }),
+        tokenResponse('retry-refresh-token'),
+      ],
+    });
+    await auth.restoreSession();
+
+    // Act
+    const [firstError, secondError] = await Promise.all([
+      auth.refresh().catch((caught: unknown) => caught),
+      auth.refresh().catch((caught: unknown) => caught),
+    ]);
+    const retryTokens = await auth.refresh();
+
+    // Assert
+    expect(firstError).toBeInstanceOf(GarminRequestError);
+    expect(secondError).toBeInstanceOf(GarminRequestError);
+    expect(retryTokens.refreshToken).toBe('retry-refresh-token');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('clears stored tokens when refresh is revoked', async () => {
     // Arrange
     const { auth, storage } = await setupAuthWithExpiredSession([
@@ -241,6 +382,18 @@ function setupAuth({ responses }: { responses: Response[] }): AuthFixture {
 async function setupAuthWithExpiredSession(responses: Response[]): Promise<AuthFixture> {
   const fixture = setupAuth({ responses });
   await fixture.storage.save(expiredTokens());
+  return fixture;
+}
+
+async function setupAuthWithSession({
+  tokens,
+  responses,
+}: {
+  tokens: Awaited<ReturnType<MemoryTokenStorage['load']>>;
+  responses: Response[];
+}): Promise<AuthFixture> {
+  const fixture = setupAuth({ responses });
+  if (tokens) await fixture.storage.save(tokens);
   return fixture;
 }
 

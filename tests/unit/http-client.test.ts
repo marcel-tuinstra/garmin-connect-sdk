@@ -9,7 +9,7 @@ import {
   GarminValidationError,
 } from '../../src/client/GarminRequestError.js';
 import { buildPath, formatZodIssues, HttpClient } from '../../src/client/HttpClient.js';
-import { jsonResponse, tokens } from '../helpers/garmin.js';
+import { expiredTokens, jsonResponse, tokenResponse, tokens } from '../helpers/garmin.js';
 
 describe('HttpClient', () => {
   it('supports per-request retry overrides', async () => {
@@ -65,6 +65,44 @@ describe('HttpClient', () => {
 
     // Assert
     expect(result).toBeUndefined();
+  });
+
+  it('shares one token refresh across concurrent authenticated requests', async () => {
+    // Arrange
+    let resolveRefresh: (response: Response) => void = () => undefined;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const storage = new MemoryTokenStorage();
+    await storage.save(expiredTokens());
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      if (String(input).includes('/di-oauth2-service/oauth/token')) return refreshResponse;
+      return Promise.resolve(jsonResponse({ ok: true }));
+    });
+    const auth = new AuthService({ fetch: fetchMock, storage });
+    const http = new HttpClient({ auth, fetch: fetchMock, retry: { maxRetries: 0 } });
+
+    // Act
+    const first = http.request('/first');
+    const second = http.request('/second');
+    await Promise.resolve();
+    resolveRefresh(tokenResponse('new-refresh-token'));
+    await Promise.all([first, second]);
+
+    // Assert
+    const refreshCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input).includes('/di-oauth2-service/oauth/token'),
+    );
+    const requestCalls = fetchMock.mock.calls.filter(
+      ([input]) => !String(input).includes('/di-oauth2-service/oauth/token'),
+    );
+    expect(refreshCalls).toHaveLength(1);
+    expect(requestCalls).toHaveLength(2);
+    for (const [, init] of requestCalls) {
+      expect(new Headers(init?.headers).get('authorization')).toBe(
+        `Bearer ${auth.tokens?.accessToken}`,
+      );
+    }
   });
 
   it('maps unauthorized API responses to session expiration errors', async () => {

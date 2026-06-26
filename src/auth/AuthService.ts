@@ -29,6 +29,7 @@ const DI_CLIENT_IDS = [
   'GARMIN_CONNECT_MOBILE_ANDROID_DI',
   'GARMIN_CONNECT_MOBILE_IOS_DI',
 ] as const;
+const fallbackRefreshLocks = new WeakMap<TokenStorage, Promise<void>>();
 
 export interface AuthServiceOptions {
   storage?: TokenStorage;
@@ -43,6 +44,7 @@ export class AuthService {
   #logger: Logger;
   #retry: RetryOptions;
   #tokens: GarminTokens | null = null;
+  #refreshPromise: Promise<GarminTokens> | null = null;
 
   constructor(options: AuthServiceOptions = {}) {
     this.storage = options.storage ?? new MemoryTokenStorage();
@@ -154,13 +156,60 @@ export class AuthService {
     }
 
     if (Date.parse(this.#tokens.accessTokenExpiresAt) - EXPIRY_SKEW_MS <= Date.now()) {
-      return this.refresh();
+      return this.#refresh({ skipIfFresh: true });
     }
 
     return { ...this.#tokens };
   }
 
   async refresh(): Promise<GarminTokens> {
+    return this.#refresh({ skipIfFresh: false });
+  }
+
+  async #refresh({ skipIfFresh }: { skipIfFresh: boolean }): Promise<GarminTokens> {
+    if (this.#refreshPromise) return { ...(await this.#refreshPromise) };
+
+    const refreshPromise = this.#withStorageRefreshLock(async () => {
+      const stored = await this.storage.load();
+      if (stored) this.#tokens = stored;
+
+      if (skipIfFresh && this.#tokens && !requiresRefresh(this.#tokens)) {
+        return { ...this.#tokens };
+      }
+
+      return this.#refreshTokens();
+    });
+    this.#refreshPromise = refreshPromise;
+
+    try {
+      return { ...(await refreshPromise) };
+    } finally {
+      if (this.#refreshPromise === refreshPromise) this.#refreshPromise = null;
+    }
+  }
+
+  async #withStorageRefreshLock<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.storage.withRefreshLock) return this.storage.withRefreshLock(operation);
+
+    let release: () => void = () => undefined;
+    const previous = fallbackRefreshLocks.get(this.storage) ?? Promise.resolve();
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    fallbackRefreshLocks.set(this.storage, current);
+
+    await previous;
+    try {
+      return await operation();
+    } finally {
+      release();
+      if (fallbackRefreshLocks.get(this.storage) === current) {
+        fallbackRefreshLocks.delete(this.storage);
+      }
+    }
+  }
+
+  async #refreshTokens(): Promise<GarminTokens> {
     if (!this.#tokens?.refreshToken) {
       throw new GarminSessionExpiredError({ message: 'No Garmin refresh token is available.' });
     }
@@ -344,6 +393,10 @@ export class AuthService {
       endpoint: '/di-oauth2-service/oauth/token',
     });
   }
+}
+
+function requiresRefresh(tokens: GarminTokens): boolean {
+  return Date.parse(tokens.accessTokenExpiresAt) - EXPIRY_SKEW_MS <= Date.now();
 }
 
 function normalizeTokenResponse(

@@ -40,18 +40,57 @@ try {
         import { existsSync } from 'node:fs';
         const sdk = await import('garmin-connect-sdk');
         const required = [
+          'decodeActivityMetricRow',
           'GarminConnectSDK',
+          'GarminAuthError',
+          'GarminMfaRequiredError',
+          'GarminRateLimitError',
+          'GarminRequestError',
+          'GarminSessionExpiredError',
+          'GarminTimeoutError',
+          'GarminValidationError',
           'FileTokenStorage',
           'MemoryTokenStorage',
-          'GarminRequestError',
+          'normalizeMetricDescriptors',
+          'errorFromResponse',
+          'parseRetryAfter',
           'summarizeActivityDetails',
+          'summarizeActivitySplits',
           'buildWorkoutPayload',
         ];
         for (const name of required) {
           if (!(name in sdk)) throw new Error(\`Missing export: \${name}\`);
         }
+        const blocked = ['AuthService', 'HttpClient', 'buildPath'];
+        for (const name of blocked) {
+          if (name in sdk) throw new Error(\`Unexpected internal export: \${name}\`);
+        }
+        const garmin = new sdk.GarminConnectSDK();
+        for (const name of ['auth', 'http']) {
+          if (name in garmin) throw new Error(\`Unexpected public SDK property: \${name}\`);
+        }
+        const expected = [...required].sort();
+        const actual = Object.keys(sdk).sort();
+        if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+          throw new Error(\`Unexpected public exports: \${actual.join(', ')}\`);
+        }
         if (!existsSync('node_modules/garmin-connect-sdk/dist/index.d.ts')) {
           throw new Error('Missing dist/index.d.ts in installed package.');
+        }
+        const blockedImports = [
+          'garmin-connect-sdk/auth/AuthService',
+          'garmin-connect-sdk/client/HttpClient',
+          'garmin-connect-sdk/dist/index.js',
+          'garmin-connect-sdk/src/index.js',
+        ];
+        for (const specifier of blockedImports) {
+          await import(specifier)
+            .then(() => {
+              throw new Error(\`Unexpected deep import success: \${specifier}\`);
+            })
+            .catch((error) => {
+              if (error?.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
+            });
         }
       `,
     ],

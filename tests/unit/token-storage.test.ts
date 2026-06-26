@@ -31,6 +31,36 @@ describe('token storage', () => {
     expect(await storage.load()).toBeNull();
   });
 
+  it('serializes memory refresh locks within one storage instance', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    const events: string[] = [];
+    let releaseFirst: () => void = () => undefined;
+    const firstCanFinish = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+
+    // Act
+    const first = storage.withRefreshLock(async () => {
+      events.push('first-start');
+      await firstCanFinish;
+      events.push('first-end');
+      return 'first';
+    });
+    await Promise.resolve();
+    const second = storage.withRefreshLock(async () => {
+      events.push('second-start');
+      return 'second';
+    });
+    await Promise.resolve();
+
+    // Assert
+    expect(events).toEqual(['first-start']);
+    releaseFirst();
+    await expect(Promise.all([first, second])).resolves.toEqual(['first', 'second']);
+    expect(events).toEqual(['first-start', 'first-end', 'second-start']);
+  });
+
   it('saves file tokens without email or password fields', async () => {
     // Arrange
     const dir = await mkdtemp(join(tmpdir(), 'garmin-token-test-'));
@@ -52,6 +82,38 @@ describe('token storage', () => {
     expect(await storage.load()).toBeNull();
   });
 
+  it('serializes file refresh locks across storage instances', async () => {
+    // Arrange
+    const dir = await mkdtemp(join(tmpdir(), 'garmin-token-lock-'));
+    const firstStorage = new FileTokenStorage(dir);
+    const secondStorage = new FileTokenStorage(dir);
+    const events: string[] = [];
+    let releaseFirst: () => void = () => undefined;
+    const firstCanFinish = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+
+    // Act
+    const first = firstStorage.withRefreshLock(async () => {
+      events.push('first-start');
+      await firstCanFinish;
+      events.push('first-end');
+      return 'first';
+    });
+    await waitFor(() => events.includes('first-start'));
+    const second = secondStorage.withRefreshLock(async () => {
+      events.push('second-start');
+      return 'second';
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Assert
+    expect(events).toEqual(['first-start']);
+    releaseFirst();
+    await expect(Promise.all([first, second])).resolves.toEqual(['first', 'second']);
+    expect(events).toEqual(['first-start', 'first-end', 'second-start']);
+  });
+
   it('returns null when a token file has not been created yet', async () => {
     // Arrange
     const dir = await mkdtemp(join(tmpdir(), 'garmin-token-empty-'));
@@ -64,3 +126,11 @@ describe('token storage', () => {
     expect(loaded).toBeNull();
   });
 });
+
+async function waitFor(assertion: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (assertion()) return;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  throw new Error('Timed out waiting for condition.');
+}

@@ -10,8 +10,8 @@ import { WorkoutsEndpoint } from '../endpoints/WorkoutsEndpoint.js';
 import { HttpClient } from './HttpClient.js';
 
 export class GarminConnectSDK {
-  readonly auth: AuthService;
-  readonly http: HttpClient;
+  #auth: AuthService;
+  #http: HttpClient;
   readonly activities: ActivitiesEndpoint;
   readonly sleep: SleepEndpoint;
   readonly health: HealthEndpoint;
@@ -24,30 +24,30 @@ export class GarminConnectSDK {
 
   constructor(options: GarminConnectSDKOptions = {}) {
     const retry = { maxRetries: options.maxRetries ?? 3, ...options.retry };
-    this.auth = new AuthService({
+    this.#auth = new AuthService({
       storage: options.storage,
       logger: options.logger,
       fetch: options.fetch,
       retry,
     });
-    this.http = new HttpClient({
-      auth: this.auth,
+    this.#http = new HttpClient({
+      auth: this.#auth,
       fetch: options.fetch,
       logger: options.logger,
       retry,
       timeoutMs: options.timeoutMs,
     });
-    this.user = new UserEndpoint(this.http);
-    this.activities = new ActivitiesEndpoint(this.http);
-    this.sleep = new SleepEndpoint(this.http, this.user);
-    this.health = new HealthEndpoint(this.http, this.user);
-    this.devices = new DevicesEndpoint(this.http);
-    this.workouts = new WorkoutsEndpoint(this.http);
-    this.calendar = new CalendarEndpoint(this.http);
+    this.user = new UserEndpoint(this.#http);
+    this.activities = new ActivitiesEndpoint(this.#http);
+    this.sleep = new SleepEndpoint(this.#http, this.user);
+    this.health = new HealthEndpoint(this.#http, this.user);
+    this.devices = new DevicesEndpoint(this.#http);
+    this.workouts = new WorkoutsEndpoint(this.#http);
+    this.calendar = new CalendarEndpoint(this.#http);
   }
 
   async login(options: LoginOptions): Promise<void> {
-    const tokens = await this.auth.login(options);
+    const tokens = await this.#auth.login(options);
     if (tokens.displayName) {
       this.user.setCachedProfile({ displayName: tokens.displayName });
     } else {
@@ -56,13 +56,13 @@ export class GarminConnectSDK {
   }
 
   async restoreSession(): Promise<boolean> {
-    const restored = await this.auth.restoreSession();
-    const displayName = this.auth.tokens?.displayName;
+    const restored = await this.#auth.restoreSession();
+    const displayName = this.#auth.tokens?.displayName;
     if (displayName) this.user.setCachedProfile({ displayName });
     return restored;
   }
 
   logout(): Promise<void> {
-    return this.auth.logout();
+    return this.#auth.logout();
   }
 }

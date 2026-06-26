@@ -1,5 +1,4 @@
 export { GarminConnectSDK } from './client/GarminConnectSDK.js';
-export { HttpClient, buildPath } from './client/HttpClient.js';
 export {
   GarminAuthError,
   GarminMfaRequiredError,
@@ -12,12 +11,10 @@ export {
   GarminTimeoutError,
 } from './client/GarminRequestError.js';
 
-export { AuthService } from './auth/AuthService.js';
 export { FileTokenStorage } from './auth/FileTokenStorage.js';
 export { MemoryTokenStorage } from './auth/MemoryTokenStorage.js';
 export type { TokenStorage } from './auth/TokenStorage.js';
 export type {
-  AuthTokensResponse,
   GarminConnectSDKOptions,
   GarminTokens,
   LoginOptions,
