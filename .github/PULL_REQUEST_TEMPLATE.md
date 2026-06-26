@@ -3,9 +3,12 @@
 ## Verification
 
 - [ ] `pnpm test`
+- [ ] `pnpm coverage`
 - [ ] `pnpm typecheck`
 - [ ] `pnpm lint`
 - [ ] `pnpm build`
+- [ ] `pnpm package:smoke`
+- [ ] No npm publish, GitHub release, or Git tag was created.
 
 ## Privacy Checklist
 

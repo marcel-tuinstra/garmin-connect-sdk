@@ -138,22 +138,25 @@ try {
     }
 
     default:
-      throw new Error(`Unknown command "${command}". Run "pnpm garmin -- help".`);
+      throw new Error(`Unknown command "${command}". Run "garmin-connect help".`);
   }
 } finally {
   rl.close();
 }
 
 function printHelp() {
-  console.log(`Garmin Connect SDK manual test CLI
+  console.log(`Garmin Connect SDK CLI
 
 Usage:
-  pnpm garmin -- profile
-  pnpm garmin -- devices
-  pnpm garmin -- activities [--limit 10] [--start 0] [--type running]
-  pnpm garmin -- activity --id <activityId> [--details] [--raw]
-  pnpm garmin -- sleep [--date YYYY-MM-DD]
-  pnpm garmin -- body-battery [--date YYYY-MM-DD]
+  garmin-connect profile
+  garmin-connect devices
+  garmin-connect activities [--limit 10] [--start 0] [--type running]
+  garmin-connect activity --id <activityId> [--details] [--raw]
+  garmin-connect sleep [--date YYYY-MM-DD]
+  garmin-connect body-battery [--date YYYY-MM-DD]
+
+Repo script:
+  pnpm garmin -- <command>
 
 Auth:
   Restores GARMIN_TOKEN_PATH or ./.garmin-tokens first.
@@ -161,6 +164,6 @@ Auth:
   GARMIN_EMAIL, GARMIN_PASSWORD, and GARMIN_MFA_CODE can be set for non-interactive use.
 
 Output:
-  JSON summaries by default. Raw Garmin payloads are printed only with --raw.
+  JSON summaries by default. --raw prints raw Garmin payloads for private local debugging.
 `);
 }
