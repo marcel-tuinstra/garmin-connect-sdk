@@ -56,6 +56,16 @@ files still grant account access and should be protected like credentials.
 The SDK prefers `restoreSession()` and token refresh over repeated password login. This reduces
 login friction and avoids unnecessary requests to Garmin's SSO endpoints.
 
+`FileTokenStorage` serializes refreshes across SDK instances that point at the same token file and
+writes token updates with an atomic rename. Custom `TokenStorage` implementations can provide
+`withRefreshLock()` when one token store is shared across SDK instances or processes.
+
+## Public API
+
+Import from `garmin-connect-sdk`. The supported surface is `GarminConnectSDK`, token storage
+implementations, public errors, endpoint data types, and documented helper functions. Internal auth
+and HTTP classes are not exported from the package root, and package subpath imports are unsupported.
+
 ## Endpoints
 
 Only implemented namespaces are listed here.
