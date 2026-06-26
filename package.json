@@ -1,11 +1,11 @@
 {
   "name": "garmin-connect-sdk",
   "version": "1.0.0-alpha.3",
-  "description": "Unofficial Node.js TypeScript SDK for a user's own Garmin Connect data.",
+  "description": "Unofficial Node 24+ TypeScript SDK for a user's own Garmin Connect data. Uses private Garmin Connect endpoints.",
   "type": "module",
   "packageManager": "pnpm@11.1.1",
   "license": "MIT",
-  "author": "",
+  "author": "Marcel Tuinstra",
   "keywords": [
     "garmin",
     "garmin-connect",
@@ -15,13 +15,13 @@
     "fitness",
     "health"
   ],
-  "homepage": "https://github.com/marceltuinstra/garmin-connect-sdk#readme",
+  "homepage": "https://github.com/marcel-tuinstra/garmin-connect-sdk#readme",
   "bugs": {
-    "url": "https://github.com/marceltuinstra/garmin-connect-sdk/issues"
+    "url": "https://github.com/marcel-tuinstra/garmin-connect-sdk/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marceltuinstra/garmin-connect-sdk.git"
+    "url": "git+https://github.com/marcel-tuinstra/garmin-connect-sdk.git"
   },
   "engines": {
     "node": ">=24"
@@ -29,9 +29,9 @@
   "files": [
     "dist",
     "scripts",
-    "examples",
     "README.md",
     "CHANGELOG.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "bin": {

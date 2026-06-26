@@ -32,6 +32,6 @@ body:
     id: version
     attributes:
       label: SDK version
-      placeholder: 1.0.0-alpha.1
+      placeholder: 1.0.0-alpha.x
     validations:
       required: true
