@@ -12,6 +12,14 @@ owner-only permissions where supported. On other platforms, protect the director
 permissions. Token files are not encrypted by the SDK and can grant account access until Garmin
 expires or revokes them.
 
+Treat `.garmin-tokens/tokens.json` as a bearer secret. It may also contain limited session metadata
+such as display name and client ID. Apps and plugins should isolate token storage per Garmin account
+and per application user, and should use a dedicated secret store when filesystem tokens are not
+appropriate.
+
+Do not paste real `GARMIN_EMAIL`, `GARMIN_PASSWORD`, or `GARMIN_MFA_CODE` values into shared
+terminals, recorded shells, screenshots, CI logs, public issues, or shell history.
+
 When sharing bug reports, redact Garmin profile data, activity IDs, device IDs, email addresses,
 locations, authorization headers, cookies, token files, and raw health/activity payloads. Prefer
 minimal reproduction steps and sanitized response shapes.
@@ -34,3 +42,6 @@ live account data.
 Do not commit request/response dumps, cookies, account identifiers, workout identifiers, calendar
 identifiers, or unsanitized workout/calendar payloads. Use redacted shapes and field names in
 examples.
+
+CLI `--raw` output can expose health, location, device, workout, and schedule identifiers. Use it
+only in a private local terminal and redact it before sharing.

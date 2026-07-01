@@ -21,36 +21,92 @@ pnpm build
 pnpm package:smoke
 ```
 
-`pnpm package:smoke` packs the package, installs it into a temporary consumer project, checks the
-public exports, and verifies the installed CLI help. It does not publish anything.
+`pnpm package:smoke` packs the package, installs it into a temporary consumer project,
+checks the public exports, verifies blocked deep imports, and runs the installed CLI help.
+It does not publish anything.
 
-Unit tests do not require Garmin credentials. Integration tests are opt-in and require
-`GARMIN_RUN_INTEGRATION=1` plus either a valid token session or `GARMIN_EMAIL` and
-`GARMIN_PASSWORD`. Use `GARMIN_TOKEN_PATH` to isolate a test session. If Garmin asks for MFA during
+Unit tests use Arrange/Act/Assert style and should cover meaningful behavior, including
+edge cases and failure paths. Coverage is enforced at 70% minimum for runtime SDK code.
+
+## Manual Local Checks
+
+After a build, the repo CLI can exercise a persisted local Garmin session:
+
+```bash
+pnpm build
+pnpm smoke
+pnpm garmin -- activities --limit 10
+pnpm garmin -- activity --id <activityId> --details
+pnpm garmin -- profile
+pnpm garmin -- devices
+pnpm garmin -- sleep --date YYYY-MM-DD
+pnpm garmin -- body-battery --date YYYY-MM-DD
+```
+
+Use a date where the test account has data. The CLI restores `GARMIN_TOKEN_PATH` or
+`./.garmin-tokens` first and prints JSON summaries by default. The activity command can
+print raw Garmin payloads with `--raw`; use that only in a private local terminal and
+redact output before sharing it.
+
+After installing a packed or published package, the same CLI is available through package
+binaries:
+
+```bash
+pnpm exec garmin-connect activities --limit 10
+pnpm exec garmin-connect activity --id <activityId> --details
+pnpm exec garmin-connect-smoke
+```
+
+The `examples/` directory is for repository development. It imports local source files and
+is not published as consumer sample code.
+
+## Live Integration Tests
+
+Integration tests are opt-in and use live Garmin credentials or an existing token session.
+Do not paste real credential values into shared terminals, recorded shells, screenshots,
+CI logs, or public issue text.
+
+```bash
+GARMIN_RUN_INTEGRATION=1 \
+GARMIN_EMAIL="<email>" \
+GARMIN_PASSWORD="<password>" \
+pnpm test tests/integration/garmin.integration.test.ts
+```
+
+If `.garmin-tokens/` already contains a valid session, credentials are not required for the
+live test. Set `GARMIN_TOKEN_PATH` to isolate a test session. If MFA is enabled during a
 fresh login, set `GARMIN_MFA_CODE`.
 
-Workout write integration tests must also set `GARMIN_RUN_WORKOUT_WRITE=1`. They create and delete
-real Garmin workouts and calendar schedules.
+Workout write integration tests are separately gated:
+
+```bash
+GARMIN_RUN_INTEGRATION=1 \
+GARMIN_RUN_WORKOUT_WRITE=1 \
+pnpm test tests/integration/garmin.integration.test.ts
+```
+
+These tests create temporary running and cycling workouts, schedule them to a future date,
+check the calendar, and then attempt to remove both schedules and workouts. Run them only
+against an account where live workout/calendar mutation is acceptable.
 
 ## Pull Requests
 
 - Keep PRs focused on one concern.
 - Include the verification commands you ran.
-- Update README, SECURITY, CONTRIBUTING, RELEASE, or CHANGELOG when behavior, public API, package
-  contents, privacy expectations, or release process changes.
-- Do not publish npm packages, create GitHub releases, create tags, or change release history in a
-  contributor PR.
+- Update README, docs, SECURITY, CONTRIBUTING, RELEASE, or CHANGELOG when behavior, public
+  API, package contents, privacy expectations, or release process changes.
+- Do not publish npm packages, create GitHub releases, create tags, or change release
+  history in a contributor PR.
 - Do not use `git commit --amend` or force-push in this repository.
 
 ## Security And Rate Limits
 
-Do not commit credentials or token files. Keep login retries conservative and prefer persisted token
-refresh over repeated password authentication.
+Do not commit credentials, environment files, token files, cookies, request/response dumps,
+account identifiers, device identifiers, workout identifiers, calendar identifiers, or
+unsanitized workout/calendar payloads.
 
-Do not commit request/response dumps, cookies, token files, account identifiers, device identifiers,
-workout identifiers, calendar identifiers, or unsanitized workout or calendar payloads.
+Keep login retries conservative and prefer persisted token refresh over repeated password
+authentication.
 
-Destructive integration tests must stay opt-in and clearly gated.
-
-Use GitHub private vulnerability reporting for credential, token, health-data, or location-data
-exposure. Public issues must use minimized redacted shapes.
+Use GitHub private vulnerability reporting for credential, token, health-data, or
+location-data exposure. Public issues must use minimized redacted shapes.

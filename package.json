@@ -28,8 +28,10 @@
   },
   "files": [
     "dist",
+    "docs/usage.md",
     "scripts",
     "README.md",
+    "CONTRIBUTING.md",
     "CHANGELOG.md",
     "DISCLAIMER.md",
     "SECURITY.md",
