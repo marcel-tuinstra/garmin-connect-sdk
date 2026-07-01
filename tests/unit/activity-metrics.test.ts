@@ -63,6 +63,31 @@ describe('activity metrics', () => {
     });
   });
 
+  it('counts heart-rate samples from activity detail metric rows', () => {
+    // Arrange
+    const detailsPayload = {
+      metricDescriptors: [
+        { metricsIndex: 0, key: 'sampleTime', unit: { key: 's' } },
+        { metricsIndex: 1, key: 'directHeartRate', unit: { key: 'bpm' } },
+      ],
+      activityDetailMetrics: [
+        { metrics: [0, 120] },
+        { metrics: [30, 130] },
+        { metrics: [60, null] },
+      ],
+    };
+
+    // Act
+    const details = summarizeActivityDetails(detailsPayload);
+
+    // Assert
+    expect(details).toMatchObject({
+      metricRows: 3,
+      metricDescriptorCount: 2,
+      heartRateSamples: 2,
+    });
+  });
+
   it('handles missing descriptors and non-object payloads conservatively', () => {
     // Arrange
     const descriptors = normalizeMetricDescriptors([

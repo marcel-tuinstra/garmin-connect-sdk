@@ -63,11 +63,18 @@ export function summarizeActivityDetails(
     metrics.flatMap((metric) => arrayValue(objectValue(metric)?.metricDescriptors)),
   );
   const metricDescriptors = normalizeMetricDescriptors(descriptors);
+  const publicMetricDescriptors = metricDescriptors.filter(
+    (descriptor) => !isLocationMetric(descriptor.key),
+  );
+  const heartRateDescriptors = publicMetricDescriptors.filter((descriptor) =>
+    isHeartRateMetric(descriptor.key),
+  );
 
   const geoPolyline = arrayValue(objectValue(details.geoPolylineDTO)?.polyline);
   const heartRateValues = arrayValue(objectValue(details.heartRateDTO)?.heartRateValues).concat(
     arrayValue(details.heartRateDTOs).flatMap((dto) => arrayValue(objectValue(dto)?.heartRateValues)),
   );
+  const metricRowHeartRateSamples = countMetricRowsWithHeartRate(metrics, heartRateDescriptors);
   const powerValues = arrayValue(objectValue(details.powerDTO)?.powerValues).concat(
     arrayValue(details.powerDTOs).flatMap((dto) => arrayValue(objectValue(dto)?.powerValues)),
   );
@@ -90,7 +97,7 @@ export function summarizeActivityDetails(
         : null,
     hasPolyline: geoPolyline.length > 0,
     polylinePoints: geoPolyline.length,
-    heartRateSamples: heartRateValues.length,
+    heartRateSamples: heartRateValues.length + metricRowHeartRateSamples,
     powerSamples: powerValues.length,
     speedSamples: speedValues.length,
     topLevelKeys: Object.keys(details).sort(),
