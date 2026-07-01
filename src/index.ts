@@ -62,10 +62,13 @@ export {
   decodeActivityMetricRow,
   normalizeMetricDescriptors,
   summarizeActivityDetails,
+  summarizeActivityHeartRateShape,
   summarizeActivitySplits,
 } from './utils/activityMetrics.js';
 export type {
   ActivityDetailsSummary,
+  ActivityHeartRateSampleShape,
+  ActivityHeartRateShapeSummary,
   ActivityMetricDescriptor,
   ActivitySplitsSummary,
   DecodedActivityMetricRow,

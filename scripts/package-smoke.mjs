@@ -55,6 +55,7 @@ try {
           'errorFromResponse',
           'parseRetryAfter',
           'summarizeActivityDetails',
+          'summarizeActivityHeartRateShape',
           'summarizeActivitySplits',
           'buildWorkoutPayload',
         ];
