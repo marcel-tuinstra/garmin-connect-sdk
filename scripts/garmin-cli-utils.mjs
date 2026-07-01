@@ -1,13 +1,10 @@
 /* global process */
-import { emitKeypressEvents } from 'node:readline';
-import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 
 import { FileTokenStorage, GarminConnectSDK, GarminMfaRequiredError } from '../dist/index.js';
+import { createPrompt, questionHidden } from './garmin-prompt-utils.mjs';
 
-export function createPrompt() {
-  return createInterface({ input, output });
-}
+export { createPrompt } from './garmin-prompt-utils.mjs';
 
 export async function createGarminFromCli(rl = createPrompt()) {
   const tokenPath = process.env.GARMIN_TOKEN_PATH ?? './.garmin-tokens';
@@ -20,13 +17,20 @@ export async function createGarminFromCli(rl = createPrompt()) {
   if (restored) return { garmin, restoredSession: true };
 
   const email = process.env.GARMIN_EMAIL ?? (await rl.question('Garmin email: '));
+  const passwordFromPrompt = !process.env.GARMIN_PASSWORD;
   const password = process.env.GARMIN_PASSWORD ?? (await questionHidden(rl, 'Garmin password: '));
 
   try {
     await garmin.login({ email, password, mfaCode: process.env.GARMIN_MFA_CODE });
   } catch (error) {
     if (!(error instanceof GarminMfaRequiredError)) throw error;
-    const mfaCode = await rl.question('Garmin MFA code: ');
+    const mfaPrompt = passwordFromPrompt && input.isTTY ? createPrompt() : rl;
+    let mfaCode;
+    try {
+      mfaCode = await mfaPrompt.question('Garmin MFA code: ');
+    } finally {
+      if (mfaPrompt !== rl) mfaPrompt.close();
+    }
     await garmin.login({ email, password, mfaCode });
   }
 
@@ -69,41 +73,4 @@ export function numberFlag(flags, key, fallback) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
-}
-
-async function questionHidden(rl, prompt) {
-  if (!input.isTTY) return rl.question(prompt);
-
-  output.write(prompt);
-  emitKeypressEvents(input);
-  input.setRawMode(true);
-
-  let value = '';
-  return new Promise((resolve) => {
-    const onKeypress = (character, key) => {
-      if (key?.name === 'return') {
-        input.setRawMode(false);
-        input.off('keypress', onKeypress);
-        output.write('\n');
-        resolve(value);
-        return;
-      }
-
-      if (key?.name === 'backspace') {
-        value = value.slice(0, -1);
-        return;
-      }
-
-      if (key?.ctrl && key.name === 'c') {
-        input.setRawMode(false);
-        input.off('keypress', onKeypress);
-        process.kill(process.pid, 'SIGINT');
-        return;
-      }
-
-      if (character) value += character;
-    };
-
-    input.on('keypress', onKeypress);
-  });
 }

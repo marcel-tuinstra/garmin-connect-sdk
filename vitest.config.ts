@@ -7,8 +7,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: runIntegration
-      ? ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts']
-      : ['tests/unit/**/*.test.ts'],
+      ? ['tests/unit/**/*.test.{ts,mjs}', 'tests/integration/**/*.test.{ts,mjs}']
+      : ['tests/unit/**/*.test.{ts,mjs}'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
