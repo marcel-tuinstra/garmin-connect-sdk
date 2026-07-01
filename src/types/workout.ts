@@ -19,7 +19,7 @@ export type WorkoutSchedule = z.infer<typeof workoutScheduleSchema>;
 export type CalendarItem = z.infer<typeof calendarItemSchema>;
 export type CalendarMonth = z.infer<typeof calendarMonthSchema>;
 
-export type WorkoutSport = 'running' | 'cycling';
+export type WorkoutSport = 'running' | 'cycling' | 'swimming';
 export type WorkoutStepKind = 'warmup' | 'interval' | 'recovery' | 'cooldown' | 'rest';
 
 export type WorkoutStepTarget =
