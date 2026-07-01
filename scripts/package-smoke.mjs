@@ -43,6 +43,7 @@ try {
           'decodeActivityMetricRow',
           'GarminConnectSDK',
           'GarminAuthError',
+          'GarminBotChallengeError',
           'GarminMfaRequiredError',
           'GarminRateLimitError',
           'GarminRequestError',

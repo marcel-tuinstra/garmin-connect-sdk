@@ -21,6 +21,8 @@ export class GarminRequestError extends Error {
 
 export class GarminAuthError extends GarminRequestError {}
 
+export class GarminBotChallengeError extends GarminRequestError {}
+
 export class GarminRateLimitError extends GarminRequestError {
   readonly retryAfterMs?: number;
 
