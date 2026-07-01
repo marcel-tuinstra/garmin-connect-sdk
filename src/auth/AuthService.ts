@@ -1,5 +1,6 @@
 import {
   GarminAuthError,
+  GarminBotChallengeError,
   GarminMfaRequiredError,
   GarminRateLimitError,
   GarminRequestError,
@@ -100,7 +101,10 @@ export class AuthService {
       });
 
       if (loginResponse.status === 429) throw rateLimit(loginResponse, '/mobile/api/login');
-      if (loginResponse.status === 401 || loginResponse.status === 403) {
+      if (loginResponse.status === 403) {
+        throw botChallenge(loginResponse.status, '/mobile/api/login');
+      }
+      if (loginResponse.status === 401) {
         throw new GarminAuthError({
           message: 'Garmin login failed. Check credentials.',
           statusCode: loginResponse.status,
@@ -126,7 +130,7 @@ export class AuthService {
         });
       }
 
-      const loginPayload = await readJsonObject(loginResponse);
+      const loginPayload = await readRequiredJsonObject(loginResponse, '/mobile/api/login');
       const ticket = await this.#extractTicketOrHandleMfa(
         loginPayload,
         options.mfaCode,
@@ -155,7 +159,7 @@ export class AuthService {
       this.#tokens = restored;
     }
 
-    if (Date.parse(this.#tokens.accessTokenExpiresAt) - EXPIRY_SKEW_MS <= Date.now()) {
+    if (requiresRefresh(this.#tokens)) {
       return this.#refresh({ skipIfFresh: true });
     }
 
@@ -337,7 +341,7 @@ export class AuthService {
       });
     }
 
-    const mfaPayload = (await response.json()) as Record<string, unknown>;
+    const mfaPayload = await readRequiredJsonObject(response, '/mobile/api/mfa/verifyCode');
     const verifiedTicket = firstString(mfaPayload, [
       'serviceTicketId',
       'ticket',
@@ -396,7 +400,8 @@ export class AuthService {
 }
 
 function requiresRefresh(tokens: GarminTokens): boolean {
-  return Date.parse(tokens.accessTokenExpiresAt) - EXPIRY_SKEW_MS <= Date.now();
+  const expiresAt = Date.parse(tokens.accessTokenExpiresAt);
+  return !Number.isFinite(expiresAt) || expiresAt - EXPIRY_SKEW_MS <= Date.now();
 }
 
 function normalizeTokenResponse(
@@ -456,14 +461,43 @@ async function readJsonObject(response: Response): Promise<Record<string, unknow
   }
 }
 
+async function readRequiredJsonObject(
+  response: Response,
+  endpoint: string,
+): Promise<Record<string, unknown>> {
+  try {
+    const payload = (await response.json()) as unknown;
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      return payload as Record<string, unknown>;
+    }
+  } catch (error) {
+    throw new GarminRequestError({
+      message: `Garmin ${endpoint} returned a non-JSON response.`,
+      statusCode: response.status,
+      endpoint,
+      cause: error,
+    });
+  }
+
+  throw new GarminRequestError({
+    message: `Garmin ${endpoint} returned an unexpected response payload.`,
+    statusCode: response.status,
+    endpoint,
+  });
+}
+
 function authErrorFromLoginPayload(
   payload: Record<string, unknown>,
   statusCode?: number,
-): GarminAuthError | GarminRateLimitError | undefined {
+): GarminAuthError | GarminBotChallengeError | GarminRateLimitError | undefined {
   const responseStatus = objectValue(payload, 'responseStatus');
   const responseType = typeof responseStatus?.type === 'string' ? responseStatus.type : undefined;
   const error = objectValue(payload, 'error');
-  const errorCode = typeof error?.['status-code'] === 'string' ? error['status-code'] : undefined;
+  const rawErrorCode = error?.['status-code'];
+  const errorCode =
+    typeof rawErrorCode === 'string' || typeof rawErrorCode === 'number'
+      ? String(rawErrorCode)
+      : undefined;
 
   if (responseType === 'INVALID_USERNAME_PASSWORD') {
     return new GarminAuthError({
@@ -479,6 +513,10 @@ function authErrorFromLoginPayload(
       statusCode: statusCode ?? 429,
       endpoint: '/mobile/api/login',
     });
+  }
+
+  if (responseType === 'CAPTCHA_REQUIRED') {
+    return botChallenge(statusCode, '/mobile/api/login');
   }
 
   if (responseType === 'ACCOUNT_LOCKED') {
@@ -553,5 +591,13 @@ function rateLimit(response: Response, endpoint: string): GarminRateLimitError {
     statusCode: response.status,
     endpoint,
     retryAfterMs: parseRetryAfter(response.headers.get('retry-after')),
+  });
+}
+
+function botChallenge(statusCode: number | undefined, endpoint: string): GarminBotChallengeError {
+  return new GarminBotChallengeError({
+    message: 'Garmin login was blocked by a bot challenge. Try again later or from a trusted network.',
+    statusCode,
+    endpoint,
   });
 }

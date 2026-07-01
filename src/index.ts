@@ -1,6 +1,7 @@
 export { GarminConnectSDK } from './client/GarminConnectSDK.js';
 export {
   GarminAuthError,
+  GarminBotChallengeError,
   GarminMfaRequiredError,
   GarminRateLimitError,
   GarminRequestError,

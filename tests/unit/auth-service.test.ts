@@ -8,6 +8,7 @@ import { FileTokenStorage } from '../../src/auth/FileTokenStorage.js';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import {
   GarminAuthError,
+  GarminBotChallengeError,
   GarminMfaRequiredError,
   GarminRateLimitError,
   GarminRequestError,
@@ -81,6 +82,47 @@ describe('AuthService', () => {
     expect(error).toBeInstanceOf(GarminAuthError);
   });
 
+  it('maps HTTP 403 login responses as bot challenges instead of bad credentials', async () => {
+    // Arrange
+    const { auth } = setupAuth({
+      responses: [textResponse('<html>challenge</html>', { status: 403 })],
+    });
+
+    // Act
+    const error = await auth.login(TEST_LOGIN).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminBotChallengeError);
+    expect((error as GarminBotChallengeError).statusCode).toBe(403);
+  });
+
+  it('maps CAPTCHA_REQUIRED login payloads as bot challenges', async () => {
+    // Arrange
+    const { auth } = setupAuth({
+      responses: [ssoStatusResponse('CAPTCHA_REQUIRED')],
+    });
+
+    // Act
+    const error = await auth.login(TEST_LOGIN).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminBotChallengeError);
+  });
+
+  it('fails non-JSON successful login responses as request errors', async () => {
+    // Arrange
+    const { auth } = setupAuth({
+      responses: [textResponse('<html>challenge</html>')],
+    });
+
+    // Act
+    const error = await auth.login(TEST_LOGIN).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(error).not.toBeInstanceOf(GarminAuthError);
+  });
+
   it('throws MFA-required when Garmin asks for MFA and no code is supplied', async () => {
     // Arrange
     const { auth, fetchMock } = setupAuth({
@@ -131,6 +173,19 @@ describe('AuthService', () => {
     // Arrange
     const { auth } = setupAuth({
       responses: [jsonResponse({ error: { 'status-code': '429' } }, { status: 400 })],
+    });
+
+    // Act
+    const error = await auth.login(TEST_LOGIN).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRateLimitError);
+  });
+
+  it('maps numeric login rate-limit payloads', async () => {
+    // Arrange
+    const { auth } = setupAuth({
+      responses: [jsonResponse({ error: { 'status-code': 429 } }, { status: 400 })],
     });
 
     // Act
@@ -210,6 +265,26 @@ describe('AuthService', () => {
     const body = init?.body as URLSearchParams;
     expect(body.get('grant_type')).toBe('refresh_token');
     expect(body.get('refresh_token')).toBe('old-refresh-token');
+  });
+
+  it('refreshes restored tokens with invalid expiry timestamps', async () => {
+    // Arrange
+    const { auth, fetchMock, storage } = await setupAuthWithSession({
+      tokens: storedTokens({
+        accessTokenExpiresAt: 'not-a-date',
+        refreshToken: 'old-refresh-token',
+        clientId: DI_CLIENT_ID,
+      }),
+      responses: [tokenResponse('new-refresh-token')],
+    });
+
+    // Act
+    const restored = await auth.restoreSession();
+
+    // Assert
+    expect(restored).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((await storage.load())?.refreshToken).toBe('new-refresh-token');
   });
 
   it('shares one in-flight refresh across concurrent callers', async () => {
