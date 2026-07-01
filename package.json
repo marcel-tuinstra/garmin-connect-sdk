@@ -1,6 +1,6 @@
 {
   "name": "garmin-connect-sdk",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Unofficial Node 24+ TypeScript SDK for a user's own Garmin Connect data. Uses private Garmin Connect endpoints.",
   "type": "module",
   "packageManager": "pnpm@11.1.1",
@@ -38,8 +38,8 @@
     "LICENSE"
   ],
   "bin": {
-    "garmin-connect": "./scripts/garmin.mjs",
-    "garmin-connect-smoke": "./scripts/garmin-smoke.mjs"
+    "garmin-connect": "scripts/garmin.mjs",
+    "garmin-connect-smoke": "scripts/garmin-smoke.mjs"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

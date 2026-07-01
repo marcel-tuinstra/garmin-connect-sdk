@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-alpha.4
+
+Release-candidate hardening release focused on sport/activity review support, CLI safety, and
+documentation clarity.
+
+### Highlights
+
+- Added privacy-safe activity heart-rate shape summaries for downstream review features.
+- Added sport-focused activity detail/split helpers and read endpoint hardening.
+- Fixed activity detail summaries to count heart-rate samples exposed through metric rows, not only
+  `heartRateDTO` tuple arrays.
+- Masked the interactive CLI password prompt and added CLI prompt regression coverage.
+- Improved documentation structure, package smoke coverage, and devops gate guidance.
+- Hardened Garmin login error classification for bot challenges, CAPTCHA, and auth drift.
+
 ## 1.0.0-alpha.3
 
 Release-candidate hardening release focused on test quality, package verification, and read-only API
