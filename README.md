@@ -149,12 +149,17 @@ Only implemented namespaces are listed here.
 Read-only endpoints are intended to stay stable through the `1.0.0` release candidate. Workout and
 calendar write helpers remain experimental and may change before `v1.0.0`.
 
-- `garmin.activities.list({ start, limit, activityType })`, defaults to `start: 0`, `limit: 20`
-- `garmin.activities.listAll({ pageSize, maxPages, activityType })`, defaults to `pageSize: 100`,
-  `maxPages: 10`
+- `garmin.activities.count()`
+- `garmin.activities.list({ start, limit, activityType, startDate, endDate, sortOrder })`, defaults
+  to `start: 0`, `limit: 20`
+- `garmin.activities.listAll({ pageSize, maxPages, activityType, startDate, endDate, sortOrder })`,
+  defaults to `pageSize: 100`, `maxPages: 10`
+- `garmin.activities.download(activityId, format)`, defaults to `tcx`; supported formats are
+  `original`, `tcx`, `gpx`, `kml`, and `csv`
 - `garmin.activities.get(activityId)`
 - `garmin.activities.getDetails(activityId, { maxChartSize, maxPolylineSize })`
 - `garmin.activities.getSplits(activityId)`
+- `garmin.activities.getTypes()`
 - `garmin.sleep.getDailySleep(date)`
 - `garmin.sleep.getSleepRange(start, end)`
 - `garmin.health.getHeartRate(date)`
