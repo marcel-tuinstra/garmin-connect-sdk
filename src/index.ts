@@ -24,8 +24,11 @@ export type {
 export type {
   ActivityDetail,
   ActivityDetailsOptions,
+  ActivityDownloadFormat,
   ActivityList,
+  ActivitySortOrder,
   ActivitySummary,
+  ActivityTypes,
   ListAllActivitiesOptions,
   ListActivitiesOptions,
 } from './types/activity.js';

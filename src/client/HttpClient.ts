@@ -10,6 +10,7 @@ export interface RequestOptions<T> {
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
   schema?: ZodType<T>;
+  responseType?: 'json' | 'bytes';
   skipAuth?: boolean;
   retry?: RetryOptions;
   timeoutMs?: number;
@@ -71,6 +72,15 @@ export class HttpClient {
       });
 
       if (!response.ok) throw errorFromResponse(response, endpoint);
+      if (options.responseType === 'bytes') {
+        const buffer = await response.arrayBuffer();
+        this.#logger.debug('Garmin binary response received.', {
+          endpoint,
+          bytes: buffer.byteLength,
+        });
+        return new Uint8Array(buffer) as T;
+      }
+
       const payload = await parseJson(response);
       this.#logger.debug('Garmin response received.', { endpoint, payload: summarizePayload(payload) });
 

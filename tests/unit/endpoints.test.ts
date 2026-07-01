@@ -15,15 +15,30 @@ class MockHttp {
     method?: string;
     query?: Record<string, unknown>;
     body?: unknown;
+    responseType?: string;
   }> = [];
 
   async request(
     path: string,
-    options: { method?: string; query?: Record<string, unknown>; body?: unknown } = {},
+    options: {
+      method?: string;
+      query?: Record<string, unknown>;
+      body?: unknown;
+      responseType?: string;
+    } = {},
   ): Promise<any> {
-    this.calls.push({ path, method: options.method, query: options.query, body: options.body });
+    this.calls.push({
+      path,
+      method: options.method,
+      query: options.query,
+      body: options.body,
+      responseType: options.responseType,
+    });
     if (path === '/userprofile-service/socialProfile') return { displayName: 'runner' };
     if (path === '/device-service/deviceregistration/devices') return [];
+    if (path === '/activitylist-service/activities/count') return { totalCount: 42 };
+    if (path === '/activity-service/activity/activityTypes') return { activityTypes: [] };
+    if (path.includes('/download-service/')) return new Uint8Array([1, 2, 3]);
     if (path.includes('activities/search')) return [];
     if (path.includes('activity-service/activity/')) return { activityId: 123 };
     if (path === '/workout-service/workouts') return [];
@@ -45,19 +60,50 @@ describe('endpoints', () => {
     const endpoint = new ActivitiesEndpoint(http as any);
 
     // Act
-    await endpoint.list({ limit: 20 });
+    const count = await endpoint.count();
+    await endpoint.list({
+      limit: 20,
+      activityType: 'running',
+      startDate: '2026-05-01',
+      endDate: '2026-05-31',
+      sortOrder: 'desc',
+    });
+    await endpoint.download(123);
+    await endpoint.download(123, 'gpx');
+    await endpoint.getTypes();
     await endpoint.get(123);
     await endpoint.getDetails(123);
     await endpoint.getSplits(123);
 
     // Assert
-    expect(http.calls[0]).toEqual({
+    expect(count).toBe(42);
+    expect(http.calls[0]?.path).toBe('/activitylist-service/activities/count');
+    expect(http.calls[1]).toEqual({
       path: '/activitylist-service/activities/search/activities',
-      query: { start: 0, limit: 20, activityType: undefined },
+      method: undefined,
+      query: {
+        start: 0,
+        limit: 20,
+        activityType: 'running',
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        sortOrder: 'desc',
+      },
+      body: undefined,
+      responseType: undefined,
     });
-    expect(http.calls[1]?.path).toBe('/activity-service/activity/123');
-    expect(http.calls[2]?.path).toBe('/activity-service/activity/123/details');
-    expect(http.calls[3]?.path).toBe('/activity-service/activity/123/typedsplits');
+    expect(http.calls[2]).toMatchObject({
+      path: '/download-service/export/tcx/activity/123',
+      responseType: 'bytes',
+    });
+    expect(http.calls[3]).toMatchObject({
+      path: '/download-service/export/gpx/activity/123',
+      responseType: 'bytes',
+    });
+    expect(http.calls[4]?.path).toBe('/activity-service/activity/activityTypes');
+    expect(http.calls[5]?.path).toBe('/activity-service/activity/123');
+    expect(http.calls[6]?.path).toBe('/activity-service/activity/123/details');
+    expect(http.calls[7]?.path).toBe('/activity-service/activity/123/typedsplits');
   });
 
   it('paginates activity lists with conservative bounds', async () => {
@@ -78,13 +124,34 @@ describe('endpoints', () => {
     const endpoint = new ActivitiesEndpoint(http as any);
 
     // Act
-    const activities = await endpoint.listAll({ pageSize: 2, maxPages: 3 });
+    const activities = await endpoint.listAll({
+      pageSize: 2,
+      maxPages: 3,
+      activityType: 'cycling',
+      startDate: '2026-05-01',
+      endDate: '2026-05-31',
+      sortOrder: 'asc',
+    });
 
     // Assert
     expect(activities.map((activity) => activity.activityId)).toEqual([1, 2, 3]);
     expect(http.calls.map((call) => call.query)).toEqual([
-      { start: 0, limit: 2, activityType: undefined },
-      { start: 2, limit: 2, activityType: undefined },
+      {
+        start: 0,
+        limit: 2,
+        activityType: 'cycling',
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        sortOrder: 'asc',
+      },
+      {
+        start: 2,
+        limit: 2,
+        activityType: 'cycling',
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        sortOrder: 'asc',
+      },
     ]);
   });
 

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { GarminValidationError } from '../../src/client/GarminRequestError.js';
 import {
+  activityCountSchema,
   activityDetailSchema,
   activityDetailsPayloadSchema,
   activityListSchema,
   activitySplitsSchema,
+  activityTypesSchema,
 } from '../../src/schemas/activity.schema.js';
 import {
   bodyBatterySchema,
@@ -48,6 +50,8 @@ describe('schemas', () => {
     const activityDetail = activityDetailSchema.parse(activityDetailPayload);
     const activityDetails = activityDetailsPayloadSchema.parse(activityDetailsPayload);
     const activitySplits = activitySplitsSchema.parse(activitySplitsPayload);
+    const activityCount = activityCountSchema.parse({ totalCount: 123 });
+    const activityTypes = activityTypesSchema.parse({ activityTypes: [{ typeKey: 'running' }] });
 
     // Assert
     expect(activityList).toHaveLength(1);
@@ -57,6 +61,8 @@ describe('schemas', () => {
       activityId: 123456789,
     });
     expect(activitySplits).toHaveLength(1);
+    expect(activityCount.totalCount).toBe(123);
+    expect(activityTypes).toMatchObject({ activityTypes: [{ typeKey: 'running' }] });
   });
 
   it('parses representative Garmin-like sleep and health payloads', () => {

@@ -21,6 +21,14 @@ export const activitySummarySchema = z
 
 export const activityListSchema = z.array(activitySummarySchema);
 
+export const activityCountSchema = z
+  .object({
+    totalCount: z.number(),
+  })
+  .passthrough();
+
+export const activityTypesSchema = z.record(z.unknown());
+
 export const activityDetailSchema = z
   .object({
     activityId: numberOrStringSchema,

@@ -67,6 +67,22 @@ describe('HttpClient', () => {
     expect(result).toBeUndefined();
   });
 
+  it('returns binary responses without parsing JSON', async () => {
+    // Arrange
+    const bytes = new Uint8Array([1, 2, 3]);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(bytes));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const result = await http.request('/download', {
+      responseType: 'bytes',
+      skipAuth: true,
+    });
+
+    // Assert
+    expect(result).toEqual(bytes);
+  });
+
   it('shares one token refresh across concurrent authenticated requests', async () => {
     // Arrange
     let resolveRefresh: (response: Response) => void = () => undefined;
