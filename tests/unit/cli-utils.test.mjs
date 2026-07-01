@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { questionHidden } from '../../scripts/garmin-cli-utils.mjs';
+import { questionHidden } from '../../scripts/garmin-prompt-utils.mjs';
 
 class FakeInput extends EventEmitter {
   constructor({ isTTY = true } = {}) {
