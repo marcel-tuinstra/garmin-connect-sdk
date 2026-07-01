@@ -12,6 +12,7 @@ import type {
 const SPORT_TYPES: Record<WorkoutSport, { sportTypeId: number; sportTypeKey: string; displayOrder: number }> = {
   running: { sportTypeId: 1, sportTypeKey: 'running', displayOrder: 1 },
   cycling: { sportTypeId: 2, sportTypeKey: 'cycling', displayOrder: 2 },
+  swimming: { sportTypeId: 4, sportTypeKey: 'swimming', displayOrder: 3 },
 };
 
 const STEP_TYPES: Record<WorkoutStepKind, { stepTypeId: number; stepTypeKey: string; displayOrder: number }> = {
