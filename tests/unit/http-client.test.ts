@@ -50,6 +50,7 @@ describe('HttpClient', () => {
       'https://connectapi.garmin.com/write?start=0&limit=20&includePrivate=false',
     );
     expect(init?.method).toBe('POST');
+    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.0.0');
     expect(new Headers(init?.headers).get('authorization')).toBeNull();
     expect(new Headers(init?.headers).get('content-type')).toBe('application/json');
     expect(init?.body).toBe(JSON.stringify({ name: 'Workout' }));
@@ -202,6 +203,84 @@ describe('HttpClient', () => {
 
     // Assert
     expect(path).toBe('/activities?start=0&includePrivate=false');
+  });
+
+  it('uses a redacted diagnostic endpoint while requesting the real URL', async () => {
+    // Arrange
+    const debug = vi.fn();
+    const logger = {
+      debug,
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ deleted: true }));
+    const auth = new AuthService({
+      fetch: fetchMock,
+      storage: new MemoryTokenStorage(),
+      retry: { maxRetries: 0 },
+    });
+    void auth.storage.save(tokens());
+    const http = new HttpClient({ auth, fetch: fetchMock, logger, retry: { maxRetries: 0 } });
+
+    // Act
+    await http.request('/weight-service/weight/2026-07-18/byversion/987654321', {
+      method: 'DELETE',
+      diagnosticPath: '/weight-service/weight/[REDACTED]/byversion/[REDACTED]',
+    });
+
+    // Assert
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      '/weight-service/weight/2026-07-18/byversion/987654321',
+    );
+    expect(JSON.stringify(debug.mock.calls)).not.toContain('987654321');
+    expect(JSON.stringify(debug.mock.calls)).not.toContain('2026-07-18');
+  });
+
+  it('uses the redacted diagnostic endpoint in response errors', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 503 }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await http
+      .request('/weight-service/weight/2026-07-18/byversion/987654321', {
+        method: 'DELETE',
+        diagnosticPath: '/weight-service/weight/[REDACTED]/byversion/[REDACTED]',
+      })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(Error);
+    expect(JSON.stringify(error)).not.toContain('987654321');
+    expect(JSON.stringify(error)).not.toContain('2026-07-18');
+  });
+
+  it('uses the redacted diagnostic endpoint in timeout errors', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('aborted', 'AbortError'));
+          });
+        }),
+    );
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await http
+      .request('/weight-service/weight/2026-07-18/byversion/987654321', {
+        method: 'DELETE',
+        timeoutMs: 1,
+        diagnosticPath: '/weight-service/weight/[REDACTED]/byversion/[REDACTED]',
+      })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminTimeoutError);
+    expect(JSON.stringify(error)).not.toContain('987654321');
+    expect(JSON.stringify(error)).not.toContain('2026-07-18');
   });
 });
 

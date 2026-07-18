@@ -22,7 +22,7 @@ import { buildWorkoutPayload, isCreateWorkoutInput } from '../utils/workoutPaylo
  * Experimental Garmin workout APIs.
  *
  * Methods on this endpoint can create, schedule, unschedule, and delete workouts in the Garmin
- * account. Treat this namespace as unstable until it graduates from the v1 release candidate cycle.
+ * account. The public signatures follow SemVer, while Garmin's unsupported behavior may drift.
  */
 export class WorkoutsEndpoint {
   #http: HttpClient;

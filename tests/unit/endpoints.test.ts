@@ -7,6 +7,7 @@ import { DevicesEndpoint } from '../../src/endpoints/DevicesEndpoint.js';
 import { HealthEndpoint } from '../../src/endpoints/HealthEndpoint.js';
 import { SleepEndpoint } from '../../src/endpoints/SleepEndpoint.js';
 import { UserEndpoint } from '../../src/endpoints/UserEndpoint.js';
+import { WeightEndpoint } from '../../src/endpoints/WeightEndpoint.js';
 import { WorkoutsEndpoint } from '../../src/endpoints/WorkoutsEndpoint.js';
 
 class MockHttp {
@@ -16,6 +17,8 @@ class MockHttp {
     query?: Record<string, unknown>;
     body?: unknown;
     responseType?: string;
+    retry?: { maxRetries?: number };
+    diagnosticPath?: string;
   }> = [];
 
   async request(
@@ -25,6 +28,8 @@ class MockHttp {
       query?: Record<string, unknown>;
       body?: unknown;
       responseType?: string;
+      retry?: { maxRetries?: number };
+      diagnosticPath?: string;
     } = {},
   ): Promise<any> {
     this.calls.push({
@@ -33,6 +38,8 @@ class MockHttp {
       query: options.query,
       body: options.body,
       responseType: options.responseType,
+      ...(options.retry ? { retry: options.retry } : {}),
+      ...(options.diagnosticPath ? { diagnosticPath: options.diagnosticPath } : {}),
     });
     if (path === '/userprofile-service/socialProfile') return { displayName: 'runner' };
     if (path === '/device-service/deviceregistration/devices') return [];
@@ -211,6 +218,131 @@ describe('endpoints', () => {
     expect(http.calls[9]?.path).toBe('/workout-service/workout/456');
     expect(http.calls[10]?.path).toBe('/calendar-service/year/2026/month/5');
     expect(http.calls[11]?.path).toBe('/calendar-service/year/2026/month/5/day/15/start/0');
+  });
+
+  it('builds weight day and range reads', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    await weight.getDailyWeighIns('2026-07-18');
+    await weight.getWeighIns('2026-07-11', '2026-07-18');
+
+    // Assert
+    expect(http.calls[0]).toMatchObject({
+      path: '/weight-service/weight/dayview/2026-07-18',
+      query: { includeAll: true },
+      diagnosticPath: '/weight-service/weight/dayview/[REDACTED]',
+    });
+    expect(http.calls[1]).toMatchObject({
+      path: '/weight-service/weight/range/2026-07-11/2026-07-18',
+      query: { includeAll: true },
+      diagnosticPath: '/weight-service/weight/range/[REDACTED]/[REDACTED]',
+    });
+  });
+
+  it('adds a weigh-in once with retries disabled', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    const result = await weight.addWeighIn({
+      value: 75.4,
+      unit: 'kg',
+      measuredAt: '2026-07-18T14:30:00.000+02:00',
+    });
+
+    // Assert
+    expect(result).toBeUndefined();
+    expect(http.calls[0]).toEqual({
+      path: '/weight-service/user-weight',
+      method: 'POST',
+      query: undefined,
+      body: {
+        dateTimestamp: '2026-07-18T14:30:00.000',
+        gmtTimestamp: '2026-07-18T12:30:00.000',
+        unitKey: 'kg',
+        sourceType: 'MANUAL',
+        value: 75.4,
+      },
+      responseType: undefined,
+      retry: { maxRetries: 0 },
+    });
+  });
+
+  it('removes one weigh-in by calendar date and samplePk with retries disabled', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    const result = await weight.removeWeighIn({
+      calendarDate: '2026-07-18',
+      samplePk: 123456,
+    });
+
+    // Assert
+    expect(result).toBeUndefined();
+    expect(http.calls[0]).toEqual({
+      path: '/weight-service/weight/2026-07-18/byversion/123456',
+      method: 'DELETE',
+      query: undefined,
+      body: undefined,
+      responseType: undefined,
+      retry: { maxRetries: 0 },
+      diagnosticPath: '/weight-service/weight/[REDACTED]/byversion/[REDACTED]',
+    });
+  });
+
+  it('accepts a digit-string samplePk without numeric coercion', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    await weight.removeWeighIn({ calendarDate: '2026-07-18', samplePk: '9007199254740993' });
+
+    // Assert
+    expect(http.calls[0]?.path).toBe(
+      '/weight-service/weight/2026-07-18/byversion/9007199254740993',
+    );
+  });
+
+  it.each([
+    { calendarDate: '2026-07-18', samplePk: 0 },
+    { calendarDate: '2026-07-18', samplePk: -1 },
+    { calendarDate: '2026-07-18', samplePk: 1.5 },
+    { calendarDate: '2026-07-18', samplePk: '' },
+    { calendarDate: '2026-07-18', samplePk: '123/456' },
+    { calendarDate: 'not-a-date', samplePk: 123456 },
+  ])('rejects an invalid weigh-in removal target: $calendarDate $samplePk', async (input) => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    const error = await weight.removeWeighIn(input).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(Error);
+    expect(http.calls).toHaveLength(0);
+  });
+
+  it('rejects reversed weight ranges before making a request', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const weight = new WeightEndpoint(http as any);
+
+    // Act
+    const error = await weight
+      .getWeighIns('2026-07-18', '2026-07-11')
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(RangeError);
+    expect(http.calls).toHaveLength(0);
   });
 
   it('builds workout create, schedule, unschedule, and delete requests', async () => {

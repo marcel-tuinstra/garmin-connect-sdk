@@ -1,7 +1,7 @@
 name: Garmin schema drift
 description: Report a Garmin response shape that fails validation.
-title: "schema: "
-labels: ["schema", "garmin-drift"]
+title: 'schema: '
+labels: ['bug', 'schema', 'garmin-drift']
 body:
   - type: markdown
     attributes:
@@ -32,6 +32,6 @@ body:
     id: version
     attributes:
       label: SDK version
-      placeholder: 1.0.0-alpha.x
+      placeholder: 1.0.0
     validations:
       required: true

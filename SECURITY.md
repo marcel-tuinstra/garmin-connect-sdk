@@ -1,7 +1,7 @@
 # Security Policy
 
 This SDK must not log Garmin passwords, access tokens, refresh tokens, authorization headers, or raw
-private health payloads.
+private health payloads, including weight history and body-composition responses.
 
 This package uses unofficial Garmin Connect endpoints. Garmin can change, rate limit, block, or add
 account checks to those endpoints without notice. Use this package only with accounts and data you
@@ -37,11 +37,15 @@ for those reports.
 Public issues are fine for non-sensitive bugs when the report uses redacted payload shapes and no
 live account data.
 
+Manual weight creation is non-idempotent, and removal permanently deletes health history. The SDK
+sends each POST or DELETE once. Reconcile an ambiguous result through a bounded read, and do not
+publish values, timestamps, `samplePk` identifiers, or raw responses as test evidence.
+
 ## Private Payloads
 
-Do not commit request/response dumps, cookies, account identifiers, workout identifiers, calendar
-identifiers, or unsanitized workout/calendar payloads. Use redacted shapes and field names in
-examples.
+Do not commit request/response dumps, cookies, account identifiers, weigh-in identifiers, workout
+identifiers, calendar identifiers, or unsanitized health/workout/calendar payloads. Use redacted
+shapes and field names in examples.
 
 CLI `--raw` output can expose health, location, device, workout, and schedule identifiers. Use it
 only in a private local terminal and redact it before sharing.

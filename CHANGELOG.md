@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0 - 2026-07-18
+
+### Highlights
+
+- Declared the package-root API and exported TypeScript signatures stable under Semantic Versioning.
+- Added a typed weight namespace for daily and range weigh-in reads.
+- Added experimental manual weigh-in creation and targeted removal by `calendarDate` and `samplePk`.
+- Added explicit unit, timestamp, date, and removal-identifier validation.
+- Disabled retries for weight POST and DELETE requests and documented read-back reconciliation after
+  ambiguous outcomes.
+- Redacted weight dates and `samplePk` identifiers from SDK diagnostic endpoints.
+- Updated the SDK HTTP user-agent to report version `1.0.0`.
+- Added separate privacy-safe live gates for weight reads, requested writes, and temporary
+  create/delete verification, plus a public feature-request form.
+
 ## 1.0.0-alpha.4
 
 Release-candidate hardening release focused on sport/activity review support, CLI safety, and
@@ -28,7 +43,7 @@ stability.
   endpoints, token storage, dates, workout payloads, logging, and SDK composition.
 - Added shared test helpers for Garmin-like responses, token fixtures, JWT fixtures, and fetch-call
   inspection.
-- Documented the `1.0.0-rc.1` readiness checklist and release process.
+- Added maintainer release-readiness checks.
 - Clarified that read-only endpoints are release-candidate stable while workout/calendar writes stay
   experimental.
 - Fixed duplicated SSO cookie forwarding during MFA verification in Node.

@@ -101,14 +101,16 @@ option.
 
 ## Endpoint Map
 
-Only implemented namespaces are listed. Read-only endpoints are intended to stabilize
-before `1.0.0`; workout and calendar writes remain experimental.
+Only implemented namespaces are listed. Public package-root methods and exported TypeScript types
+follow Semantic Versioning from `1.0.0`. Workout, calendar, and weight writes remain operationally
+experimental because Garmin does not support the underlying endpoints.
 
 | Namespace           | Methods                                                                                              |
 | ------------------- | ---------------------------------------------------------------------------------------------------- |
 | `garmin.activities` | `count()`, `list()`, `listAll()`, `download()`, `get()`, `getDetails()`, `getSplits()`, `getTypes()` |
 | `garmin.sleep`      | `getDailySleep()`, `getSleepRange()`                                                                 |
 | `garmin.health`     | `getHeartRate()`, `getStress()`, `getBodyBattery()`, `getHrvStatus()`                                |
+| `garmin.weight`     | `getDailyWeighIns()`, `getWeighIns()`, experimental writes: `addWeighIn()`, `removeWeighIn()`        |
 | `garmin.user`       | `getProfile()`                                                                                       |
 | `garmin.devices`    | `list()`                                                                                             |
 | `garmin.workouts`   | `list()`, `get()`, `getTypes()`, `create()`, `createRaw()`, `schedule()`, `unschedule()`, `delete()` |
@@ -116,6 +118,38 @@ before `1.0.0`; workout and calendar writes remain experimental.
 
 Type declarations ship with the package and are the best source for request and response
 shapes.
+
+## Weight Reads And Experimental Writes
+
+Garmin returns weight and mass fields from its read endpoints in grams. The write method accepts
+the value in the explicitly selected `kg` or `lbs` unit. The timestamp must include `Z` or a numeric
+offset so historical measurements keep their original local wall-clock time.
+
+```ts
+const history = await garmin.weight.getWeighIns('2026-07-11', '2026-07-18');
+const day = await garmin.weight.getDailyWeighIns('2026-07-18');
+
+await garmin.weight.addWeighIn({
+  value: 75.4,
+  unit: 'kg',
+  measuredAt: '2026-07-18T14:30:00.000+02:00',
+});
+
+const removable = day.dateWeightList.find((entry) => entry.samplePk != null);
+if (removable?.samplePk != null) {
+  await garmin.weight.removeWeighIn({
+    calendarDate: removable.calendarDate,
+    samplePk: removable.samplePk,
+  });
+}
+```
+
+`addWeighIn()` adds a manual record; it is not an update or upsert. Garmin permits multiple
+weigh-ins per day. `removeWeighIn()` permanently deletes the record identified by its
+`calendarDate` and `samplePk`; use both fields from the same GET response. The SDK sends each POST or
+DELETE once and disables retries for both. A timeout or transport failure after dispatch has an
+unknown outcome: read the day back and reconcile the exact record before taking more action. Do not
+log raw weight responses or record identifiers.
 
 ## Error Handling
 

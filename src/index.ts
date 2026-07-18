@@ -37,6 +37,17 @@ export type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from './typ
 export type { DailySleep, SleepRange } from './types/sleep.js';
 export type { Device, DeviceList, SocialProfile } from './types/user.js';
 export type {
+  AddWeighInInput,
+  BoundaryWeight,
+  DailyWeighIns,
+  DailyWeightSummary,
+  RemoveWeighInInput,
+  WeighIn,
+  WeighInRange,
+  WeightAverage,
+  WeightUnit,
+} from './types/weight.js';
+export type {
   CalendarItem,
   CalendarMonth,
   CreateWorkoutInput,

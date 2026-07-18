@@ -24,4 +24,8 @@ Workout creation and calendar scheduling mutate the Garmin account. There is no 
 transaction rollback. Failed cleanup can leave workouts or schedules in the account and may sync
 them to Garmin devices.
 
+Manual weigh-in creation mutates health data and has no idempotency guarantee. Removal permanently
+deletes the selected record. Verify uncertain POST or DELETE outcomes through a read before taking
+more action.
+
 This document is not legal advice.
