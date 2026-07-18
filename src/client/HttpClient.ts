@@ -1,6 +1,10 @@
 import type { ZodIssue, ZodType } from 'zod';
 
-import { errorFromResponse, GarminTimeoutError, GarminValidationError } from './GarminRequestError.js';
+import {
+  errorFromResponse,
+  GarminTimeoutError,
+  GarminValidationError,
+} from './GarminRequestError.js';
 import type { AuthService } from '../auth/AuthService.js';
 import { noopLogger, summarizePayload, type Logger } from '../utils/logger.js';
 import { withRetry, type RetryOptions } from '../utils/retry.js';
@@ -14,6 +18,8 @@ export interface RequestOptions<T> {
   skipAuth?: boolean;
   retry?: RetryOptions;
   timeoutMs?: number;
+  /** Redacted path used in logs and errors while the real path is sent over the wire. */
+  diagnosticPath?: string;
 }
 
 export interface HttpClientOptions {
@@ -44,59 +50,66 @@ export class HttpClient {
 
   async request<T = unknown>(path: string, options: RequestOptions<T> = {}): Promise<T> {
     const endpoint = buildPath(path, options.query);
+    const diagnosticEndpoint = buildPath(options.diagnosticPath ?? path, options.query);
 
-    return withRetry(async () => {
-      const headers = new Headers({
-        accept: 'application/json',
-        'nk': 'NT',
-        'user-agent': 'garmin-connect-sdk/0.1',
-      });
-
-      if (!options.skipAuth) {
-        const tokens = await this.#auth.refreshIfNeeded();
-        headers.set('authorization', `Bearer ${tokens.accessToken}`);
-      }
-
-      let body: BodyInit | undefined;
-      if (options.body !== undefined) {
-        headers.set('content-type', 'application/json');
-        body = JSON.stringify(options.body);
-      }
-
-      const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
-        method: options.method ?? 'GET',
-        headers,
-        body,
-        timeoutMs: options.timeoutMs,
-        endpoint,
-      });
-
-      if (!response.ok) throw errorFromResponse(response, endpoint);
-      if (options.responseType === 'bytes') {
-        const buffer = await response.arrayBuffer();
-        this.#logger.debug('Garmin binary response received.', {
-          endpoint,
-          bytes: buffer.byteLength,
+    return withRetry(
+      async () => {
+        const headers = new Headers({
+          accept: 'application/json',
+          nk: 'NT',
+          'user-agent': 'garmin-connect-sdk/1.0.0',
         });
-        return new Uint8Array(buffer) as T;
-      }
 
-      const payload = await parseJson(response);
-      this.#logger.debug('Garmin response received.', { endpoint, payload: summarizePayload(payload) });
+        if (!options.skipAuth) {
+          const tokens = await this.#auth.refreshIfNeeded();
+          headers.set('authorization', `Bearer ${tokens.accessToken}`);
+        }
 
-      if (!options.schema) return payload as T;
-      const result = options.schema.safeParse(payload);
-      if (!result.success) {
-        throw new GarminValidationError({
-          message: 'Garmin response validation failed.',
-          endpoint,
-          issues: formatZodIssues(result.error.issues),
-          cause: result.error,
+        let body: BodyInit | undefined;
+        if (options.body !== undefined) {
+          headers.set('content-type', 'application/json');
+          body = JSON.stringify(options.body);
+        }
+
+        const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
+          method: options.method ?? 'GET',
+          headers,
+          body,
+          timeoutMs: options.timeoutMs,
+          endpoint: diagnosticEndpoint,
         });
-      }
 
-      return result.data;
-    }, { ...this.#retry, ...options.retry });
+        if (!response.ok) throw errorFromResponse(response, diagnosticEndpoint);
+        if (options.responseType === 'bytes') {
+          const buffer = await response.arrayBuffer();
+          this.#logger.debug('Garmin binary response received.', {
+            endpoint: diagnosticEndpoint,
+            bytes: buffer.byteLength,
+          });
+          return new Uint8Array(buffer) as T;
+        }
+
+        const payload = await parseJson(response);
+        this.#logger.debug('Garmin response received.', {
+          endpoint: diagnosticEndpoint,
+          payload: summarizePayload(payload),
+        });
+
+        if (!options.schema) return payload as T;
+        const result = options.schema.safeParse(payload);
+        if (!result.success) {
+          throw new GarminValidationError({
+            message: 'Garmin response validation failed.',
+            endpoint: diagnosticEndpoint,
+            issues: formatZodIssues(result.error.issues),
+            cause: result.error,
+          });
+        }
+
+        return result.data;
+      },
+      { ...this.#retry, ...options.retry },
+    );
   }
 
   async #fetchWithTimeout(
@@ -175,7 +188,8 @@ function formatPath(path: Array<string | number>): string {
 
 function isAbortError(error: unknown): boolean {
   return (
-    error instanceof DOMException ||
-    (typeof error === 'object' && error !== null && 'name' in error)
-  ) && (error as { name?: string }).name === 'AbortError';
+    (error instanceof DOMException ||
+      (typeof error === 'object' && error !== null && 'name' in error)) &&
+    (error as { name?: string }).name === 'AbortError'
+  );
 }

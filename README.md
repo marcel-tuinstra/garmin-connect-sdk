@@ -10,7 +10,7 @@ They can change, rate limit, block, or disappear without notice. This project is
 affiliated with, endorsed by, or supported by Garmin. Read the
 [disclaimer](./DISCLAIMER.md) before using it.
 
-Read APIs are the primary use case. Workout creation and calendar scheduling are
+Read APIs are the primary use case. Workout creation, calendar scheduling, and weight mutations are
 experimental account-mutating helpers without dry-run or rollback support.
 
 ## Install
@@ -18,21 +18,15 @@ experimental account-mutating helpers without dry-run or rollback support.
 The package is ESM-only, requires Node `>=24`, and supports imports from
 `garmin-connect-sdk` only.
 
-Alpha releases are published under the `alpha` dist tag:
+Install the stable release:
 
 ```bash
-npm install garmin-connect-sdk@alpha
-pnpm add garmin-connect-sdk@alpha
-yarn add garmin-connect-sdk@alpha
+npm install garmin-connect-sdk
+pnpm add garmin-connect-sdk
+yarn add garmin-connect-sdk
 ```
 
-Release candidates will use the `rc` dist tag:
-
-```bash
-npm install garmin-connect-sdk@rc
-pnpm add garmin-connect-sdk@rc
-yarn add garmin-connect-sdk@rc
-```
+The `alpha` and `rc` dist tags are reserved for consumers who explicitly opt into prereleases.
 
 ## First Check
 
@@ -82,14 +76,15 @@ and should be protected like credentials.
 
 ## Included Surface
 
-| Area             | Status              | Examples                                                            |
-| ---------------- | ------------------- | ------------------------------------------------------------------- |
-| Activities       | Read-oriented       | List, download, details, splits, type metadata                      |
-| Sleep and health | Read-oriented       | Daily sleep, sleep ranges, heart rate, stress, HRV, Body Battery    |
-| User and devices | Read-oriented       | Profile and registered devices                                      |
-| Workouts         | Experimental writes | List, create, schedule, unschedule, delete                          |
-| Calendar         | Experimental writes | Month/week views and workout schedule changes                       |
-| CLI              | Local verification  | Profile, devices, activities, activity details, sleep, Body Battery |
+| Area             | Status                      | Examples                                                            |
+| ---------------- | --------------------------- | ------------------------------------------------------------------- |
+| Activities       | Read-oriented               | List, download, details, splits, type metadata                      |
+| Sleep and health | Read-oriented               | Daily sleep, sleep ranges, heart rate, stress, HRV, Body Battery    |
+| Weight           | Reads + experimental writes | Daily/range weigh-ins plus manual creation and removal              |
+| User and devices | Read-oriented               | Profile and registered devices                                      |
+| Workouts         | Experimental writes         | List, create, schedule, unschedule, delete                          |
+| Calendar         | Experimental writes         | Month/week views and workout schedule changes                       |
+| CLI              | Local verification          | Profile, devices, activities, activity details, sleep, Body Battery |
 
 The package root is the supported public surface. Deep imports such as
 `garmin-connect-sdk/src/...`, `garmin-connect-sdk/dist/...`, or internal auth/client paths
@@ -101,8 +96,12 @@ are unsupported.
 - Do not log or paste raw health, location, activity, device, workout, or calendar payloads.
 - Isolate token storage per user/account in apps or plugins.
 - Back off on rate limits and expect private endpoint drift.
-- Treat workout/calendar writes and write integration tests as live account changes that may
-  sync to Garmin devices.
+- Treat workout/calendar/weight writes and write integration tests as live account changes. Weight
+  writes mutate health history; workout and calendar changes may also sync to Garmin devices.
+- Treat `weight.addWeighIn()` as non-idempotent: repeated calls can create duplicate health records.
+  The SDK does not retry this write automatically; reconcile an ambiguous outcome with a weight GET.
+- `weight.removeWeighIn()` permanently removes the selected record. The SDK sends the DELETE once;
+  read the same day back after an ambiguous outcome instead of retrying blindly.
 
 See [Security](./SECURITY.md) for reporting and redaction guidance.
 
@@ -117,6 +116,7 @@ See [Security](./SECURITY.md) for reporting and redaction guidance.
 
 ## Status
 
-Current releases are alpha builds on the path to `1.0.0-rc.1`. Read-only APIs are intended
-to stabilize first; workout and calendar write helpers remain experimental until explicitly
-promoted.
+Version `1.0.0` defines the supported package-root API. Read methods and exported TypeScript
+signatures follow Semantic Versioning. Workout, calendar, and weight mutations remain operationally
+experimental because they use unsupported Garmin endpoints, but their public method signatures also
+follow Semantic Versioning.

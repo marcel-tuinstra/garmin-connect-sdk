@@ -21,7 +21,7 @@ This repo already has a focused Node CI workflow. Baseline devops work should st
 
 - A Renovate configuration can be added later with grouping for TypeScript, Vitest, Vite, tsup, ESLint, and pnpm lockfile maintenance.
 - A shared devops gate should reuse the existing CI job rather than adding a second package workflow.
-- Release automation should continue to follow `RELEASE.md`; do not auto-publish from generic dependency or CI changes.
+- Keep release automation maintainer-controlled; generic dependency or CI changes must never publish.
 
 ## Cheap local verification
 

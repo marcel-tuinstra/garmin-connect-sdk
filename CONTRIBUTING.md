@@ -89,12 +89,39 @@ These tests create temporary running and cycling workouts, schedule them to a fu
 check the calendar, and then attempt to remove both schedules and workouts. Run them only
 against an account where live workout/calendar mutation is acceptable.
 
+Weight writes use a separate explicit gate and require synthetic or intentionally requested test
+values. The test performs a bounded preflight GET, skips an exact daily duplicate, sends at most one
+POST per value, and verifies through GET without printing raw health data:
+
+```bash
+GARMIN_RUN_INTEGRATION=1 \
+GARMIN_RUN_WEIGHT_WRITE=1 \
+GARMIN_TEST_CURRENT_WEIGHT_KG=<kg> \
+GARMIN_TEST_PREVIOUS_WEIGHT_KG=<kg> \
+pnpm test tests/integration/garmin.integration.test.ts
+```
+
+Successful requested records remain in the account. Do not enable this gate in shared CI.
+
+Weight removal has its own gate. It creates one temporary synthetic entry, reads its `samplePk`,
+deletes that exact entry, and confirms its absence. Choose a value that does not already occur today:
+
+```bash
+GARMIN_RUN_INTEGRATION=1 \
+GARMIN_RUN_WEIGHT_DELETE=1 \
+GARMIN_TEST_DELETE_WEIGHT_KG=<synthetic-kg> \
+pnpm test tests/integration/garmin.integration.test.ts
+```
+
+The test sends one POST and one DELETE. It does not retry either mutation after an ambiguous result,
+and it must stay disabled in shared CI.
+
 ## Pull Requests
 
 - Keep PRs focused on one concern.
 - Include the verification commands you ran.
-- Update README, docs, SECURITY, CONTRIBUTING, RELEASE, or CHANGELOG when behavior, public
-  API, package contents, privacy expectations, or release process changes.
+- Update README, docs, SECURITY, CONTRIBUTING, or CHANGELOG when behavior, public API, package
+  contents, or privacy expectations change.
 - Do not publish npm packages, create GitHub releases, create tags, or change release
   history in a contributor PR.
 - Do not use `git commit --amend` or force-push in this repository.

@@ -6,6 +6,7 @@ import { DevicesEndpoint } from '../endpoints/DevicesEndpoint.js';
 import { HealthEndpoint } from '../endpoints/HealthEndpoint.js';
 import { SleepEndpoint } from '../endpoints/SleepEndpoint.js';
 import { UserEndpoint } from '../endpoints/UserEndpoint.js';
+import { WeightEndpoint } from '../endpoints/WeightEndpoint.js';
 import { WorkoutsEndpoint } from '../endpoints/WorkoutsEndpoint.js';
 import { HttpClient } from './HttpClient.js';
 
@@ -17,9 +18,10 @@ export class GarminConnectSDK {
   readonly health: HealthEndpoint;
   readonly user: UserEndpoint;
   readonly devices: DevicesEndpoint;
-  /** Experimental account-mutating workout APIs. These may change before v1. */
+  readonly weight: WeightEndpoint;
+  /** Operationally experimental account-mutating workout APIs. Public signatures follow SemVer. */
   readonly workouts: WorkoutsEndpoint;
-  /** Experimental account-mutating calendar scheduling APIs. These may change before v1. */
+  /** Operationally experimental calendar scheduling APIs. Public signatures follow SemVer. */
   readonly calendar: CalendarEndpoint;
 
   constructor(options: GarminConnectSDKOptions = {}) {
@@ -42,6 +44,7 @@ export class GarminConnectSDK {
     this.sleep = new SleepEndpoint(this.#http, this.user);
     this.health = new HealthEndpoint(this.#http, this.user);
     this.devices = new DevicesEndpoint(this.#http);
+    this.weight = new WeightEndpoint(this.#http);
     this.workouts = new WorkoutsEndpoint(this.#http);
     this.calendar = new CalendarEndpoint(this.#http);
   }

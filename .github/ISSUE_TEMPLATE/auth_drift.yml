@@ -1,7 +1,7 @@
 name: Garmin auth drift
 description: Report Garmin login, MFA, refresh, or session restore drift.
-title: "auth: "
-labels: ["auth", "garmin-drift"]
+title: 'auth: '
+labels: ['bug', 'auth', 'garmin-drift']
 body:
   - type: markdown
     attributes:
@@ -36,6 +36,6 @@ body:
     id: version
     attributes:
       label: SDK version
-      placeholder: 1.0.0-alpha.x
+      placeholder: 1.0.0
     validations:
       required: true

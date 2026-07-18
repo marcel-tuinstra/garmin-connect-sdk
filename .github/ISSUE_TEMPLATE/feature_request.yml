@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a new SDK capability or improvement.
+title: 'feat: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the SDK.
+
+        Do not paste Garmin credentials, tokens, cookies, email addresses, account identifiers, locations, or raw health/activity payloads. Use synthetic examples and minimized redacted shapes.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to accomplish, and what is currently missing?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_api
+    attributes:
+      label: Proposed SDK behavior
+      description: Describe the methods, inputs, or outputs you would find useful. Synthetic code examples are welcome.
+      render: typescript
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: How are you solving this today, if at all?
+  - type: dropdown
+    id: account_mutation
+    attributes:
+      label: Does this feature change Garmin account data?
+      options:
+        - 'No or read-only'
+        - 'Yes or possibly'
+        - 'Unsure'
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SDK version
+      placeholder: 1.0.0

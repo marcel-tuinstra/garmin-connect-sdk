@@ -17,6 +17,7 @@ import {
 } from '../../src/schemas/health.schema.js';
 import { dailySleepSchema } from '../../src/schemas/sleep.schema.js';
 import { devicesSchema, socialProfileSchema } from '../../src/schemas/user.schema.js';
+import { dailyWeighInsSchema, weighInRangeSchema } from '../../src/schemas/weight.schema.js';
 import {
   calendarMonthSchema,
   workoutListSchema,
@@ -107,6 +108,73 @@ describe('schemas', () => {
     expect(workoutTypes.workoutSportTypes).toHaveLength(1);
     expect(workoutSchedule.workoutScheduleId).toBe(3003);
     expect(calendarMonth.calendarItems).toHaveLength(1);
+  });
+
+  it('parses Garmin weight day and range payloads while preserving gram values', () => {
+    // Arrange
+    const rangeMetric = {
+      samplePk: 123,
+      calendarDate: '2026-07-18',
+      weight: 75400,
+      sourceType: 'MANUAL',
+      timestampGMT: 1784368800000,
+      bmi: null,
+      privateFutureField: true,
+    };
+    const dayMetric = { ...rangeMetric, samplePk: undefined, version: 456 };
+
+    // Act
+    const day = dailyWeighInsSchema.parse({
+      startDate: '2026-07-18',
+      endDate: '2026-07-18',
+      dateWeightList: [dayMetric, { ...dayMetric, version: 457 }],
+      totalAverage: { weight: 75400, bmi: null },
+    });
+    const range = weighInRangeSchema.parse({
+      dailyWeightSummaries: [
+        {
+          summaryDate: '2026-07-18',
+          numOfWeightEntries: 1,
+          minWeight: 75400,
+          maxWeight: 75400,
+          latestWeight: rangeMetric,
+          allWeightMetrics: [rangeMetric],
+        },
+      ],
+      totalAverage: { weight: 75400 },
+      previousDateWeight: { calendarDate: null, weight: null },
+      nextDateWeight: null,
+    });
+
+    // Assert
+    expect(day.dateWeightList[0]?.weight).toBe(75400);
+    expect(day.dateWeightList).toHaveLength(2);
+    expect(day.dateWeightList[0]?.privateFutureField).toBe(true);
+    expect(range.dailyWeightSummaries[0]?.allWeightMetrics[0]?.weight).toBe(75400);
+    expect(range.dailyWeightSummaries[0]?.latestWeight?.weight).toBe(75400);
+    expect(range.previousDateWeight).toEqual({ calendarDate: null, weight: null });
+  });
+
+  it('parses an empty weight day with nullable averages', () => {
+    // Act
+    const day = dailyWeighInsSchema.parse({
+      startDate: '2026-07-18',
+      endDate: '2026-07-18',
+      dateWeightList: [],
+      totalAverage: { weight: null, bmi: null, bodyFat: null },
+    });
+
+    // Assert
+    expect(day.dateWeightList).toEqual([]);
+    expect(day.totalAverage?.weight).toBeNull();
+  });
+
+  it('rejects a weight metric without reconciliation fields', () => {
+    // Act
+    const result = dailyWeighInsSchema.safeParse({ dateWeightList: [{ weight: 75400 }] });
+
+    // Assert
+    expect(result.success).toBe(false);
   });
 
   it('reports validation paths without private payloads', () => {

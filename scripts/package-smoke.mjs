@@ -68,6 +68,15 @@ try {
           if (name in sdk) throw new Error(\`Unexpected internal export: \${name}\`);
         }
         const garmin = new sdk.GarminConnectSDK();
+        if (
+          !garmin.weight ||
+          typeof garmin.weight.getDailyWeighIns !== 'function' ||
+          typeof garmin.weight.getWeighIns !== 'function' ||
+          typeof garmin.weight.addWeighIn !== 'function' ||
+          typeof garmin.weight.removeWeighIn !== 'function'
+        ) {
+          throw new Error('Missing public weight namespace.');
+        }
         for (const name of ['auth', 'http']) {
           if (name in garmin) throw new Error(\`Unexpected public SDK property: \${name}\`);
         }
