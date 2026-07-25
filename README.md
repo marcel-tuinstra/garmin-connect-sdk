@@ -13,6 +13,8 @@ affiliated with, endorsed by, or supported by Garmin. Read the
 Read APIs are the primary use case. Workout creation, calendar scheduling, and weight mutations are
 experimental account-mutating helpers without dry-run or rollback support.
 
+[![Current project Board](https://tracker.tuinstra.dev/api/public/organizations/tuinstra-dev/projects/garmin-connect-sdk/scope.svg)](https://tracker.tuinstra.dev/p/tuinstra-dev/garmin-connect-sdk)
+
 ## Install
 
 The package is ESM-only, requires Node `>=24`, and supports imports from
