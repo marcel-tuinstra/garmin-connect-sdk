@@ -6,6 +6,8 @@ import {
   GarminRequestError,
   GarminSessionExpiredError,
   parseRetryAfter,
+  errorFromResponse,
+  readResponseErrorEvidence,
 } from '../client/GarminRequestError.js';
 import { noopLogger, redact, type Logger } from '../utils/logger.js';
 import { withRetry, type RetryOptions } from '../utils/retry.js';
@@ -241,21 +243,11 @@ export class AuthService {
       statusCode: response.status,
     });
 
-    if (response.status === 429) throw rateLimit(response, '/di-oauth2-service/oauth/token');
-    if (response.status === 401 || response.status === 403) {
-      await this.logout();
-      throw new GarminSessionExpiredError({
-        message: 'Garmin refresh token is expired or revoked.',
-        statusCode: response.status,
-        endpoint: '/di-oauth2-service/oauth/token',
-      });
-    }
     if (!response.ok) {
-      throw new GarminRequestError({
-        message: `Garmin token refresh failed (${response.status}).`,
-        statusCode: response.status,
-        endpoint: '/di-oauth2-service/oauth/token',
-      });
+      const evidence = await readResponseErrorEvidence(response);
+      const error = errorFromResponse(response, '/di-oauth2-service/oauth/token', evidence);
+      if (error instanceof GarminSessionExpiredError) await this.logout();
+      throw error;
     }
 
     const payload = (await response.json()) as AuthTokensResponse;

@@ -38,6 +38,9 @@ exists, it prompts for email, password, and MFA when needed. It writes JSON summ
 default. `--raw` can expose health, location, device, workout, and schedule identifiers;
 use it only in a private local terminal and redact output before sharing.
 
+The CLI stops on rate limits, bot challenges, and transient validation failures. It prompts
+for credentials only if storage has no session or Garmin has rejected the session.
+
 ## Auth And Session Storage
 
 Use `restoreSession()` before `login()`:
@@ -102,8 +105,8 @@ const garmin = new GarminConnectSDK({
 | `retry` / `maxRetries` | Tune retry behavior. `Retry-After` headers are respected when Garmin sends them.                                           |
 | `timeoutMs`            | Abort HTTP requests that exceed the configured timeout.                                                                    |
 
-MFA is passed to `login()` with `mfaCode` or `mfaCodeProvider`; it is not a constructor
-option.
+Pass MFA to `login()` through `mfaCode`, either as a string or as a function that returns
+the code. It is not a constructor option.
 
 ## Endpoint Map
 
@@ -158,6 +161,17 @@ unknown outcome: read the day back and reconcile the exact record before taking 
 log raw weight responses or record identifiers.
 
 ## Error Handling
+
+An authenticated API `401` or an explicit rejected-token response raises
+`GarminSessionExpiredError`. A generic `403` does not prove that a token expired: keep the
+session and check endpoint permissions or Garmin availability. Identifiable bot or CAPTCHA
+challenges raise `GarminBotChallengeError`. Rate limits and service failures retain their
+own error classes, even if their response includes auth-related text.
+
+The OAuth distinction between a rejected token and insufficient permissions follows
+[RFC 6750, section 3.1](https://www.rfc-editor.org/rfc/rfc6750#section-3.1). Garmin's private
+endpoints can depart from that standard; report a minimized response shape if you encounter
+an unrecognized failure. The SDK does not include response bodies in classified errors.
 
 ```ts
 import {
@@ -254,7 +268,7 @@ not log raw workout payloads from live accounts.
 
 | Error or symptom            | Action                                                                              |
 | --------------------------- | ----------------------------------------------------------------------------------- |
-| `GarminMfaRequiredError`    | Pass `mfaCode` or `mfaCodeProvider` to `login()`.                                   |
+| `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                   |
 | `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually. |
 | `GarminSessionExpiredError` | Delete the token file or call `logout()`, then log in again.                        |
 | `GarminRateLimitError`      | Back off and respect `retryAfterMs` when present.                                   |

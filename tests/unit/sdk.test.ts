@@ -95,7 +95,7 @@ describe('GarminConnectSDK', () => {
 
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
-    expect(await storage.load()).toMatchObject({ accessToken: 'access-token' });
+    expect(await storage.load()).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -121,19 +121,18 @@ describe('GarminConnectSDK', () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse({ displayName: 'runner' }))
-      .mockResolvedValueOnce(new Response('', { status: 401 }))
-      .mockResolvedValueOnce(jsonResponse({ displayName: 'new-runner' }));
+      .mockResolvedValueOnce(new Response('', { status: 401 }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
     await garmin.restoreSession();
 
     // Act
     const error = await garmin.restoreSession().catch((caught: unknown) => caught);
-    const displayName = await garmin.user.getDisplayName();
+    const cacheError = await garmin.user.getDisplayName().catch((caught: unknown) => caught);
 
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
-    expect(displayName).toBe('new-runner');
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(cacheError).toBeInstanceOf(GarminSessionExpiredError);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('fetches profile after login when the token response has no displayName', async () => {
