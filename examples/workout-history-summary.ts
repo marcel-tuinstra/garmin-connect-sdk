@@ -24,30 +24,18 @@ if (!(await garmin.restoreSession())) {
 }
 
 const activities = await garmin.activities.list({ limit: 10 });
-const summaries = await Promise.all(
+const detailSummaries = await Promise.all(
   activities.map(async (activity) => {
     const details = await garmin.activities.getDetails(activity.activityId, {
       maxChartSize: 1000,
       maxPolylineSize: 1000,
     });
-    const detailSummary = summarizeActivityDetails(details);
-
-    return {
-      id: activity.activityId,
-      name: activity.activityName ?? null,
-      type: activity.activityType?.typeKey ?? null,
-      start: activity.startTimeLocal ?? null,
-      distance: activity.distance ?? null,
-      duration: activity.duration ?? null,
-      details: 'metricRows' in detailSummary
-        ? {
-            metricRows: detailSummary.metricRows,
-            metricDescriptors: detailSummary.metricDescriptors.map((descriptor) => descriptor.key),
-            firstMetricRow: detailSummary.firstMetricRow,
-          }
-        : detailSummary,
-    };
+    return summarizeActivityDetails(details);
   }),
 );
 
-console.log(JSON.stringify({ count: summaries.length, activities: summaries }, null, 2));
+console.log(JSON.stringify({
+  activityCount: activities.length,
+  detailSummariesAvailable: detailSummaries.length,
+  metricRowSummariesAvailable: detailSummaries.filter((summary) => 'metricRows' in summary).length,
+}, null, 2));

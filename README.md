@@ -113,6 +113,7 @@ are unsupported.
   read the same day back after an ambiguous outcome instead of retrying blindly.
 
 See [Security](./SECURITY.md) for reporting and redaction guidance.
+For lost write responses, follow the [endpoint-specific read-back steps](./docs/usage.md#reconciling-uncertain-writes).
 
 ## More Docs
 
