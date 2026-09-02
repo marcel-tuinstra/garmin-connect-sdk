@@ -23,6 +23,8 @@ pnpm package:smoke
 
 `pnpm package:smoke` packs the package, installs it into a temporary consumer project,
 checks the public exports, verifies blocked deep imports, and runs the installed CLI help.
+It also checks the installed package's license text and metadata against the source
+reference. This checks packaging consistency, not ownership or legal permission.
 It does not publish anything.
 
 Unit tests use Arrange/Act/Assert style and should cover meaningful behavior, including
