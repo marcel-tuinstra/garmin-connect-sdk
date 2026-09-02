@@ -248,6 +248,21 @@ describe('AuthService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it('clears an earlier in-memory session when storage no longer has tokens', async () => {
+    // Arrange
+    const { auth, storage } = setupAuth({ responses: [] });
+    await storage.save(storedTokens());
+    await auth.restoreSession();
+    await storage.clear();
+
+    // Act
+    const restored = await auth.restoreSession();
+
+    // Assert
+    expect(restored).toBe(false);
+    expect(auth.tokens).toBeNull();
+  });
+
   it('refreshes restored expired tokens', async () => {
     // Arrange
     const { auth, fetchMock, storage } = await setupAuthWithExpiredSession([

@@ -59,13 +59,23 @@ export class GarminConnectSDK {
   }
 
   async restoreSession(): Promise<boolean> {
-    const restored = await this.#auth.restoreSession();
-    const displayName = this.#auth.tokens?.displayName;
-    if (displayName) this.user.setCachedProfile({ displayName });
-    return restored;
+    this.user.clearCachedProfile();
+
+    try {
+      const restored = await this.#auth.restoreSession();
+      if (!restored) return false;
+
+      await this.user.getProfile();
+      return true;
+    } catch (error) {
+      this.#auth.clearSessionCache();
+      this.user.clearCachedProfile();
+      throw error;
+    }
   }
 
-  logout(): Promise<void> {
-    return this.#auth.logout();
+  async logout(): Promise<void> {
+    this.user.clearCachedProfile();
+    await this.#auth.logout();
   }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Validate restored sessions with an authenticated profile read, including locally unexpired
+  tokens. Clear cached profile data on logout and before session restoration.
+
 ## 1.0.0 - 2026-07-18
 
 ### Highlights

@@ -65,8 +65,14 @@ It does not store email or password values, but the token file is a bearer secre
 include limited session metadata such as display name and client ID. The SDK does not
 encrypt token files.
 
-Call `logout()` to clear stored tokens, or delete the token file when Garmin revokes a
-session and `restoreSession()` keeps failing.
+`restoreSession()` returns `false` if storage has no session. For stored tokens, it refreshes
+them when needed and makes an authenticated profile request before returning `true`, even
+if the access token has not reached its local expiry time. A failed check throws the
+corresponding SDK error. Rate limits, network failures, or Garmin service failures do not
+prove that the session is invalid; keep the stored tokens and retry the read later.
+
+Call `logout()` to clear stored tokens and the SDK's cached profile. Keep token storage on
+a persistent volume for containers so deployments can reuse the session.
 
 For apps or plugins:
 
