@@ -64,6 +64,7 @@ export class WorkoutsEndpoint {
       method: 'POST',
       body: payload,
       schema: workoutSchema,
+      retry: { maxRetries: 0 },
     });
   }
 
@@ -72,18 +73,21 @@ export class WorkoutsEndpoint {
       method: 'POST',
       body: { date: formatDate(options.date) },
       schema: workoutScheduleSchema,
+      retry: { maxRetries: 0 },
     });
   }
 
   unschedule(scheduleId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
   }
 
   delete(workoutId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/workout/${workoutId}`, {
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
   }
 }

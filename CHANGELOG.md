@@ -11,6 +11,8 @@
 - Recover a definitively rejected authenticated read with one token refresh and one replay.
   Coordinate concurrent recovery and preserve refresh credentials after transient failures
   without reusing the rejected access token. Keep writes out of auth recovery.
+- Limit ordinary API retries to reads by default. Explicitly disable retries for workout,
+  calendar, and weight mutations, including when global retry settings are increased.
 
 ## 1.0.0 - 2026-07-18
 

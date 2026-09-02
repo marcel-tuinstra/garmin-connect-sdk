@@ -53,6 +53,21 @@ describe('retry', () => {
     expect(sleep).toHaveBeenCalledTimes(2);
   });
 
+  it('treats unsafe retry counts as a zero retry budget', async () => {
+    // Arrange
+    const operation = vi.fn<() => Promise<string>>().mockRejectedValue(new Error('network'));
+
+    // Act
+    const error = await withRetry(operation, {
+      maxRetries: Number.MAX_SAFE_INTEGER + 1,
+      sleep: async () => undefined,
+    }).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(Error);
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
+
   it('uses Retry-After ahead of backoff', () => {
     // Arrange
     const error = new GarminRateLimitError({ message: 'limited', retryAfterMs: 2500 });

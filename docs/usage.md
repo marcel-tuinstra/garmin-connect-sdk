@@ -114,11 +114,29 @@ const garmin = new GarminConnectSDK({
 | `storage`              | Persist tokens with `FileTokenStorage`, keep them in memory with `MemoryTokenStorage`, or provide a custom `TokenStorage`. |
 | `logger`               | Receives SDK logs. Do not log raw Garmin payloads, tokens, cookies, or authorization headers.                              |
 | `fetch`                | Inject a custom fetch for tests, proxying, or controlled runtime environments.                                             |
-| `retry` / `maxRetries` | Tune retry behavior. `Retry-After` headers are respected when Garmin sends them.                                           |
+| `retry` / `maxRetries` | Tune retry behavior for reads and login. Does not enable retries for workout, calendar, or weight writes. `Retry-After` is respected. |
 | `timeoutMs`            | Abort HTTP requests that exceed the configured timeout.                                                                    |
 
 Pass MFA to `login()` through `mfaCode`, either as a string or as a function that returns
 the code. It is not a constructor option.
+
+### Read Retries And Write Safety
+
+API `GET` and `HEAD` requests use bounded retries for network failures, `429`, and
+eligible `5xx` responses. The default is three retries after the initial attempt.
+Set `maxRetries: 0` to disable these ordinary retries. The one-time session recovery
+described above is separate from this retry budget.
+Use a non-negative safe integer for `maxRetries`; invalid values disable retries.
+Timeouts are not retried by default. A custom read retry predicate can opt them in.
+
+Workout creation, scheduling, unscheduling, deletion, and weight creation/removal send
+each mutation once. Increasing global `maxRetries` or providing `retry.shouldRetry`
+does not enable retries for these methods. A lost response does not prove that Garmin
+rejected the change; read back the affected data before deciding whether to try again.
+
+There is no public `PUT` operation. Internally, methods other than `GET` and `HEAD`
+default to no retries unless an endpoint explicitly supplies a retry count. Existing
+write endpoints explicitly disable retries.
 
 ## Endpoint Map
 

@@ -54,6 +54,7 @@ export function calculateDelayMs(error: unknown, attempt: number, options: Retry
 
 export async function withRetry<T>(operation: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
+  const maxRetries = normalizeMaxRetries(config.maxRetries);
   const shouldRetry = options.shouldRetry ?? defaultShouldRetry;
   let attempt = 0;
 
@@ -61,7 +62,7 @@ export async function withRetry<T>(operation: () => Promise<T>, options: RetryOp
     try {
       return await operation();
     } catch (error) {
-      if (attempt >= config.maxRetries || !shouldRetry(error, attempt)) {
+      if (attempt >= maxRetries || !shouldRetry(error, attempt)) {
         throw error;
       }
 
@@ -69,4 +70,10 @@ export async function withRetry<T>(operation: () => Promise<T>, options: RetryOp
       await config.sleep(calculateDelayMs(error, attempt, config));
     }
   }
+}
+
+function normalizeMaxRetries(value: number | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && Number.isSafeInteger(value) && value > 0
+    ? value
+    : 0;
 }
