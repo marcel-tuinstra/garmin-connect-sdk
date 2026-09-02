@@ -2,14 +2,16 @@ import type { ZodIssue, ZodType } from 'zod';
 
 import {
   errorFromResponse,
+  GarminRequestError,
   GarminSessionExpiredError,
   GarminTimeoutError,
   GarminValidationError,
   readResponseErrorEvidence,
 } from './GarminRequestError.js';
 import type { AuthService } from '../auth/AuthService.js';
+import type { GarminTokens } from '../auth/types.js';
 import { noopLogger, summarizePayload, type Logger } from '../utils/logger.js';
-import { withRetry, type RetryOptions } from '../utils/retry.js';
+import { defaultShouldRetry, withRetry, type RetryOptions } from '../utils/retry.js';
 
 export interface RequestOptions<T> {
   method?: string;
@@ -33,6 +35,11 @@ export interface HttpClientOptions {
   timeoutMs?: number;
 }
 
+interface DispatchedSession {
+  tokens: GarminTokens;
+  generation: number;
+}
+
 export class HttpClient {
   readonly baseUrl: string;
   #auth: AuthService;
@@ -53,72 +60,147 @@ export class HttpClient {
   async request<T = unknown>(path: string, options: RequestOptions<T> = {}): Promise<T> {
     const endpoint = buildPath(path, options.query);
     const diagnosticEndpoint = buildPath(options.diagnosticPath ?? path, options.query);
+    let dispatchedSession: DispatchedSession | undefined;
+    const retry = { ...this.#retry, ...options.retry };
+    const configuredShouldRetry = retry.shouldRetry;
 
-    return withRetry(
-      async () => {
-        const headers = new Headers({
-          accept: 'application/json',
-          nk: 'NT',
-          'user-agent': 'garmin-connect-sdk/1.0.0',
-        });
-
-        if (!options.skipAuth) {
-          const tokens = await this.#auth.refreshIfNeeded();
-          headers.set('authorization', `Bearer ${tokens.accessToken}`);
+    try {
+      return await withRetry(
+        () => {
+          dispatchedSession = undefined;
+          return this.#requestOnce(endpoint, diagnosticEndpoint, options, (tokens, generation) => {
+            dispatchedSession = { tokens, generation };
+          });
+        },
+        {
+          ...retry,
+          shouldRetry: (error, attempt) =>
+            !(error instanceof GarminSessionExpiredError) &&
+            (configuredShouldRetry?.(error, attempt) ?? defaultShouldRetry(error)),
+        },
+      );
+    } catch (error) {
+      if (!canRecoverRequest(error, options, dispatchedSession)) {
+        if (error instanceof GarminSessionExpiredError && dispatchedSession && !options.skipAuth) {
+          await this.#auth.invalidateSession(
+            dispatchedSession.tokens,
+            dispatchedSession.generation,
+          );
         }
+        throw error;
+      }
+      if (!dispatchedSession) throw error;
+      const recoverySession = dispatchedSession;
 
-        let body: BodyInit | undefined;
-        if (options.body !== undefined) {
-          headers.set('content-type', 'application/json');
-          body = JSON.stringify(options.body);
-        }
-
-        const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
-          method: options.method ?? 'GET',
-          headers,
-          body,
-          timeoutMs: options.timeoutMs,
+      try {
+        await this.#auth.recoverSession(recoverySession.tokens, recoverySession.generation);
+      } catch (recoveryError) {
+        if (recoveryError instanceof GarminRequestError) throw recoveryError;
+        throw new GarminRequestError({
+          message: 'Garmin session recovery failed.',
           endpoint: diagnosticEndpoint,
         });
+      }
 
-        if (!response.ok) {
-          const evidence = await readResponseErrorEvidence(response);
-          const error = errorFromResponse(response, diagnosticEndpoint, evidence);
-          if (error instanceof GarminSessionExpiredError && !options.skipAuth) {
-            await this.#auth.logout();
-          }
-          throw error;
-        }
-        if (options.responseType === 'bytes') {
-          const buffer = await response.arrayBuffer();
-          this.#logger.debug('Garmin binary response received.', {
-            endpoint: diagnosticEndpoint,
-            bytes: buffer.byteLength,
-          });
-          return new Uint8Array(buffer) as T;
-        }
-
-        const payload = await parseJson(response);
-        this.#logger.debug('Garmin response received.', {
+      if (this.#auth.sessionGeneration !== recoverySession.generation) {
+        throw new GarminRequestError({
+          message: 'Garmin session recovery was cancelled.',
           endpoint: diagnosticEndpoint,
-          payload: summarizePayload(payload),
         });
+      }
 
-        if (!options.schema) return payload as T;
-        const result = options.schema.safeParse(payload);
-        if (!result.success) {
-          throw new GarminValidationError({
-            message: 'Garmin response validation failed.',
-            endpoint: diagnosticEndpoint,
-            issues: formatZodIssues(result.error.issues),
-            cause: result.error,
-          });
+      const replaySession: { current?: DispatchedSession } = {};
+      try {
+        return await this.#requestOnce(
+          endpoint,
+          diagnosticEndpoint,
+          options,
+          (tokens, generation) => {
+            replaySession.current = { tokens, generation };
+          },
+        );
+      } catch (replayError) {
+        if (replayError instanceof GarminSessionExpiredError && replaySession.current) {
+          await this.#auth.invalidateSession(
+            replaySession.current.tokens,
+            replaySession.current.generation,
+          );
         }
+        throw replayError;
+      }
+    }
+  }
 
-        return result.data;
-      },
-      { ...this.#retry, ...options.retry },
-    );
+  async #requestOnce<T>(
+    endpoint: string,
+    diagnosticEndpoint: string,
+    options: RequestOptions<T>,
+    onAuthenticatedDispatch?: (tokens: GarminTokens, generation: number) => void,
+  ): Promise<T> {
+    const headers = new Headers({
+      accept: 'application/json',
+      nk: 'NT',
+      'user-agent': 'garmin-connect-sdk/1.0.0',
+    });
+
+    if (!options.skipAuth) {
+      const generation = this.#auth.sessionGeneration;
+      const tokens = await this.#auth.refreshIfNeeded();
+      if (generation !== this.#auth.sessionGeneration) {
+        throw new GarminRequestError({
+          message: 'Garmin session changed before request dispatch.',
+        });
+      }
+      headers.set('authorization', `Bearer ${tokens.accessToken}`);
+      onAuthenticatedDispatch?.(tokens, generation);
+    }
+
+    let body: BodyInit | undefined;
+    if (options.body !== undefined) {
+      headers.set('content-type', 'application/json');
+      body = JSON.stringify(options.body);
+    }
+
+    const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
+      method: options.method ?? 'GET',
+      headers,
+      body,
+      timeoutMs: options.timeoutMs,
+      endpoint: diagnosticEndpoint,
+    });
+
+    if (!response.ok) {
+      const evidence = await readResponseErrorEvidence(response);
+      const error = errorFromResponse(response, diagnosticEndpoint, evidence);
+      throw error;
+    }
+    if (options.responseType === 'bytes') {
+      const buffer = await response.arrayBuffer();
+      this.#logger.debug('Garmin binary response received.', {
+        endpoint: diagnosticEndpoint,
+        bytes: buffer.byteLength,
+      });
+      return new Uint8Array(buffer) as T;
+    }
+
+    const payload = await parseJson(response);
+    this.#logger.debug('Garmin response received.', {
+      endpoint: diagnosticEndpoint,
+      payload: summarizePayload(payload),
+    });
+
+    if (!options.schema) return payload as T;
+    const result = options.schema.safeParse(payload);
+    if (!result.success) {
+      throw new GarminValidationError({
+        message: 'Garmin response validation failed.',
+        endpoint: diagnosticEndpoint,
+        issues: formatZodIssues(result.error.issues),
+        cause: result.error,
+      });
+    }
+
+    return result.data;
   }
 
   async #fetchWithTimeout(
@@ -146,6 +228,20 @@ export class HttpClient {
       clearTimeout(timeout);
     }
   }
+}
+
+function canRecoverRequest<T>(
+  error: unknown,
+  options: RequestOptions<T>,
+  dispatchedSession: DispatchedSession | undefined,
+): boolean {
+  const method = (options.method ?? 'GET').toUpperCase();
+  return (
+    error instanceof GarminSessionExpiredError &&
+    !options.skipAuth &&
+    (method === 'GET' || method === 'HEAD') &&
+    dispatchedSession !== undefined
+  );
 }
 
 export function buildPath(

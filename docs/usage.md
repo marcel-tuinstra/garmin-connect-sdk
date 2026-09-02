@@ -77,6 +77,18 @@ prove that the session is invalid; keep the stored tokens and retry the read lat
 Call `logout()` to clear stored tokens and the SDK's cached profile. Keep token storage on
 a persistent volume for containers so deployments can reuse the session.
 
+For an authenticated `GET` or `HEAD` that Garmin rejects, the SDK attempts one token refresh
+and repeats the read once. This also applies to the profile read during `restoreSession()`.
+It does not retain your password or call `login()` for this recovery. Concurrent rejected
+reads within an SDK instance share the refresh attempt.
+
+The SDK clears the rejected session before recovery. A definitive refresh-token rejection
+leaves storage empty. After a temporary refresh failure, it preserves the refresh credential
+with an expired access-token timestamp, so the next use must refresh before sending an
+authenticated API request. The failed operation returns its error without another recovery
+attempt. Bot challenges, ambiguous `403` responses, and rate limits do not trigger this
+recovery path. Writes do not get an auth-recovery replay.
+
 For apps or plugins:
 
 - Isolate token storage per Garmin account and per application user.
@@ -162,8 +174,9 @@ log raw weight responses or record identifiers.
 
 ## Error Handling
 
-An authenticated API `401` or an explicit rejected-token response raises
-`GarminSessionExpiredError`. A generic `403` does not prove that a token expired: keep the
+An authenticated API `401` or an explicit rejected-token response maps to
+`GarminSessionExpiredError`; eligible reads first get the bounded recovery described above.
+A generic `403` does not prove that a token expired: keep the
 session and check endpoint permissions or Garmin availability. Identifiable bot or CAPTCHA
 challenges raise `GarminBotChallengeError`. Rate limits and service failures retain their
 own error classes, even if their response includes auth-related text.

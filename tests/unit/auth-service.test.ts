@@ -393,10 +393,7 @@ describe('AuthService', () => {
     // Arrange
     const { auth, fetchMock, storage } = await setupAuthWithSession({
       tokens: storedTokens({ refreshToken: 'old-refresh-token', clientId: DI_CLIENT_ID }),
-      responses: [
-        tokenResponse('new-refresh-token'),
-        new Response('', { status: 401 }),
-      ],
+      responses: [tokenResponse('new-refresh-token'), new Response('', { status: 401 })],
     });
     await auth.restoreSession();
 
@@ -416,10 +413,7 @@ describe('AuthService', () => {
     // Arrange
     const { auth, fetchMock } = await setupAuthWithSession({
       tokens: storedTokens({ refreshToken: 'old-refresh-token', clientId: DI_CLIENT_ID }),
-      responses: [
-        new Response('', { status: 503 }),
-        tokenResponse('retry-refresh-token'),
-      ],
+      responses: [new Response('', { status: 503 }), tokenResponse('retry-refresh-token')],
     });
     await auth.restoreSession();
 
@@ -493,6 +487,67 @@ describe('AuthService', () => {
     expect(error).toBeInstanceOf(GarminRequestError);
     expect(error).not.toBeInstanceOf(GarminSessionExpiredError);
     expect(await storage.load()).toMatchObject({ refreshToken: 'old-refresh-token' });
+  });
+
+  it('clears local state before recovering with the captured refresh credential', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    const rejected = storedTokens({ refreshToken: 'recover-refresh-token' });
+    await storage.save(rejected);
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(async () => {
+      expect(await storage.load()).toBeNull();
+      return tokenResponse('recovered-refresh-token');
+    });
+    const auth = new AuthService({ fetch: fetchMock, storage });
+
+    // Act
+    const recovered = await auth.recoverSession(rejected);
+
+    // Assert
+    expect(recovered.refreshToken).toBe('recovered-refresh-token');
+    expect((await storage.load())?.refreshToken).toBe('recovered-refresh-token');
+  });
+
+  it('quarantines a captured refresh credential after a transient recovery failure', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    const rejected = storedTokens({ refreshToken: 'recover-refresh-token' });
+    await storage.save(rejected);
+    const auth = new AuthService({
+      fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 503 })),
+      storage,
+    });
+
+    // Act
+    const error = await auth.recoverSession(rejected).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(auth.tokens).toBeNull();
+    expect(await storage.load()).toMatchObject({
+      accessToken: '',
+      refreshToken: 'recover-refresh-token',
+      accessTokenExpiresAt: new Date(0).toISOString(),
+    });
+  });
+
+  it('removes the captured credential after a definitive recovery rejection', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    const rejected = storedTokens({ refreshToken: 'recover-refresh-token' });
+    await storage.save(rejected);
+    const auth = new AuthService({
+      fetch: vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 401 })),
+      storage,
+    });
+
+    // Act
+    const error = await auth.recoverSession(rejected).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminSessionExpiredError);
+    expect(auth.tokens).toBeNull();
+    expect(await storage.load()).toBeNull();
   });
 });
 
