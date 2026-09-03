@@ -106,6 +106,9 @@ are unsupported.
 - Back off on rate limits and expect private endpoint drift.
 - Treat workout/calendar/weight writes and write integration tests as live account changes. Weight
   writes mutate health history; workout and calendar changes may also sync to Garmin devices.
+- Workout creation, scheduling, unscheduling, deletion, and weight writes are not retried
+  automatically, even when global retry settings are increased. A lost response can leave
+  the outcome uncertain; read back before repeating a mutation.
 - Treat `weight.addWeighIn()` as non-idempotent: repeated calls can create duplicate health records.
   The SDK does not retry this write automatically; reconcile an ambiguous outcome with a weight GET.
 - `weight.removeWeighIn()` permanently removes the selected record. The SDK sends the DELETE once;

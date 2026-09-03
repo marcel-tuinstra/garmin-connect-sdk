@@ -61,7 +61,11 @@ export class HttpClient {
     const endpoint = buildPath(path, options.query);
     const diagnosticEndpoint = buildPath(options.diagnosticPath ?? path, options.query);
     let dispatchedSession: DispatchedSession | undefined;
-    const retry = { ...this.#retry, ...options.retry };
+    const method = normalizeMethod(options.method);
+    const retry =
+      isSafeRead(method) || hasExplicitWriteRetryBudget(options.retry)
+        ? { ...this.#retry, ...options.retry }
+        : { ...this.#retry, ...options.retry, maxRetries: 0 };
     const configuredShouldRetry = retry.shouldRetry;
 
     try {
@@ -162,7 +166,7 @@ export class HttpClient {
     }
 
     const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
-      method: options.method ?? 'GET',
+      method: normalizeMethod(options.method),
       headers,
       body,
       timeoutMs: options.timeoutMs,
@@ -235,12 +239,30 @@ function canRecoverRequest<T>(
   options: RequestOptions<T>,
   dispatchedSession: DispatchedSession | undefined,
 ): boolean {
-  const method = (options.method ?? 'GET').toUpperCase();
+  const method = normalizeMethod(options.method);
   return (
     error instanceof GarminSessionExpiredError &&
     !options.skipAuth &&
     (method === 'GET' || method === 'HEAD') &&
     dispatchedSession !== undefined
+  );
+}
+
+function normalizeMethod(method?: string): string {
+  return (method ?? 'GET').toUpperCase();
+}
+
+function isSafeRead(method: string): boolean {
+  return method === 'GET' || method === 'HEAD';
+}
+
+function hasExplicitWriteRetryBudget(retry?: RetryOptions): boolean {
+  const maxRetries = retry?.maxRetries;
+  return (
+    typeof maxRetries === 'number' &&
+    Number.isFinite(maxRetries) &&
+    Number.isSafeInteger(maxRetries) &&
+    maxRetries > 0
   );
 }
 
