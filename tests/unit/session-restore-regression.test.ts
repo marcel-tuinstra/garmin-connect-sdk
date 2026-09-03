@@ -29,8 +29,7 @@ describe('session restore regressions', () => {
     await expect(garmin.restoreSession()).rejects.toBeInstanceOf(GarminSessionExpiredError);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    // Keep persisted credentials available for an explicit retry after a transient rejection.
-    expect((await storage.load())?.accessToken).toBe('access-token');
+    expect(await storage.load()).toBeNull();
   });
 
   it('refreshes an expired restored token before validating it', async () => {

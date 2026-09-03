@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import { AuthService } from '../../src/auth/AuthService.js';
 import {
+  GarminBotChallengeError,
+  GarminRequestError,
   GarminSessionExpiredError,
   GarminTimeoutError,
   GarminValidationError,
@@ -135,6 +137,106 @@ describe('HttpClient', () => {
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
     expect((error as GarminSessionExpiredError).endpoint).toBe('/private');
+  });
+
+  it('uses explicit JSON token rejection and challenge headers to classify failed requests', async () => {
+    // Arrange
+    const tokenRejected = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ error: 'invalid_token' }, { status: 403 }));
+    const cloudflareChallenge = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('', { status: 403, headers: { 'cf-mitigated': 'challenge' } }));
+
+    // Act
+    const rejectionError = await httpClient(tokenRejected, { maxRetries: 0 })
+      .request('/private', { skipAuth: true })
+      .catch((caught: unknown) => caught);
+    const challengeError = await httpClient(cloudflareChallenge, { maxRetries: 0 })
+      .request('/private', { skipAuth: true })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(rejectionError).toBeInstanceOf(GarminSessionExpiredError);
+    expect(challengeError).toBeInstanceOf(GarminBotChallengeError);
+  });
+
+  it('does not classify a generic 403 response as an expired session', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 403 }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await http.request('/private', { skipAuth: true }).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(error).not.toBeInstanceOf(GarminSessionExpiredError);
+  });
+
+  it('does not clear a session when a skipAuth request is rejected', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    await storage.save(tokens());
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 401 }));
+    const auth = new AuthService({ fetch: fetchMock, storage });
+    const http = new HttpClient({ auth, fetch: fetchMock, retry: { maxRetries: 0 } });
+
+    // Act
+    const error = await http.request('/public', { skipAuth: true }).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminSessionExpiredError);
+    expect(await storage.load()).toMatchObject({ accessToken: 'access-token' });
+  });
+
+  it('does not wait for a failed response body cancellation', async () => {
+    // Arrange
+    const oversizedJson = new Uint8Array(8_193);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(oversizedJson);
+          },
+          cancel() {
+            return Promise.reject(new Error('cancellation failed'));
+          },
+        }),
+        { status: 403, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await http.request('/private', { skipAuth: true }).catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+  });
+
+  it('bounds structured error inspection when a response body stalls', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          pull() {
+            return new Promise<void>(() => undefined);
+          },
+        }),
+        { status: 403, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const error = await Promise.race([
+      http.request('/private', { skipAuth: true }).catch((caught: unknown) => caught),
+      new Promise<unknown>((resolve) => setTimeout(() => resolve('timed out'), 500)),
+    ]);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
   });
 
   it('throws a timeout error when the request is aborted', async () => {

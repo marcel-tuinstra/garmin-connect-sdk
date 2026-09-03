@@ -1,8 +1,14 @@
 /* global process */
 import { stdin as input, stdout as output } from 'node:process';
 
-import { FileTokenStorage, GarminConnectSDK, GarminMfaRequiredError } from '../dist/index.js';
+import {
+  FileTokenStorage,
+  GarminConnectSDK,
+  GarminMfaRequiredError,
+  GarminSessionExpiredError,
+} from '../dist/index.js';
 import { createPrompt, questionHidden } from './garmin-prompt-utils.mjs';
+import { restoreSessionForCli } from './garmin-session-utils.mjs';
 
 export { createPrompt } from './garmin-prompt-utils.mjs';
 
@@ -13,7 +19,7 @@ export async function createGarminFromCli(rl = createPrompt()) {
     timeoutMs: Number(process.env.GARMIN_TIMEOUT_MS ?? 15000),
   });
 
-  const restored = await garmin.restoreSession().catch(() => false);
+  const restored = await restoreSessionForCli(garmin, GarminSessionExpiredError);
   if (restored) return { garmin, restoredSession: true };
 
   const email = process.env.GARMIN_EMAIL ?? (await rl.question('Garmin email: '));

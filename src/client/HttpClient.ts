@@ -2,8 +2,10 @@ import type { ZodIssue, ZodType } from 'zod';
 
 import {
   errorFromResponse,
+  GarminSessionExpiredError,
   GarminTimeoutError,
   GarminValidationError,
+  readResponseErrorEvidence,
 } from './GarminRequestError.js';
 import type { AuthService } from '../auth/AuthService.js';
 import { noopLogger, summarizePayload, type Logger } from '../utils/logger.js';
@@ -79,7 +81,14 @@ export class HttpClient {
           endpoint: diagnosticEndpoint,
         });
 
-        if (!response.ok) throw errorFromResponse(response, diagnosticEndpoint);
+        if (!response.ok) {
+          const evidence = await readResponseErrorEvidence(response);
+          const error = errorFromResponse(response, diagnosticEndpoint, evidence);
+          if (error instanceof GarminSessionExpiredError && !options.skipAuth) {
+            await this.#auth.logout();
+          }
+          throw error;
+        }
         if (options.responseType === 'bytes') {
           const buffer = await response.arrayBuffer();
           this.#logger.debug('Garmin binary response received.', {

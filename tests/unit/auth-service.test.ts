@@ -450,6 +450,50 @@ describe('AuthService', () => {
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
     expect(await storage.load()).toBeNull();
   });
+
+  it('clears stored tokens when OAuth refresh explicitly rejects the grant', async () => {
+    // Arrange
+    const { auth, storage } = await setupAuthWithExpiredSession([
+      jsonResponse({ error: 'invalid_grant' }, { status: 400 }),
+    ]);
+
+    // Act
+    const error = await auth.restoreSession().catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminSessionExpiredError);
+    expect(await storage.load()).toBeNull();
+  });
+
+  it('retains tokens when OAuth refresh returns an explicit client configuration error', async () => {
+    // Arrange
+    const { auth, storage } = await setupAuthWithExpiredSession([
+      jsonResponse({ error: 'invalid_client' }, { status: 401 }),
+    ]);
+
+    // Act
+    const error = await auth.restoreSession().catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(error).not.toBeInstanceOf(GarminSessionExpiredError);
+    expect(await storage.load()).toMatchObject({ refreshToken: 'old-refresh-token' });
+  });
+
+  it('retains tokens when OAuth refresh returns an ambiguous 403', async () => {
+    // Arrange
+    const { auth, storage } = await setupAuthWithExpiredSession([
+      jsonResponse({ error: 'forbidden' }, { status: 403 }),
+    ]);
+
+    // Act
+    const error = await auth.restoreSession().catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(error).not.toBeInstanceOf(GarminSessionExpiredError);
+    expect(await storage.load()).toMatchObject({ refreshToken: 'old-refresh-token' });
+  });
 });
 
 interface AuthFixture {

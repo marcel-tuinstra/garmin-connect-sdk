@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  GarminBotChallengeError,
   GarminRateLimitError,
   GarminRequestError,
   GarminSessionExpiredError,
@@ -22,7 +23,7 @@ describe('errors', () => {
     expect((error as GarminRateLimitError).retryAfterMs).toBe(2000);
   });
 
-  it('maps auth statuses to session expiration', () => {
+  it('keeps bare 401 compatibility but treats a generic 403 as a request error', () => {
     // Arrange
     const unauthorized = new Response('', { status: 401 });
     const forbidden = new Response('', { status: 403 });
@@ -33,7 +34,50 @@ describe('errors', () => {
 
     // Assert
     expect(unauthorizedError).toBeInstanceOf(GarminSessionExpiredError);
-    expect(forbiddenError).toBeInstanceOf(GarminSessionExpiredError);
+    expect(forbiddenError).toBeInstanceOf(GarminRequestError);
+    expect(forbiddenError).not.toBeInstanceOf(GarminSessionExpiredError);
+  });
+
+  it('uses explicit token and challenge evidence without changing 429 or server errors', () => {
+    // Arrange
+    const rejected = new Response('', { status: 403 });
+    const challenge = new Response('', { status: 401 });
+    const rateLimited = new Response('', { status: 429 });
+    const unavailable = new Response('', { status: 503 });
+
+    // Act
+    const rejectedError = errorFromResponse(rejected, '/x', { code: 'invalid_token' });
+    const challengeError = errorFromResponse(challenge, '/x', { challenge: true });
+    const rateLimitError = errorFromResponse(rateLimited, '/x', { code: 'invalid_token' });
+    const unavailableError = errorFromResponse(unavailable, '/x', { challenge: true });
+
+    // Assert
+    expect(rejectedError).toBeInstanceOf(GarminSessionExpiredError);
+    expect(challengeError).toBeInstanceOf(GarminBotChallengeError);
+    expect(rateLimitError).toBeInstanceOf(GarminRateLimitError);
+    expect(unavailableError).toBeInstanceOf(GarminRequestError);
+    expect(unavailableError).not.toBeInstanceOf(GarminBotChallengeError);
+  });
+
+  it('derives only Bearer header evidence when no explicit evidence is supplied', () => {
+    // Arrange
+    const bearerRejected = new Response('', {
+      status: 403,
+      headers: { 'www-authenticate': 'Bearer error="invalid_token"' },
+    });
+    const basicRejected = new Response('', {
+      status: 403,
+      headers: { 'www-authenticate': 'Basic error="invalid_token"' },
+    });
+
+    // Act
+    const bearerError = errorFromResponse(bearerRejected, '/x');
+    const basicError = errorFromResponse(basicRejected, '/x');
+
+    // Assert
+    expect(bearerError).toBeInstanceOf(GarminSessionExpiredError);
+    expect(basicError).toBeInstanceOf(GarminRequestError);
+    expect(basicError).not.toBeInstanceOf(GarminSessionExpiredError);
   });
 
   it('maps unavailable and generic failures without losing endpoint context', () => {
@@ -50,7 +94,8 @@ describe('errors', () => {
     expect(unavailableError.message).toContain('unavailable');
     expect(unavailableError.endpoint).toBe('/unavailable');
     expect(badRequestError).toBeInstanceOf(GarminRequestError);
-    expect(badRequestError.message).toContain('400 Bad Request');
+    expect(badRequestError.message).toContain('400');
+    expect(badRequestError.message).not.toContain('Bad Request');
     expect(badRequestError.endpoint).toBe('/bad');
   });
 
