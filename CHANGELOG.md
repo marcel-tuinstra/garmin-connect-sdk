@@ -16,6 +16,10 @@
 
 - Validate restored sessions with an authenticated profile read, including locally unexpired
   tokens. Clear cached profile data on logout and before session restoration.
+- Distinguish rejected tokens, bot challenges, and ambiguous forbidden responses. Keep stored
+  sessions on ambiguous authorization or transient failures, and redact error response details.
+- Stop the CLI from falling back to a password login after a rate limit, bot challenge, or
+  transient session-validation failure.
 
 ## 1.0.0 - 2026-07-18
 
