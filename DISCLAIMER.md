@@ -3,6 +3,11 @@
 This project is an unofficial SDK for a user's own Garmin Connect data. It is not affiliated with,
 endorsed by, sponsored by, or supported by Garmin.
 
+Starting with version `1.1.0`, the SDK uses the
+[PolyForm Noncommercial License 1.0.0](./LICENSE). You must comply with its permitted
+purposes and other conditions. See the [license summary](./README.md#license), including
+the unchanged rights for previously published releases through `1.0.0`.
+
 Garmin does not publish or support the private Garmin Connect endpoints used by this package.
 Garmin may change, rate limit, block, or remove those endpoints without notice. Garmin may also take
 account-level action when it detects use it does not allow.
@@ -12,9 +17,9 @@ Garmin's terms, or access data you are not authorized to use. You are responsibl
 following Garmin's terms, Garmin's developer rules where they apply, and any laws or policies that
 apply to your use.
 
-Use official Garmin APIs for supported production integrations. Use this package only when you
-accept the risk of private endpoint drift, account restrictions, data exposure, and broken
-compatibility.
+Use official Garmin APIs for supported production integrations. Accepting the risk of private
+endpoint drift, account restrictions, data exposure, and broken compatibility does not replace
+the need to comply with the SDK license or obtain any required permission from Garmin.
 
 Tokens, activity data, health data, location data, device data, workout data, and calendar data can
 be sensitive. Protect token files like passwords. Do not publish raw Garmin payloads from live

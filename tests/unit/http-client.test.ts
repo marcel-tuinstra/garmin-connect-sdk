@@ -50,7 +50,7 @@ describe('HttpClient', () => {
       'https://connectapi.garmin.com/write?start=0&limit=20&includePrivate=false',
     );
     expect(init?.method).toBe('POST');
-    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.0.0');
+    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.1.0');
     expect(new Headers(init?.headers).get('authorization')).toBeNull();
     expect(new Headers(init?.headers).get('content-type')).toBe('application/json');
     expect(init?.body).toBe(JSON.stringify({ name: 'Workout' }));

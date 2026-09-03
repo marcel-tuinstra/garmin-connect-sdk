@@ -57,7 +57,7 @@ export class HttpClient {
         const headers = new Headers({
           accept: 'application/json',
           nk: 'NT',
-          'user-agent': 'garmin-connect-sdk/1.0.0',
+          'user-agent': 'garmin-connect-sdk/1.1.0',
         });
 
         if (!options.skipAuth) {

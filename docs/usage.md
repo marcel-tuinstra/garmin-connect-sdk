@@ -3,6 +3,11 @@
 This guide is the consumer reference for `garmin-connect-sdk`. Keep the README short; put
 operational details here.
 
+Starting with version `1.1.0`, use is subject to the
+[PolyForm Noncommercial License 1.0.0](../LICENSE). Read the
+[license summary](../README.md#license) before upgrading from an earlier MIT release.
+The SDK license does not grant Garmin access permission; see the [disclaimer](../DISCLAIMER.md).
+
 ## Runtime Shape
 
 - Node `>=24`.
