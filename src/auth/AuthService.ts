@@ -63,6 +63,7 @@ export class AuthService {
   }
 
   async restoreSession(): Promise<boolean> {
+    this.#tokens = null;
     const tokens = await this.storage.load();
     if (!tokens) return false;
     this.#tokens = tokens;
@@ -267,6 +268,14 @@ export class AuthService {
   async logout(): Promise<void> {
     this.#tokens = null;
     await this.storage.clear();
+  }
+
+  /**
+   * Removes only the in-memory session. Persisted tokens are intentionally
+   * retained so a transient authenticated request failure can be retried.
+   */
+  clearSessionCache(): void {
+    this.#tokens = null;
   }
 
   async #extractTicketOrHandleMfa(

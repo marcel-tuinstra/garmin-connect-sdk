@@ -12,6 +12,11 @@
 - Align package metadata and the HTTP user-agent with `1.1.0`, and verify the license
   identity, text, copyright notice, and documentation in local package checks.
 
+### Changes
+
+- Validate restored sessions with an authenticated profile read, including locally unexpired
+  tokens. Clear cached profile data on logout and before session restoration.
+
 ## 1.0.0 - 2026-07-18
 
 ### Highlights
