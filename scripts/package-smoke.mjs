@@ -6,6 +6,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 
+import { verifyPackedLicense } from './package-license.mjs';
+
 const repoRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const tempRoot = mkdtempSync(join(tmpdir(), 'garmin-connect-sdk-package-smoke-'));
 const packDir = join(tempRoot, 'pack');
@@ -31,6 +33,10 @@ try {
   }
 
   run('pnpm', ['add', tarball], consumerDir);
+  await verifyPackedLicense({
+    packageRoot: join(consumerDir, 'node_modules', 'garmin-connect-sdk'),
+    referenceRoot: repoRoot,
+  });
   run(
     process.execPath,
     [
