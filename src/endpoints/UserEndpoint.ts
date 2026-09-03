@@ -29,4 +29,8 @@ export class UserEndpoint {
   setCachedProfile(profile: SocialProfile): void {
     this.#profile = profile;
   }
+
+  clearCachedProfile(): void {
+    this.#profile = null;
+  }
 }

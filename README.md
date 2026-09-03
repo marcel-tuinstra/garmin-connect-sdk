@@ -78,6 +78,10 @@ Prefer `restoreSession()` and token refresh over repeated password login. `FileT
 stores tokens, not email or password values, but token files still grant account access
 and should be protected like credentials.
 
+`restoreSession()` validates stored tokens with an authenticated profile read before returning
+`true`. It returns `false` for empty storage and throws if validation fails. See
+[auth and session storage](./docs/usage.md#auth-and-session-storage) for failure handling.
+
 ## Included Surface
 
 | Area             | Status                      | Examples                                                            |
