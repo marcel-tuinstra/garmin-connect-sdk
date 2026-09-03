@@ -41,12 +41,14 @@ export class CalendarEndpoint {
       method: 'POST',
       body: { date: formatDate(options.date) },
       schema: workoutScheduleSchema,
+      retry: { maxRetries: 0 },
     });
   }
 
   removeWorkout(scheduleId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
   }
 }

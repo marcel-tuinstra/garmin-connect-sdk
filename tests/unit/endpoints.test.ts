@@ -369,6 +369,7 @@ describe('endpoints', () => {
     // Assert
     expect(http.calls[0]?.path).toBe('/workout-service/workout');
     expect(http.calls[0]?.method).toBe('POST');
+    expect(http.calls[0]?.retry).toEqual({ maxRetries: 0 });
     expect(http.calls[0]?.body).toMatchObject({
       workoutName: 'SDK Test Run',
       sportType: { sportTypeKey: 'running' },
@@ -391,23 +392,28 @@ describe('endpoints', () => {
       path: '/workout-service/schedule/456',
       method: 'POST',
       body: { date: '2026-06-15' },
+      retry: { maxRetries: 0 },
     });
     expect(http.calls[2]).toMatchObject({
       path: '/workout-service/schedule/789',
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
     expect(http.calls[3]).toMatchObject({
       path: '/workout-service/workout/456',
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
     expect(http.calls[4]).toMatchObject({
       path: '/workout-service/schedule/456',
       method: 'POST',
       body: { date: '2026-06-16' },
+      retry: { maxRetries: 0 },
     });
     expect(http.calls[5]).toMatchObject({
       path: '/workout-service/schedule/790',
       method: 'DELETE',
+      retry: { maxRetries: 0 },
     });
   });
 

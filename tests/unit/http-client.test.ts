@@ -11,6 +11,7 @@ import {
   GarminValidationError,
 } from '../../src/client/GarminRequestError.js';
 import { buildPath, formatZodIssues, HttpClient } from '../../src/client/HttpClient.js';
+import type { RetryOptions } from '../../src/utils/retry.js';
 import { expiredTokens, jsonResponse, tokenResponse, tokens } from '../helpers/garmin.js';
 
 describe('HttpClient', () => {
@@ -30,6 +31,96 @@ describe('HttpClient', () => {
     // Assert
     expect(result).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries GET and HEAD network, rate-limit, and server failures', async () => {
+    // Arrange
+    const getFetch = vi
+      .fn<typeof fetch>()
+      .mockRejectedValueOnce(new TypeError('network unavailable'))
+      .mockResolvedValueOnce(jsonResponse({ get: true }));
+    const headFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 429 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const getHttp = httpClient(getFetch, { maxRetries: 1 });
+    const headHttp = httpClient(headFetch, { maxRetries: 1 });
+
+    // Act
+    const getResult = await getHttp.request('/read', {
+      retry: { sleep: async () => undefined, random: () => 0 },
+    });
+    const headResult = await headHttp.request('/read', {
+      method: 'head',
+      retry: { sleep: async () => undefined, random: () => 0 },
+    });
+
+    // Assert
+    expect(getResult).toEqual({ get: true });
+    expect(headResult).toBeUndefined();
+    expect(getFetch).toHaveBeenCalledTimes(2);
+    expect(headFetch).toHaveBeenCalledTimes(2);
+    expect(headFetch.mock.calls[0]?.[1]?.method).toBe('HEAD');
+  });
+
+  it('does not let global retry settings or predicates retry writes by default', async () => {
+    // Arrange
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(jsonResponse({ shouldNotRun: true }));
+    const http = httpClient(fetchMock, { maxRetries: 3, shouldRetry: () => true });
+
+    // Act
+    const error = await http.request('/write', { method: 'post', body: { value: 1 } }).catch(
+      (caught: unknown) => caught,
+    );
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a write only when the request explicitly supplies a retry budget', async () => {
+    // Arrange
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(jsonResponse({ saved: true }));
+    const http = httpClient(fetchMock, { maxRetries: 3 });
+
+    // Act
+    const result = await http.request('/write', {
+      method: 'PUT',
+      body: { value: 1 },
+      retry: { maxRetries: 1, sleep: async () => undefined, random: () => 0 },
+    });
+
+    // Assert
+    expect(result).toEqual({ saved: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry an unsafe timeout by default', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('aborted', 'AbortError'));
+          });
+        }),
+    );
+    const http = httpClient(fetchMock, { maxRetries: 3 });
+
+    // Act
+    const error = await http
+      .request('/write', { method: 'DELETE', timeoutMs: 1 })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminTimeoutError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('builds query strings, serializes JSON bodies, and supports skipAuth requests', async () => {
@@ -460,7 +551,7 @@ describe('HttpClient', () => {
   });
 });
 
-function httpClient(fetchMock: typeof fetch, retry: { maxRetries: number }): HttpClient {
+function httpClient(fetchMock: typeof fetch, retry: RetryOptions): HttpClient {
   const auth = new AuthService({
     fetch: fetchMock,
     storage: new MemoryTokenStorage(),
