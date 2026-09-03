@@ -17,6 +17,8 @@ experimental account-mutating helpers without dry-run or rollback support.
 
 ## Install
 
+Version `1.1.0` introduces a license change. Read [License](#license) before upgrading.
+
 The package is ESM-only, requires Node `>=24`, and supports imports from
 `garmin-connect-sdk` only.
 
@@ -130,3 +132,21 @@ Version `1.0.0` defines the supported package-root API. Read methods and exporte
 signatures follow Semantic Versioning. Workout, calendar, and weight mutations remain operationally
 experimental because they use unsupported Garmin endpoints, but their public method signatures also
 follow Semantic Versioning.
+
+## License
+
+Starting with version `1.1.0`, this SDK uses the
+[PolyForm Noncommercial License 1.0.0](./LICENSE). It is source-available software,
+not OSI-approved open source. The license permits noncommercial purposes and specifies
+permitted personal uses and categories of noncommercial organizations.
+
+Commercial use outside those permitted purposes is not licensed. A free app or demo
+is not automatically noncommercial; the license qualifies personal uses as having no
+anticipated commercial application. Read the full terms before using or distributing the SDK.
+
+Previously published releases through `1.0.0` remain available under their original MIT
+terms, including the commercial-use rights they granted. The new terms do not revoke those
+rights. Dependencies retain their own licenses and notices.
+
+The SDK license does not grant permission to access Garmin systems. See the
+[disclaimer](./DISCLAIMER.md) for Garmin access and account risks.

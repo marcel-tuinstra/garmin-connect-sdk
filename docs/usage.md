@@ -3,6 +3,11 @@
 This guide covers authentication, endpoint usage, error handling, and safe writes with
 `garmin-connect-sdk`.
 
+Starting with version `1.1.0`, use is subject to the
+[PolyForm Noncommercial License 1.0.0](../LICENSE). Read the
+[license summary](../README.md#license) before upgrading from an earlier MIT release.
+The SDK license does not grant Garmin access permission; see the [disclaimer](../DISCLAIMER.md).
+
 ## Runtime Shape
 
 - Node `>=24`.

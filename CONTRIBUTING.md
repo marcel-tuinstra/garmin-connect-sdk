@@ -1,5 +1,15 @@
 # Contributing
 
+## Contribution License
+
+The SDK uses the [PolyForm Noncommercial License 1.0.0](./LICENSE) starting with
+version `1.1.0`. By submitting a contribution, you offer it under that license and
+confirm that you have the right to do so. Identify any third-party code you include
+and retain its license and attribution notices. Dependencies keep their own licenses.
+
+Previously published releases through `1.0.0` retain their original MIT terms.
+Read the [license summary](./README.md#license) and [disclaimer](./DISCLAIMER.md).
+
 ## Local Setup
 
 Use Node `>=24`, Corepack, and the pinned pnpm version from `package.json`.

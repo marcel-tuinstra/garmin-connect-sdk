@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### License Change For 1.1.0
+
+- Adopt [PolyForm Noncommercial License 1.0.0](./LICENSE) for SDK releases starting
+  with `1.1.0`. Commercial use outside the license's permitted purposes is not licensed.
+  Read the [license summary](./README.md#license) before upgrading.
+- Preserve the original MIT terms and granted rights for previously published releases
+  through `1.0.0`, including commercial use. Keep third-party licenses and notices intact.
+- Align package metadata and the HTTP user-agent with `1.1.0`, and verify the license
+  identity, text, copyright notice, and documentation in local package checks.
+
+### Changes
+
 - Validate restored sessions with an authenticated profile read, including locally unexpired
   tokens. Clear cached profile data on logout and before session restoration.
 - Distinguish rejected tokens, bot challenges, and ambiguous forbidden responses. Keep stored
