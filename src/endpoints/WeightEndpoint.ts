@@ -9,6 +9,10 @@ import type {
 import { formatDate } from '../utils/dates.js';
 import { buildWeighInPayload } from '../utils/weightPayload.js';
 
+/**
+ * Weight reads use the SDK's bounded retry policy. Weight writes deliberately do not retry after
+ * an uncertain result; read back the affected records before deciding on another mutation.
+ */
 export class WeightEndpoint {
   #http: HttpClient;
 
@@ -39,7 +43,11 @@ export class WeightEndpoint {
     });
   }
 
-  /** Operationally experimental write. Public signature follows SemVer; repeated calls may duplicate. */
+  /**
+   * Operationally experimental write. Public signature follows SemVer; it is not retried
+   * automatically because repeated calls may duplicate a weigh-in. If the outcome is uncertain,
+   * reconcile with {@link getDailyWeighIns} before submitting another one.
+   */
   async addWeighIn(input: AddWeighInInput): Promise<void> {
     await this.#http.request<void>('/weight-service/user-weight', {
       method: 'POST',
@@ -48,7 +56,11 @@ export class WeightEndpoint {
     });
   }
 
-  /** Operationally experimental DELETE. Public signature follows SemVer; reconcile timeouts by GET. */
+  /**
+   * Operationally experimental DELETE. Public signature follows SemVer; it is not retried
+   * automatically. If the outcome is uncertain, reconcile with {@link getDailyWeighIns} before
+   * attempting another removal.
+   */
   async removeWeighIn(input: RemoveWeighInInput): Promise<void> {
     const calendarDate = formatDate(input.calendarDate);
     const samplePk = normalizeSamplePk(input.samplePk);

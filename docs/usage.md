@@ -1,7 +1,7 @@
 # Usage Guide
 
-This guide is the consumer reference for `garmin-connect-sdk`. Keep the README short; put
-operational details here.
+This guide covers authentication, endpoint usage, error handling, and safe writes with
+`garmin-connect-sdk`.
 
 Starting with version `1.1.0`, use is subject to the
 [PolyForm Noncommercial License 1.0.0](../LICENSE). Read the
@@ -114,13 +114,13 @@ const garmin = new GarminConnectSDK({
 });
 ```
 
-| Option                 | Use                                                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `storage`              | Persist tokens with `FileTokenStorage`, keep them in memory with `MemoryTokenStorage`, or provide a custom `TokenStorage`. |
-| `logger`               | Receives SDK logs. Do not log raw Garmin payloads, tokens, cookies, or authorization headers.                              |
-| `fetch`                | Inject a custom fetch for tests, proxying, or controlled runtime environments.                                             |
+| Option                 | Use                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`              | Persist tokens with `FileTokenStorage`, keep them in memory with `MemoryTokenStorage`, or provide a custom `TokenStorage`.            |
+| `logger`               | Receives SDK logs. Do not log raw Garmin payloads, tokens, cookies, or authorization headers.                                         |
+| `fetch`                | Inject a custom fetch for tests, proxying, or controlled runtime environments.                                                        |
 | `retry` / `maxRetries` | Tune retry behavior for reads and login. Does not enable retries for workout, calendar, or weight writes. `Retry-After` is respected. |
-| `timeoutMs`            | Abort HTTP requests that exceed the configured timeout.                                                                    |
+| `timeoutMs`            | Abort HTTP requests that exceed the configured timeout.                                                                               |
 
 Pass MFA to `login()` through `mfaCode`, either as a string or as a function that returns
 the code. It is not a constructor option.
@@ -179,11 +179,14 @@ await garmin.weight.addWeighIn({
   measuredAt: '2026-07-18T14:30:00.000+02:00',
 });
 
-const removable = day.dateWeightList.find((entry) => entry.samplePk != null);
-if (removable?.samplePk != null) {
+// Call only after the user selects a specific record from a fresh daily GET.
+async function removeSelectedWeighIn(selected: (typeof day.dateWeightList)[number]) {
+  if (selected.samplePk == null) {
+    throw new Error('The selected record has no removal identifier.');
+  }
   await garmin.weight.removeWeighIn({
-    calendarDate: removable.calendarDate,
-    samplePk: removable.samplePk,
+    calendarDate: selected.calendarDate,
+    samplePk: selected.samplePk,
   });
 }
 ```
@@ -194,6 +197,7 @@ weigh-ins per day. `removeWeighIn()` permanently deletes the record identified b
 DELETE once and disables retries for both. A timeout or transport failure after dispatch has an
 unknown outcome: read the day back and reconcile the exact record before taking more action. Do not
 log raw weight responses or record identifiers.
+See [reconciling uncertain writes](#reconciling-uncertain-writes) before repeating a mutation.
 
 ## Error Handling
 
@@ -276,9 +280,10 @@ account and may sync to Garmin devices.
 
 ```ts
 const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const workoutName = `SDK Zone 2 Run ${crypto.randomUUID()}`;
 
 const workout = await garmin.workouts.create({
-  name: 'SDK Zone 2 Run',
+  name: workoutName,
   sport: 'running',
   steps: [
     { type: 'warmup', durationSeconds: 600 },
@@ -292,7 +297,13 @@ const schedule = await garmin.workouts.schedule({
   date: futureDate,
 });
 
-await garmin.workouts.unschedule(schedule.workoutScheduleId ?? schedule.id!);
+const scheduleId = schedule.workoutScheduleId ?? schedule.scheduleId ?? schedule.id;
+if (scheduleId == null) {
+  throw new Error('Read the calendar to identify the schedule before removing it.');
+}
+
+// Explicit cleanup of the records returned above; never guess identifiers.
+await garmin.workouts.unschedule(scheduleId);
 await garmin.workouts.delete(workout.workoutId);
 ```
 
@@ -300,17 +311,49 @@ Use `createRaw(payload)` only when you already have a Garmin-shaped workout payl
 trusted local builder. Application-specific mappers should live in the consuming app. Do
 not log raw workout payloads from live accounts.
 
+Every failed `await` stops this example. Do not wrap the entire sequence in a retry loop:
+an earlier step may already have succeeded. Store returned identifiers privately before
+starting the next step. Cleanup can also fail and needs the same read-back checks.
+
+## Reconciling Uncertain Writes
+
+A timeout, lost connection, or unusable success response can occur after Garmin applies
+a change. The SDK returns that failure without repeating the mutation. Stop the write
+sequence and inspect the same account through a read endpoint:
+
+Keep the intended name/marker, date, and relevant input in private application state
+before dispatch. That gives you something to compare if the response never arrives.
+
+| Uncertain operation                                  | Read back before taking further action                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workouts.create()` / `createRaw()`                  | Page through `workouts.list({ start, limit, myWorkoutsOnly: true })` for the unique name or marker used in the request. For a candidate, use `workouts.get(workoutId)` to compare its details. The default list contains only 20 records; one page is not an exhaustive search.                                                             |
+| `workouts.schedule()` / `calendar.addWorkout()`      | Use `calendar.getWeek(date)` or `getMonth(year, month)` for the requested date. Match the date and workout ID and identify the actual schedule. Multiple entries for the same workout may be legitimate.                                                                                                                                    |
+| `workouts.unschedule()` / `calendar.removeWorkout()` | Read the relevant week/month and check whether the exact schedule is still present. A schedule identifier is not the workout identifier; never substitute one for the other.                                                                                                                                                                |
+| `workouts.delete()`                                  | Call `workouts.get(workoutId)` for the known ID. A successful read means it remains. A `GarminRequestError` with `statusCode === 404` is evidence of absence, not proof that this delete succeeded; endpoint drift or authorization can obscure the result. Resolve uncertainty with another read or manual inspection, not another delete. |
+| `weight.addWeighIn()`                                | Use `weight.getDailyWeighIns(day)` or `getWeighIns(start, end)` around the measurement's calendar date. Compare the timestamp and mass with the submitted measurement; reads express mass in grams, not the input `kg`/`lbs` unit. Multiple weigh-ins per day are supported.                                                                |
+| `weight.removeWeighIn()`                             | Read the same day again and look for the exact `samplePk` and `calendarDate` pair from the original GET. Do not remove another entry with a similar weight or substitute `version` for `samplePk`.                                                                                                                                          |
+
+For calendar reads, `getMonth()` accepts months 1–12. Missing calendar fields, a partial
+list, or a failed read are not proof that a mutation failed. An empty result immediately
+after a write may also be inconclusive. Keep the outcome unresolved and inspect again
+later, respecting rate limits; do not turn uncertainty into another write.
+
+If there is no reliable match or more than one candidate, ask the user to check Garmin
+Connect. Do not automatically create duplicates, delete possible matches, or reconcile
+across accounts. Read-back results and identifiers belong in private application state,
+not logs or public bug reports. Logging an outcome such as `needsReview: true` is enough.
+
 ## Troubleshooting
 
-| Error or symptom            | Action                                                                              |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                   |
-| `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually. |
-| `GarminSessionExpiredError` | Delete the token file or call `logout()`, then log in again.                        |
-| `GarminRateLimitError`      | Back off and respect `retryAfterMs` when present.                                   |
-| `GarminTimeoutError`        | Increase `timeoutMs` or retry later.                                                |
-| `GarminValidationError`     | Garmin may have changed a response shape. Share only minimized, redacted shapes.    |
-| Repeated auth failures      | Check credentials, MFA, account status, and private Garmin endpoint drift.          |
+| Error or symptom            | Action                                                                                  |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                        |
+| `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually.     |
+| `GarminSessionExpiredError` | Delete the token file or call `logout()`, then log in again.                            |
+| `GarminRateLimitError`      | Back off and respect `retryAfterMs` when present.                                       |
+| `GarminTimeoutError`        | For reads, review the timeout and retry later. For writes, reconcile the outcome first. |
+| `GarminValidationError`     | Garmin may have changed a response shape. Share only minimized, redacted shapes.        |
+| Repeated auth failures      | Check credentials, MFA, account status, and private Garmin endpoint drift.              |
 
 ## Examples
 
