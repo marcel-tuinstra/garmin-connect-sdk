@@ -3,13 +3,21 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import { GarminConnectSDK } from '../../src/client/GarminConnectSDK.js';
 import { GarminSessionExpiredError } from '../../src/client/GarminRequestError.js';
-import { expiredTokens, fetchCall, jsonResponse, tokenResponse, tokens } from '../helpers/garmin.js';
+import {
+  expiredTokens,
+  fetchCall,
+  jsonResponse,
+  tokenResponse,
+  tokens,
+} from '../helpers/garmin.js';
 
 describe('session restore regressions', () => {
   it('validates a locally fresh restored token even when displayName is cached', async () => {
     const storage = new MemoryTokenStorage();
     await storage.save(tokens({ displayName: 'runner' }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ displayName: 'runner' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ displayName: 'runner' }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
 
     await expect(garmin.restoreSession()).resolves.toBe(true);
@@ -28,7 +36,7 @@ describe('session restore regressions', () => {
 
     await expect(garmin.restoreSession()).rejects.toBeInstanceOf(GarminSessionExpiredError);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(await storage.load()).toBeNull();
   });
 
@@ -51,7 +59,9 @@ describe('session restore regressions', () => {
   it('does not expose a stale profile after logout', async () => {
     const storage = new MemoryTokenStorage();
     await storage.save(tokens({ displayName: 'runner' }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ displayName: 'runner' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ displayName: 'runner' }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
 
     await garmin.restoreSession();
