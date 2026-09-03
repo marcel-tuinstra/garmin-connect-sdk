@@ -11,8 +11,9 @@ import { formatDate } from '../utils/dates.js';
 /**
  * Experimental Garmin calendar APIs.
  *
- * Month/week reads are safe, but workout scheduling helpers mutate the Garmin account. Treat this
- * namespace uses unsupported Garmin behavior, but its public signatures follow SemVer.
+ * Month/week reads use the SDK's bounded retry policy, but workout scheduling helpers mutate the
+ * Garmin account and deliberately do not retry after an uncertain result. This namespace uses
+ * unsupported Garmin behavior; its public signatures follow SemVer.
  */
 export class CalendarEndpoint {
   #http: HttpClient;
@@ -36,6 +37,10 @@ export class CalendarEndpoint {
     );
   }
 
+  /**
+   * Schedules a workout without automatic retries. If its outcome is uncertain, reconcile with
+   * {@link getWeek} or {@link getMonth} before attempting another schedule.
+   */
   addWorkout(options: ScheduleWorkoutOptions): Promise<WorkoutSchedule> {
     return this.#http.request(`/workout-service/schedule/${options.workoutId}`, {
       method: 'POST',
@@ -45,6 +50,10 @@ export class CalendarEndpoint {
     });
   }
 
+  /**
+   * Removes a workout without automatic retries. If its outcome is uncertain, reconcile with
+   * {@link getWeek} or {@link getMonth} before attempting another removal.
+   */
   removeWorkout(scheduleId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
       method: 'DELETE',

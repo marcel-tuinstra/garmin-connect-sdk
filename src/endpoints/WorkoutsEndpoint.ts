@@ -22,7 +22,9 @@ import { buildWorkoutPayload, isCreateWorkoutInput } from '../utils/workoutPaylo
  * Experimental Garmin workout APIs.
  *
  * Methods on this endpoint can create, schedule, unschedule, and delete workouts in the Garmin
- * account. The public signatures follow SemVer, while Garmin's unsupported behavior may drift.
+ * account. Reads use the SDK's bounded retry policy; writes deliberately do not retry because an
+ * interrupted request may already have changed the account. The public signatures follow SemVer,
+ * while Garmin's unsupported behavior may drift.
  */
 export class WorkoutsEndpoint {
   #http: HttpClient;
@@ -54,6 +56,10 @@ export class WorkoutsEndpoint {
     });
   }
 
+  /**
+   * Creates a workout definition without automatic retries. If its outcome is uncertain,
+   * reconcile by listing workouts and applying application-specific matching before retrying.
+   */
   create(input: WorkoutCreateRequest): Promise<Workout> {
     const payload = isCreateWorkoutInput(input) ? buildWorkoutPayload(input) : input;
     return this.createRaw(payload);
@@ -68,6 +74,10 @@ export class WorkoutsEndpoint {
     });
   }
 
+  /**
+   * Schedules a workout without automatic retries. If its outcome is uncertain, inspect the
+   * relevant calendar week or month before attempting another schedule.
+   */
   schedule(options: ScheduleWorkoutOptions): Promise<WorkoutSchedule> {
     return this.#http.request(`/workout-service/schedule/${options.workoutId}`, {
       method: 'POST',
@@ -77,6 +87,10 @@ export class WorkoutsEndpoint {
     });
   }
 
+  /**
+   * Removes a scheduled workout without automatic retries. If its outcome is uncertain, inspect
+   * the relevant calendar week or month before attempting another removal.
+   */
   unschedule(scheduleId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
       method: 'DELETE',
@@ -84,6 +98,10 @@ export class WorkoutsEndpoint {
     });
   }
 
+  /**
+   * Deletes a workout definition without automatic retries. If its outcome is uncertain, use
+   * {@link get} to reconcile the workout's availability before deciding whether to retry.
+   */
   delete(workoutId: string | number): Promise<unknown> {
     return this.#http.request(`/workout-service/workout/${workoutId}`, {
       method: 'DELETE',

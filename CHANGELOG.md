@@ -25,6 +25,9 @@
   without reusing the rejected access token. Keep writes out of auth recovery.
 - Limit ordinary API retries to reads by default. Explicitly disable retries for workout,
   calendar, and weight mutations, including when global retry settings are increased.
+- Document read-back checks for uncertain workout, calendar, and weight mutations.
+  Require an explicitly selected weigh-in in the removal example and keep activity
+  example output limited to aggregate availability counts.
 
 ## 1.0.0 - 2026-07-18
 
