@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { MemoryTokenStorage } from '../../src/auth/MemoryTokenStorage.js';
 import { GarminConnectSDK } from '../../src/client/GarminConnectSDK.js';
-import { GarminRequestError, GarminSessionExpiredError } from '../../src/client/GarminRequestError.js';
+import {
+  GarminRequestError,
+  GarminSessionExpiredError,
+} from '../../src/client/GarminRequestError.js';
 import { fetchCall, jsonResponse, tokenResponse, tokens } from '../helpers/garmin.js';
 
 const TEST_LOGIN = { email: 'runner@example.com', password: 'secret' };
@@ -96,7 +99,7 @@ describe('GarminConnectSDK', () => {
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
     expect(await storage.load()).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('keeps stored tokens after a transient session-validation failure', async () => {
@@ -121,6 +124,7 @@ describe('GarminConnectSDK', () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse({ displayName: 'runner' }))
+      .mockResolvedValueOnce(new Response('', { status: 401 }))
       .mockResolvedValueOnce(new Response('', { status: 401 }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
     await garmin.restoreSession();
@@ -132,7 +136,7 @@ describe('GarminConnectSDK', () => {
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
     expect(cacheError).toBeInstanceOf(GarminSessionExpiredError);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('fetches profile after login when the token response has no displayName', async () => {
@@ -158,7 +162,9 @@ describe('GarminConnectSDK', () => {
     // Arrange
     const storage = new MemoryTokenStorage();
     await storage.save(tokens({ displayName: 'runner' }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ displayName: 'runner' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ displayName: 'runner' }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
     await garmin.restoreSession();
 
@@ -175,7 +181,9 @@ describe('GarminConnectSDK', () => {
     // Arrange
     const storage = new MemoryTokenStorage();
     await storage.save(tokens({ displayName: 'runner' }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ displayName: 'runner' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ displayName: 'runner' }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
     await garmin.restoreSession();
     await garmin.logout();
@@ -192,7 +200,9 @@ describe('GarminConnectSDK', () => {
     // Arrange
     const storage = new MemoryTokenStorage();
     await storage.save(tokens({ displayName: 'runner' }));
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ displayName: 'runner' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ displayName: 'runner' }));
     const garmin = new GarminConnectSDK({ storage, fetch: fetchMock, maxRetries: 0 });
     await garmin.restoreSession();
     await storage.clear();
@@ -268,12 +278,12 @@ describe('GarminConnectSDK', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse({ displayName: 'runner' }))
       .mockImplementation(
-      (_input, init) =>
-        new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            reject(new DOMException('aborted', 'AbortError'));
-          });
-        }),
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => {
+              reject(new DOMException('aborted', 'AbortError'));
+            });
+          }),
       );
     const garmin = new GarminConnectSDK({
       storage,
@@ -332,12 +342,12 @@ describe('GarminConnectSDK', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse({ displayName: 'runner' }))
       .mockImplementation(
-      (_input, init) =>
-        new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            reject(new DOMException('aborted', 'AbortError'));
-          });
-        }),
+        (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => {
+              reject(new DOMException('aborted', 'AbortError'));
+            });
+          }),
       );
     const garmin = new GarminConnectSDK({
       storage,

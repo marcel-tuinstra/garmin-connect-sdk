@@ -48,6 +48,8 @@ export class AuthService {
   #retry: RetryOptions;
   #tokens: GarminTokens | null = null;
   #refreshPromise: Promise<GarminTokens> | null = null;
+  #sessionGeneration = 0;
+  #storageMutation: Promise<void> = Promise.resolve();
 
   constructor(options: AuthServiceOptions = {}) {
     this.storage = options.storage ?? new MemoryTokenStorage();
@@ -64,6 +66,10 @@ export class AuthService {
     return this.#tokens?.accessToken ?? null;
   }
 
+  get sessionGeneration(): number {
+    return this.#sessionGeneration;
+  }
+
   async restoreSession(): Promise<boolean> {
     this.#tokens = null;
     const tokens = await this.storage.load();
@@ -74,6 +80,7 @@ export class AuthService {
   }
 
   async login(options: LoginOptions): Promise<GarminTokens> {
+    const loginGeneration = ++this.#sessionGeneration;
     const operation = async (): Promise<GarminTokens> => {
       const loginUrl = new URL(`${SSO_BASE_URL}/mobile/api/login`);
       loginUrl.search = new URLSearchParams({
@@ -140,8 +147,9 @@ export class AuthService {
         cookieHeader(loginResponse.headers),
       );
       const tokens = await this.#exchangeTicket(ticket);
+      if (loginGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
       this.#tokens = tokens;
-      await this.storage.save(tokens);
+      await this.#mutateStorage(() => this.storage.save(tokens));
       this.#logger.info('Garmin login succeeded.', { tokens: redact(tokens) });
       return { ...tokens };
     };
@@ -171,6 +179,80 @@ export class AuthService {
 
   async refresh(): Promise<GarminTokens> {
     return this.#refresh({ skipIfFresh: false });
+  }
+
+  /**
+   * Performs the single refresh attempt allowed after a rejected authenticated
+   * read. The rejected credential is held only for this call and is never
+   * restored as an active access token.
+   */
+  async recoverSession(
+    rejected: GarminTokens,
+    generation = this.#sessionGeneration,
+  ): Promise<GarminTokens> {
+    if (!rejected.refreshToken) {
+      throw new GarminSessionExpiredError({ message: 'No Garmin refresh token is available.' });
+    }
+    if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+    if (this.#refreshPromise) return { ...(await this.#refreshPromise) };
+
+    const candidate = { ...rejected };
+    const recoveryPromise = this.#withStorageRefreshLock(async () => {
+      const stored = await this.storage.load();
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+      const replacement =
+        stored &&
+        (stored.accessToken !== candidate.accessToken ||
+          stored.refreshToken !== candidate.refreshToken)
+          ? stored
+          : undefined;
+      if (
+        replacement?.accessToken &&
+        replacement.accessToken !== candidate.accessToken &&
+        !requiresRefresh(replacement)
+      ) {
+        this.#tokens = { ...replacement };
+        return { ...replacement };
+      }
+
+      const recoveryCandidate = replacement ?? candidate;
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+
+      this.#tokens = null;
+      await this.#mutateStorage(() => this.storage.clear());
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+
+      try {
+        return await this.#refreshTokens({
+          candidate: recoveryCandidate,
+          clearOnSessionFailure: false,
+          canPersist: () => generation === this.#sessionGeneration,
+        });
+      } catch (error) {
+        if (generation === this.#sessionGeneration) this.#tokens = null;
+        if (
+          generation === this.#sessionGeneration &&
+          !(error instanceof GarminSessionExpiredError)
+        ) {
+          try {
+            await this.#mutateStorage(() =>
+              this.storage.save(quarantinedTokens(recoveryCandidate)),
+            );
+          } catch {
+            // Preserve the classified recovery error if token storage is unavailable.
+          }
+        }
+        if (error instanceof GarminRequestError) throw error;
+        throw new GarminRequestError({ message: 'Garmin session recovery failed.' });
+      }
+    });
+    this.#refreshPromise = recoveryPromise;
+
+    try {
+      return { ...(await recoveryPromise) };
+    } finally {
+      if (this.#refreshPromise === recoveryPromise) this.#refreshPromise = null;
+    }
   }
 
   async #refresh({ skipIfFresh }: { skipIfFresh: boolean }): Promise<GarminTokens> {
@@ -216,8 +298,33 @@ export class AuthService {
     }
   }
 
-  async #refreshTokens(): Promise<GarminTokens> {
-    if (!this.#tokens?.refreshToken) {
+  async #mutateStorage<T>(operation: () => Promise<T>): Promise<T> {
+    let release: () => void = () => undefined;
+    const previous = this.#storageMutation;
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    this.#storageMutation = current;
+
+    await previous;
+    try {
+      return await operation();
+    } finally {
+      release();
+      if (this.#storageMutation === current) this.#storageMutation = Promise.resolve();
+    }
+  }
+
+  async #refreshTokens({
+    candidate = this.#tokens,
+    clearOnSessionFailure = true,
+    canPersist,
+  }: {
+    candidate?: GarminTokens | null;
+    clearOnSessionFailure?: boolean;
+    canPersist?: () => boolean;
+  } = {}): Promise<GarminTokens> {
+    if (!candidate?.refreshToken) {
       throw new GarminSessionExpiredError({ message: 'No Garmin refresh token is available.' });
     }
 
@@ -225,7 +332,7 @@ export class AuthService {
       method: 'POST',
       headers: {
         ...nativeHeaders({
-          authorization: buildBasicAuth(this.#tokens.clientId ?? DI_CLIENT_IDS[0]),
+          authorization: buildBasicAuth(candidate.clientId ?? DI_CLIENT_IDS[0]),
           accept: 'application/json',
           'content-type': 'application/x-www-form-urlencoded',
           'cache-control': 'no-cache',
@@ -233,8 +340,8 @@ export class AuthService {
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
-        refresh_token: this.#tokens.refreshToken,
-        client_id: this.#tokens.clientId ?? DI_CLIENT_IDS[0],
+        refresh_token: candidate.refreshToken,
+        client_id: candidate.clientId ?? DI_CLIENT_IDS[0],
       }),
     });
 
@@ -246,20 +353,44 @@ export class AuthService {
     if (!response.ok) {
       const evidence = await readResponseErrorEvidence(response);
       const error = errorFromResponse(response, '/di-oauth2-service/oauth/token', evidence);
-      if (error instanceof GarminSessionExpiredError) await this.logout();
+      if (error instanceof GarminSessionExpiredError && clearOnSessionFailure) await this.logout();
       throw error;
     }
 
     const payload = (await response.json()) as AuthTokensResponse;
-    const tokens = normalizeTokenResponse(payload, this.#tokens.displayName, this.#tokens.clientId);
+    const tokens = normalizeTokenResponse(payload, candidate.displayName, candidate.clientId);
+    if (canPersist && !canPersist()) {
+      throw new GarminRequestError({ message: 'Garmin session recovery was cancelled.' });
+    }
     this.#tokens = tokens;
-    await this.storage.save(tokens);
+    await this.#mutateStorage(() => this.storage.save(tokens));
+    if (canPersist && !canPersist()) {
+      if (
+        this.#tokens?.accessToken === tokens.accessToken &&
+        this.#tokens.refreshToken === tokens.refreshToken
+      )
+        this.#tokens = null;
+      throw recoveryCancelledError();
+    }
     return { ...tokens };
   }
 
   async logout(): Promise<void> {
+    this.#sessionGeneration += 1;
     this.#tokens = null;
-    await this.storage.clear();
+    await this.#mutateStorage(() => this.storage.clear());
+  }
+
+  async invalidateSession(tokens: GarminTokens, generation: number): Promise<void> {
+    if (
+      generation !== this.#sessionGeneration ||
+      this.#tokens?.accessToken !== tokens.accessToken ||
+      this.#tokens.refreshToken !== tokens.refreshToken
+    )
+      return;
+    this.#sessionGeneration += 1;
+    this.#tokens = null;
+    await this.#mutateStorage(() => this.storage.clear());
   }
 
   /**
@@ -267,6 +398,7 @@ export class AuthService {
    * retained so a transient authenticated request failure can be retried.
    */
   clearSessionCache(): void {
+    this.#sessionGeneration += 1;
     this.#tokens = null;
   }
 
@@ -403,6 +535,18 @@ export class AuthService {
 function requiresRefresh(tokens: GarminTokens): boolean {
   const expiresAt = Date.parse(tokens.accessTokenExpiresAt);
   return !Number.isFinite(expiresAt) || expiresAt - EXPIRY_SKEW_MS <= Date.now();
+}
+
+function quarantinedTokens(tokens: GarminTokens): GarminTokens {
+  return {
+    ...tokens,
+    accessToken: '',
+    accessTokenExpiresAt: new Date(0).toISOString(),
+  };
+}
+
+function recoveryCancelledError(): GarminRequestError {
+  return new GarminRequestError({ message: 'Garmin session recovery was cancelled.' });
 }
 
 function normalizeTokenResponse(
@@ -597,7 +741,8 @@ function rateLimit(response: Response, endpoint: string): GarminRateLimitError {
 
 function botChallenge(statusCode: number | undefined, endpoint: string): GarminBotChallengeError {
   return new GarminBotChallengeError({
-    message: 'Garmin login was blocked by a bot challenge. Try again later or from a trusted network.',
+    message:
+      'Garmin login was blocked by a bot challenge. Try again later or from a trusted network.',
     statusCode,
     endpoint,
   });

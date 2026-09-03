@@ -20,6 +20,9 @@
   sessions on ambiguous authorization or transient failures, and redact error response details.
 - Stop the CLI from falling back to a password login after a rate limit, bot challenge, or
   transient session-validation failure.
+- Recover a definitively rejected authenticated read with one token refresh and one replay.
+  Coordinate concurrent recovery and preserve refresh credentials after transient failures
+  without reusing the rejected access token. Keep writes out of auth recovery.
 
 ## 1.0.0 - 2026-07-18
 

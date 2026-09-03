@@ -139,6 +139,72 @@ describe('HttpClient', () => {
     expect((error as GarminSessionExpiredError).endpoint).toBe('/private');
   });
 
+  it('recovers once and replays an authenticated GET after a definitive rejection', async () => {
+    // Arrange
+    let apiCalls = 0;
+    const storage = new MemoryTokenStorage();
+    await storage.save(tokens({ refreshToken: 'recover-refresh-token' }));
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      if (String(input).includes('/di-oauth2-service/oauth/token')) {
+        return Promise.resolve(tokenResponse('recovered-refresh-token'));
+      }
+      apiCalls += 1;
+      return Promise.resolve(
+        apiCalls === 1 ? new Response('', { status: 401 }) : jsonResponse({ recovered: true }),
+      );
+    });
+    const auth = new AuthService({ fetch: fetchMock, storage });
+    const http = new HttpClient({ auth, fetch: fetchMock, retry: { maxRetries: 0 } });
+
+    // Act
+    const result = await http.request('/private');
+
+    // Assert
+    expect(result).toEqual({ recovered: true });
+    expect(apiCalls).toBe(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect((await storage.load())?.refreshToken).toBe('recovered-refresh-token');
+  });
+
+  it('does not recover or replay a mutating request', async () => {
+    // Arrange
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response('', { status: 401 }));
+    const http = httpClient(fetchMock, { maxRetries: 3 });
+
+    // Act
+    const error = await http
+      .request('/private', { method: 'POST', body: { mutation: true } })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminSessionExpiredError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry after a failed controlled recovery even with an always-retry policy', async () => {
+    // Arrange
+    const storage = new MemoryTokenStorage();
+    await storage.save(tokens({ refreshToken: 'recover-refresh-token' }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 401 }))
+      .mockResolvedValueOnce(new Response('', { status: 503 }));
+    const auth = new AuthService({ fetch: fetchMock, storage });
+    const http = new HttpClient({
+      auth,
+      fetch: fetchMock,
+      retry: { maxRetries: 3, shouldRetry: () => true, sleep: async () => undefined },
+    });
+
+    // Act
+    const error = await http.request('/private').catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect((error as GarminRequestError).statusCode).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('uses explicit JSON token rejection and challenge headers to classify failed requests', async () => {
     // Arrange
     const tokenRejected = vi
@@ -146,7 +212,9 @@ describe('HttpClient', () => {
       .mockResolvedValue(jsonResponse({ error: 'invalid_token' }, { status: 403 }));
     const cloudflareChallenge = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(new Response('', { status: 403, headers: { 'cf-mitigated': 'challenge' } }));
+      .mockResolvedValue(
+        new Response('', { status: 403, headers: { 'cf-mitigated': 'challenge' } }),
+      );
 
     // Act
     const rejectionError = await httpClient(tokenRejected, { maxRetries: 0 })
@@ -167,7 +235,9 @@ describe('HttpClient', () => {
     const http = httpClient(fetchMock, { maxRetries: 0 });
 
     // Act
-    const error = await http.request('/private', { skipAuth: true }).catch((caught: unknown) => caught);
+    const error = await http
+      .request('/private', { skipAuth: true })
+      .catch((caught: unknown) => caught);
 
     // Assert
     expect(error).toBeInstanceOf(GarminRequestError);
@@ -183,7 +253,9 @@ describe('HttpClient', () => {
     const http = new HttpClient({ auth, fetch: fetchMock, retry: { maxRetries: 0 } });
 
     // Act
-    const error = await http.request('/public', { skipAuth: true }).catch((caught: unknown) => caught);
+    const error = await http
+      .request('/public', { skipAuth: true })
+      .catch((caught: unknown) => caught);
 
     // Assert
     expect(error).toBeInstanceOf(GarminSessionExpiredError);
@@ -209,7 +281,9 @@ describe('HttpClient', () => {
     const http = httpClient(fetchMock, { maxRetries: 0 });
 
     // Act
-    const error = await http.request('/private', { skipAuth: true }).catch((caught: unknown) => caught);
+    const error = await http
+      .request('/private', { skipAuth: true })
+      .catch((caught: unknown) => caught);
 
     // Assert
     expect(error).toBeInstanceOf(GarminRequestError);
