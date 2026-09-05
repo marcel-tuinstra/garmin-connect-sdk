@@ -110,6 +110,43 @@ describe('schemas', () => {
     expect(calendarMonth.calendarItems).toHaveLength(1);
   });
 
+  it('accepts mixed activity and scheduled-workout calendar items', () => {
+    // Arrange
+    const payload = {
+      calendarItems: [
+        {
+          date: '2026-09-01',
+          title: 'Morning Run',
+          itemType: 'activity',
+          activityId: 111,
+          workoutId: null,
+          workoutScheduleId: null,
+        },
+        {
+          date: '2026-09-05',
+          title: 'Intervals',
+          itemType: 'workout',
+          workoutId: 1687133685,
+          workoutScheduleId: '1766781002',
+        },
+      ],
+    };
+
+    // Act
+    const result = calendarMonthSchema.parse(payload);
+
+    // Assert
+    expect(result.calendarItems).toMatchObject([
+      { workoutId: null, workoutScheduleId: null, activityId: 111 },
+      { workoutId: 1687133685, workoutScheduleId: '1766781002' },
+    ]);
+    expect(
+      calendarMonthSchema.safeParse({
+        calendarItems: [{ workoutId: true, workoutScheduleId: {} }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('parses Garmin weight day and range payloads while preserving gram values', () => {
     // Arrange
     const rangeMetric = {
