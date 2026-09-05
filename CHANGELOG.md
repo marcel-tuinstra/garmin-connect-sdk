@@ -14,6 +14,8 @@
 
 ### Changes
 
+- Accept explicit `null` workout references on completed activity calendar items so calendar
+  month/week reads remain compatible with Garmin responses.
 - Validate restored sessions with an authenticated profile read, including locally unexpired
   tokens. Clear cached profile data on logout and before session restoration.
 - Distinguish rejected tokens, bot challenges, and ambiguous forbidden responses. Keep stored
