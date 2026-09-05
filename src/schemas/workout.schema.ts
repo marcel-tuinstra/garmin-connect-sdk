@@ -83,8 +83,8 @@ export const calendarItemSchema = z
     itemType: z.string().optional(),
     date: z.string().optional(),
     title: z.string().optional(),
-    workoutId: numberOrStringSchema.optional(),
-    workoutScheduleId: numberOrStringSchema.optional(),
+    workoutId: numberOrStringSchema.nullable().optional(),
+    workoutScheduleId: numberOrStringSchema.nullable().optional(),
     workout: workoutSummarySchema.optional(),
   })
   .passthrough();
