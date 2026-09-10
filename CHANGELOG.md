@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add typed and raw full-replacement workout updates with validation, immutable caller input, no
+  automatic retry, and documented read-back reconciliation for uncertain outcomes.
+
 ## 1.1.0 - 2026-09-05
 
 ### License Change For 1.1.0
