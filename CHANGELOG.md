@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
+  malformed-data handling, safe key filtering, and location redaction by default.
+
 ## 1.1.0 - 2026-09-05
 
 ### License Change For 1.1.0

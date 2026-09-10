@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  decodeActivityDetailMetrics,
-  decodeActivityMetricRows,
-  decodeActivityMetrics,
-} from '../../src/utils/activityMetrics.js';
+import { decodeActivityMetricRows } from '../../src/utils/activityMetrics.js';
 
 describe('activity detail metric parser', () => {
   it('decodes every row using top-level descriptors by index', () => {
@@ -14,10 +10,7 @@ describe('activity detail metric parser', () => {
         { metricsIndex: 0, key: 'elapsedDuration' },
         { metricsIndex: 1, key: 'cadence' },
       ],
-      activityDetailMetrics: [
-        { metrics: [12, 84, 140] },
-        { metrics: [24, 85, 142] },
-      ],
+      activityDetailMetrics: [{ metrics: [12, 84, 140] }, { metrics: [24, 85, 142] }],
     };
 
     expect(decodeActivityMetricRows(payload)).toEqual([
@@ -44,7 +37,7 @@ describe('activity detail metric parser', () => {
       ],
     };
 
-    expect(decodeActivityMetrics(payload)).toEqual([
+    expect(decodeActivityMetricRows(payload)).toEqual([
       { heartRate: 140, cadence: 84 },
       { cadence: 86, heartRate: 142 },
     ]);
@@ -60,7 +53,7 @@ describe('activity detail metric parser', () => {
       activityDetailMetrics: [{ metrics: [null] }, { metrics: [141, 220] }],
     };
 
-    expect(decodeActivityDetailMetrics(payload)).toEqual([
+    expect(decodeActivityMetricRows(payload)).toEqual([
       { heartRate: null, power: null, speed: null },
       { heartRate: 141, power: null, speed: null },
     ]);

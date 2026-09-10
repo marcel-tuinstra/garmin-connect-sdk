@@ -72,6 +72,7 @@ export type {
 export { buildWorkoutPayload } from './utils/workoutPayload.js';
 export {
   decodeActivityMetricRow,
+  decodeActivityMetricRows,
   normalizeMetricDescriptors,
   summarizeActivityDetails,
   summarizeActivityHeartRateShape,

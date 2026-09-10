@@ -90,12 +90,6 @@ export function decodeActivityMetricRows(
   }, []);
 }
 
-/** Alias that makes the activity-detail scope explicit for consumers. */
-export const decodeActivityDetailMetrics = decodeActivityMetricRows;
-
-/** Alias for the concise package-level activity metric helper. */
-export const decodeActivityMetrics = decodeActivityMetricRows;
-
 export function summarizeActivityDetails(
   details: unknown,
   options: DecodeActivityMetricOptions = {},
@@ -116,7 +110,9 @@ export function summarizeActivityDetails(
 
   const geoPolyline = arrayValue(objectValue(details.geoPolylineDTO)?.polyline);
   const heartRateValues = arrayValue(objectValue(details.heartRateDTO)?.heartRateValues).concat(
-    arrayValue(details.heartRateDTOs).flatMap((dto) => arrayValue(objectValue(dto)?.heartRateValues)),
+    arrayValue(details.heartRateDTOs).flatMap((dto) =>
+      arrayValue(objectValue(dto)?.heartRateValues),
+    ),
   );
   const metricRowHeartRateSamples = countMetricRowsWithHeartRate(metrics, heartRateDescriptors);
   const powerValues = arrayValue(objectValue(details.powerDTO)?.powerValues).concat(
@@ -148,9 +144,7 @@ export function summarizeActivityDetails(
   };
 }
 
-export function summarizeActivitySplits(
-  splits: unknown,
-): ActivitySplitsSummary | { type: string } {
+export function summarizeActivitySplits(splits: unknown): ActivitySplitsSummary | { type: string } {
   if (Array.isArray(splits)) {
     return {
       count: splits.length,
@@ -190,9 +184,15 @@ export function summarizeActivityHeartRateShape(details: unknown): ActivityHeart
 
   const metrics = arrayValue(details.activityDetailMetrics);
   const metricDescriptors = collectMetricDescriptors(details, metrics);
-  const publicDescriptors = metricDescriptors.filter((descriptor) => !isLocationMetric(descriptor.key));
-  const heartRateDescriptors = publicDescriptors.filter((descriptor) => isHeartRateMetric(descriptor.key));
-  const timeDescriptors = publicDescriptors.filter((descriptor) => isTimeOrOffsetMetric(descriptor.key));
+  const publicDescriptors = metricDescriptors.filter(
+    (descriptor) => !isLocationMetric(descriptor.key),
+  );
+  const heartRateDescriptors = publicDescriptors.filter((descriptor) =>
+    isHeartRateMetric(descriptor.key),
+  );
+  const timeDescriptors = publicDescriptors.filter((descriptor) =>
+    isTimeOrOffsetMetric(descriptor.key),
+  );
   const dtoSamples = collectHeartRateValueSamples(details);
   const tupleShape = classifyTupleSamples(dtoSamples);
   const metricRowHrSamples = countMetricRowsWithHeartRate(metrics, heartRateDescriptors);
@@ -200,9 +200,12 @@ export function summarizeActivityHeartRateShape(details: unknown): ActivityHeart
   const notes: string[] = [];
 
   if (dtoSamples.length > 0) notes.push('Heart-rate tuple samples found in activity detail DTOs.');
-  if (metricRowHrSamples > 0) notes.push('Heart-rate samples found in activity detail metric rows.');
+  if (metricRowHrSamples > 0)
+    notes.push('Heart-rate samples found in activity detail metric rows.');
   if (heartRateDescriptors.length > 0 && timeDescriptors.length === 0) {
-    notes.push('Heart-rate metric descriptors were present without timestamp or offset descriptors.');
+    notes.push(
+      'Heart-rate metric descriptors were present without timestamp or offset descriptors.',
+    );
   }
   if (metricDescriptors.length !== publicDescriptors.length) {
     notes.push('Location-like metric descriptors were omitted from descriptorKeys.');
@@ -214,7 +217,11 @@ export function summarizeActivityHeartRateShape(details: unknown): ActivityHeart
   const hasTimestampOrOffset =
     tupleShape === 'timestamp-value' || tupleShape === 'offset-value' || hasMetricRowTiming;
   const firstTupleShape = classifyTupleSamples(dtoSamples.slice(0, 1));
-  const sampleShape = chooseHeartRateSampleShape(tupleShape, metricRowHrSamples, hasMetricRowTiming);
+  const sampleShape = chooseHeartRateSampleShape(
+    tupleShape,
+    metricRowHrSamples,
+    hasMetricRowTiming,
+  );
 
   return heartRateShapeSummary({
     hasHeartRateSamples: dtoSamples.length + metricRowHrSamples > 0,
@@ -229,21 +236,20 @@ export function summarizeActivityHeartRateShape(details: unknown): ActivityHeart
 }
 
 export function normalizeMetricDescriptors(descriptors: unknown[]): ActivityMetricDescriptor[] {
-  return descriptors
-    .reduce<ActivityMetricDescriptor[]>((normalized, descriptor) => {
-      const value = objectValue(descriptor);
-      if (!value) return normalized;
+  return descriptors.reduce<ActivityMetricDescriptor[]>((normalized, descriptor) => {
+    const value = objectValue(descriptor);
+    if (!value) return normalized;
 
-      const key = stringValue(value.key) ?? stringValue(value.metricsKey);
-      if (!key) return normalized;
+    const key = stringValue(value.key) ?? stringValue(value.metricsKey);
+    if (!key) return normalized;
 
-      normalized.push({
-        index: numberValue(value.metricsIndex) ?? numberValue(value.index),
-        key,
-        unit: stringValue(objectValue(value.unit)?.key),
-      });
-      return normalized;
-    }, []);
+    normalized.push({
+      index: numberValue(value.metricsIndex) ?? numberValue(value.index),
+      key,
+      unit: stringValue(objectValue(value.unit)?.key),
+    });
+    return normalized;
+  }, []);
 }
 
 export function decodeActivityMetricRow(
@@ -315,7 +321,9 @@ function collectMetricDescriptors(
 
 function collectHeartRateValueSamples(details: Record<string, unknown>): unknown[] {
   return arrayValue(objectValue(details.heartRateDTO)?.heartRateValues).concat(
-    arrayValue(details.heartRateDTOs).flatMap((dto) => arrayValue(objectValue(dto)?.heartRateValues)),
+    arrayValue(details.heartRateDTOs).flatMap((dto) =>
+      arrayValue(objectValue(dto)?.heartRateValues),
+    ),
   );
 }
 
