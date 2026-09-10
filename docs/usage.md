@@ -269,9 +269,14 @@ const details = await garmin.activities.getDetails(activityId, {
 
 const metricRows = decodeActivityMetricRows(details);
 const firstHeartRateSample = metricRows.find((row) => typeof row.heartRate === 'number')?.heartRate;
+const heartRateSampleCount = metricRows.filter((row) => typeof row.heartRate === 'number').length;
 const summary = summarizeActivityDetails(details);
 
-console.log({ firstHeartRateSample, metricRows: summary.metricRows });
+console.log({
+  firstHeartRateSampleAvailable: firstHeartRateSample !== undefined,
+  heartRateSampleCount,
+  metricRows: summary.metricRows,
+});
 ```
 
 `decodeActivityMetricRows()` supports both payload-level and per-row descriptors, which allows

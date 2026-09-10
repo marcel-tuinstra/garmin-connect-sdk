@@ -43,6 +43,24 @@ describe('activity detail metric parser', () => {
     ]);
   });
 
+  it('falls back to payload descriptors when every row descriptor is unusable', () => {
+    const payload = {
+      metricDescriptors: [{ metricsIndex: 0, key: 'heartRate' }],
+      activityDetailMetrics: [
+        {
+          metricDescriptors: [
+            { metricsIndex: -1, key: 'negative' },
+            { metricsIndex: 0.5, key: 'fractional' },
+            { metricsIndex: 0, key: '__proto__' },
+          ],
+          metrics: [142],
+        },
+      ],
+    };
+
+    expect(decodeActivityMetricRows(payload)).toEqual([{ heartRate: 142 }]);
+  });
+
   it('returns null for missing samples and out-of-range valid indexes', () => {
     const payload = {
       metricDescriptors: [

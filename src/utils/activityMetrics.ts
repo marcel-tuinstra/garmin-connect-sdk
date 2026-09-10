@@ -78,7 +78,9 @@ export function decodeActivityMetricRows(
     // A row's descriptors describe that row's indexes and take precedence
     // over the payload-level set. If a malformed row descriptor set contains
     // no usable descriptors, use the payload-level set as a safe fallback.
-    const rowDescriptors = normalizeMetricDescriptors(arrayValue(metricValue.metricDescriptors));
+    const rowDescriptors = usableMetricDescriptors(
+      normalizeMetricDescriptors(arrayValue(metricValue.metricDescriptors)),
+    );
     const descriptors = rowDescriptors.length > 0 ? rowDescriptors : payloadDescriptors;
     if (values.length === 0) {
       rows.push({});
@@ -295,6 +297,14 @@ function isSafeMetricKey(key: string): boolean {
 
 function isValidMetricIndex(index: number | undefined): index is number {
   return index !== undefined && Number.isInteger(index) && index >= 0;
+}
+
+function usableMetricDescriptors(
+  descriptors: ActivityMetricDescriptor[],
+): ActivityMetricDescriptor[] {
+  return descriptors.filter(
+    (descriptor) => isSafeMetricKey(descriptor.key) && isValidMetricIndex(descriptor.index),
+  );
 }
 
 function isHeartRateMetric(key: string): boolean {
