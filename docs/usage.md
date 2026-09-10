@@ -211,12 +211,15 @@ own error classes, even if their response includes auth-related text.
 The OAuth distinction between a rejected token and insufficient permissions follows
 [RFC 6750, section 3.1](https://www.rfc-editor.org/rfc/rfc6750#section-3.1). Garmin's private
 endpoints can depart from that standard; report a minimized response shape if you encounter
-an unrecognized failure. The SDK does not include response bodies in classified errors.
+an unrecognized failure. A plain HTTP `404` maps to `GarminNotFoundError`, unless stronger
+authentication or challenge evidence is present. The SDK does not include response bodies in
+classified errors.
 
 ```ts
 import {
   GarminBotChallengeError,
   GarminMfaRequiredError,
+  GarminNotFoundError,
   GarminRateLimitError,
   GarminSessionExpiredError,
   GarminValidationError,
@@ -225,6 +228,11 @@ import {
 try {
   await garmin.activities.list({ limit: 5 });
 } catch (error) {
+  if (error instanceof GarminNotFoundError) {
+    // The requested Garmin resource is absent. The error exposes only sanitized diagnostics.
+    throw error;
+  }
+
   if (error instanceof GarminRateLimitError) {
     // Back off. retryAfterMs is set when Garmin sends Retry-After.
     throw error;
@@ -324,14 +332,14 @@ sequence and inspect the same account through a read endpoint:
 Keep the intended name/marker, date, and relevant input in private application state
 before dispatch. That gives you something to compare if the response never arrives.
 
-| Uncertain operation                                  | Read back before taking further action                                                                                                                                                                                                                                                                                                      |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `workouts.create()` / `createRaw()`                  | Page through `workouts.list({ start, limit, myWorkoutsOnly: true })` for the unique name or marker used in the request. For a candidate, use `workouts.get(workoutId)` to compare its details. The default list contains only 20 records; one page is not an exhaustive search.                                                             |
-| `workouts.schedule()` / `calendar.addWorkout()`      | Use `calendar.getWeek(date)` or `getMonth(year, month)` for the requested date. Match the date and workout ID and identify the actual schedule. Multiple entries for the same workout may be legitimate.                                                                                                                                    |
-| `workouts.unschedule()` / `calendar.removeWorkout()` | Read the relevant week/month and check whether the exact schedule is still present. A schedule identifier is not the workout identifier; never substitute one for the other.                                                                                                                                                                |
-| `workouts.delete()`                                  | Call `workouts.get(workoutId)` for the known ID. A successful read means it remains. A `GarminRequestError` with `statusCode === 404` is evidence of absence, not proof that this delete succeeded; endpoint drift or authorization can obscure the result. Resolve uncertainty with another read or manual inspection, not another delete. |
-| `weight.addWeighIn()`                                | Use `weight.getDailyWeighIns(day)` or `getWeighIns(start, end)` around the measurement's calendar date. Compare the timestamp and mass with the submitted measurement; reads express mass in grams, not the input `kg`/`lbs` unit. Multiple weigh-ins per day are supported.                                                                |
-| `weight.removeWeighIn()`                             | Read the same day again and look for the exact `samplePk` and `calendarDate` pair from the original GET. Do not remove another entry with a similar weight or substitute `version` for `samplePk`.                                                                                                                                          |
+| Uncertain operation                                  | Read back before taking further action                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `workouts.create()` / `createRaw()`                  | Page through `workouts.list({ start, limit, myWorkoutsOnly: true })` for the unique name or marker used in the request. For a candidate, use `workouts.get(workoutId)` to compare its details. The default list contains only 20 records; one page is not an exhaustive search.                                    |
+| `workouts.schedule()` / `calendar.addWorkout()`      | Use `calendar.getWeek(date)` or `getMonth(year, month)` for the requested date. Match the date and workout ID and identify the actual schedule. Multiple entries for the same workout may be legitimate.                                                                                                           |
+| `workouts.unschedule()` / `calendar.removeWorkout()` | Read the relevant week/month and check whether the exact schedule is still present. A schedule identifier is not the workout identifier; never substitute one for the other.                                                                                                                                       |
+| `workouts.delete()`                                  | Call `workouts.get(workoutId)` for the known ID. A `GarminNotFoundError` is evidence of absence, not proof that this delete succeeded; endpoint drift or authorization can obscure the result. A successful read means it remains. Resolve uncertainty with another read or manual inspection, not another delete. |
+| `weight.addWeighIn()`                                | Use `weight.getDailyWeighIns(day)` or `getWeighIns(start, end)` around the measurement's calendar date. Compare the timestamp and mass with the submitted measurement; reads express mass in grams, not the input `kg`/`lbs` unit. Multiple weigh-ins per day are supported.                                       |
+| `weight.removeWeighIn()`                             | Read the same day again and look for the exact `samplePk` and `calendarDate` pair from the original GET. Do not remove another entry with a similar weight or substitute `version` for `samplePk`.                                                                                                                 |
 
 For calendar reads, `getMonth()` accepts months 1–12. Missing calendar fields, a partial
 list, or a failed read are not proof that a mutation failed. An empty result immediately
@@ -349,6 +357,7 @@ not logs or public bug reports. Logging an outcome such as `needsReview: true` i
 | --------------------------- | --------------------------------------------------------------------------------------- |
 | `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                        |
 | `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually.     |
+| `GarminNotFoundError`       | Treat the requested resource as absent; verify its identifier when that is unexpected.  |
 | `GarminSessionExpiredError` | Delete the token file or call `logout()`, then log in again.                            |
 | `GarminRateLimitError`      | Back off and respect `retryAfterMs` when present.                                       |
 | `GarminTimeoutError`        | For reads, review the timeout and retry later. For writes, reconcile the outcome first. |
