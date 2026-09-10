@@ -52,6 +52,50 @@ export interface DecodeActivityMetricOptions {
   redactLocation?: boolean;
 }
 
+/**
+ * Decode all metric rows in an activity-details response.
+ *
+ * Garmin can return a different metric descriptor set for each row (for
+ * example when an activity changes devices or sensors). Row descriptors are
+ * therefore preferred over the payload-level descriptors. The returned rows
+ * contain only descriptor keys and never add a canonical duration field.
+ */
+export function decodeActivityMetricRows(
+  details: unknown,
+  options: DecodeActivityMetricOptions = {},
+): DecodedActivityMetricRow[] {
+  if (!isObject(details)) return [];
+
+  const metrics = arrayValue(details.activityDetailMetrics);
+  const payloadDescriptors = normalizeMetricDescriptors(arrayValue(details.metricDescriptors));
+
+  return metrics.reduce<DecodedActivityMetricRow[]>((rows, metric) => {
+    const metricValue = objectValue(metric);
+    if (!metricValue) return rows;
+
+    if (!Array.isArray(metricValue.metrics)) return rows;
+    const values = metricValue.metrics;
+    // A row's descriptors describe that row's indexes and take precedence
+    // over the payload-level set. If a malformed row descriptor set contains
+    // no usable descriptors, use the payload-level set as a safe fallback.
+    const rowDescriptors = normalizeMetricDescriptors(arrayValue(metricValue.metricDescriptors));
+    const descriptors = rowDescriptors.length > 0 ? rowDescriptors : payloadDescriptors;
+    if (values.length === 0) {
+      rows.push({});
+      return rows;
+    }
+
+    rows.push(decodeActivityMetricRow(values, descriptors, options));
+    return rows;
+  }, []);
+}
+
+/** Alias that makes the activity-detail scope explicit for consumers. */
+export const decodeActivityDetailMetrics = decodeActivityMetricRows;
+
+/** Alias for the concise package-level activity metric helper. */
+export const decodeActivityMetrics = decodeActivityMetricRows;
+
 export function summarizeActivityDetails(
   details: unknown,
   options: DecodeActivityMetricOptions = {},
@@ -194,7 +238,7 @@ export function normalizeMetricDescriptors(descriptors: unknown[]): ActivityMetr
       if (!key) return normalized;
 
       normalized.push({
-        index: numberValue(value.metricsIndex),
+        index: numberValue(value.metricsIndex) ?? numberValue(value.index),
         key,
         unit: stringValue(objectValue(value.unit)?.key),
       });
@@ -208,9 +252,12 @@ export function decodeActivityMetricRow(
   options: DecodeActivityMetricOptions = {},
 ): DecodedActivityMetricRow {
   const output: DecodedActivityMetricRow = {};
+  const seenKeys = new Set<string>();
 
   for (const descriptor of descriptors) {
-    if (descriptor.index === undefined) continue;
+    if (!isSafeMetricKey(descriptor.key) || seenKeys.has(descriptor.key)) continue;
+    if (!isValidMetricIndex(descriptor.index)) continue;
+    seenKeys.add(descriptor.key);
     if (options.redactLocation !== false && isLocationMetric(descriptor.key)) {
       output[descriptor.key] = '[REDACTED]';
       continue;
@@ -222,7 +269,26 @@ export function decodeActivityMetricRow(
 }
 
 function isLocationMetric(key: string): boolean {
-  return key.toLowerCase().includes('latitude') || key.toLowerCase().includes('longitude');
+  const normalized = key.replace(/[_\-\s]/g, '').toLowerCase();
+  return (
+    normalized.includes('latitude') ||
+    normalized.includes('longitude') ||
+    normalized.includes('positionlat') ||
+    normalized.includes('positionlong') ||
+    normalized === 'lat' ||
+    normalized === 'lon' ||
+    normalized === 'lng' ||
+    normalized.includes('location') ||
+    normalized.includes('coordinate')
+  );
+}
+
+function isSafeMetricKey(key: string): boolean {
+  return key !== '__proto__' && key !== 'prototype' && key !== 'constructor';
+}
+
+function isValidMetricIndex(index: number | undefined): index is number {
+  return index !== undefined && Number.isInteger(index) && index >= 0;
 }
 
 function isHeartRateMetric(key: string): boolean {
