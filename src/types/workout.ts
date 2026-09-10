@@ -59,6 +59,7 @@ export interface CreateWorkoutInput {
 
 export type GarminWorkoutPayload = Record<string, unknown>;
 export type WorkoutCreateRequest = CreateWorkoutInput | GarminWorkoutPayload;
+export type WorkoutUpdateRequest = WorkoutCreateRequest;
 
 export interface ListWorkoutsOptions {
   start?: number;
