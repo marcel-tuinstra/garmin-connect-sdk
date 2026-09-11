@@ -52,6 +52,7 @@ try {
           'GarminAuthError',
           'GarminBotChallengeError',
           'GarminMfaRequiredError',
+          'GarminNotFoundError',
           'GarminRateLimitError',
           'GarminRequestError',
           'GarminSessionExpiredError',

@@ -4,6 +4,10 @@
 
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
+- Add typed and raw full-replacement workout updates with validation, immutable caller input, no
+  automatic retry, and documented read-back reconciliation for uncertain outcomes.
+- Add a public `GarminNotFoundError` for plain HTTP `404` responses while preserving stronger
+  authentication, challenge, rate-limit, and service-error classifications.
 
 ## 1.1.0 - 2026-09-05
 
