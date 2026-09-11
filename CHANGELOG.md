@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add typed and raw full-replacement workout updates with validation, immutable caller input, no
+  automatic retry, and documented read-back reconciliation for uncertain outcomes.
 - Add a public `GarminNotFoundError` for plain HTTP `404` responses while preserving stronger
   authentication, challenge, rate-limit, and service-error classifications.
 

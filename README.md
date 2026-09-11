@@ -10,8 +10,8 @@ They can change, rate limit, block, or disappear without notice. This project is
 affiliated with, endorsed by, or supported by Garmin. Read the
 [disclaimer](./DISCLAIMER.md) before using it.
 
-Read APIs are the primary use case. Workout creation, calendar scheduling, and weight mutations are
-experimental account-mutating helpers without dry-run or rollback support.
+Read APIs are the primary use case. Workout creation, replacement, calendar scheduling, and weight
+mutations are experimental account-mutating helpers without dry-run or rollback support.
 
 [![Current project Board](https://tracker.tuinstra.dev/api/public/organizations/tuinstra-dev/projects/garmin-connect-sdk/scope.svg)](https://tracker.tuinstra.dev/p/tuinstra-dev/garmin-connect-sdk)
 
@@ -90,7 +90,7 @@ and should be protected like credentials.
 | Sleep and health | Read-oriented               | Daily sleep, sleep ranges, heart rate, stress, HRV, Body Battery    |
 | Weight           | Reads + experimental writes | Daily/range weigh-ins plus manual creation and removal              |
 | User and devices | Read-oriented               | Profile and registered devices                                      |
-| Workouts         | Experimental writes         | List, create, schedule, unschedule, delete                          |
+| Workouts         | Experimental writes         | List, create, replace, schedule, unschedule, delete                 |
 | Calendar         | Experimental writes         | Month/week views and workout schedule changes                       |
 | CLI              | Local verification          | Profile, devices, activities, activity details, sleep, Body Battery |
 
@@ -106,7 +106,7 @@ are unsupported.
 - Back off on rate limits and expect private endpoint drift.
 - Treat workout/calendar/weight writes and write integration tests as live account changes. Weight
   writes mutate health history; workout and calendar changes may also sync to Garmin devices.
-- Workout creation, scheduling, unscheduling, deletion, and weight writes are not retried
+- Workout creation, replacement, scheduling, unscheduling, deletion, and weight writes are not retried
   automatically, even when global retry settings are increased. A lost response can leave
   the outcome uncertain; read back before repeating a mutation.
 - Treat `weight.addWeighIn()` as non-idempotent: repeated calls can create duplicate health records.

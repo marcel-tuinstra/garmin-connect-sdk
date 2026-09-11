@@ -58,6 +58,7 @@ export type {
   ScheduleWorkoutOptions,
   Workout,
   WorkoutCreateRequest,
+  WorkoutUpdateRequest,
   WorkoutExecutableStepInput,
   WorkoutList,
   WorkoutRepeatStepInput,
