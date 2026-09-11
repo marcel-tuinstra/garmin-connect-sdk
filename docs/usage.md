@@ -262,23 +262,37 @@ security reporting for credential, token, health-data, or location-data exposure
 
 ## Activity Details
 
-Garmin activity details expose metric rows as arrays plus descriptors. Use helper functions
-to create shareable summaries instead of logging raw payloads:
+Garmin activity details expose metric rows as arrays plus descriptors. Decode those rows by their
+descriptors instead of assuming fixed column positions. Keep duration fields such as `duration`,
+`elapsedDuration`, and `movingDuration` separate; the SDK does not pick a canonical duration.
+
+This example reads one named heart-rate sample without logging the complete activity payload:
 
 ```ts
-import { summarizeActivityDetails } from 'garmin-connect-sdk';
+import { decodeActivityMetricRows, summarizeActivityDetails } from 'garmin-connect-sdk';
 
 const details = await garmin.activities.getDetails(activityId, {
   maxChartSize: 1000,
   maxPolylineSize: 1000,
 });
 
+const metricRows = decodeActivityMetricRows(details);
+const firstHeartRateSample = metricRows.find((row) => typeof row.heartRate === 'number')?.heartRate;
+const heartRateSampleCount = metricRows.filter((row) => typeof row.heartRate === 'number').length;
 const summary = summarizeActivityDetails(details);
+
+console.log({
+  firstHeartRateSampleAvailable: firstHeartRateSample !== undefined,
+  heartRateSampleCount,
+  metricRows: summary.metricRows,
+});
 ```
 
-Location metrics are redacted by default. If a private local process intentionally needs
-latitude/longitude values, pass `{ redactLocation: false }` to `summarizeActivityDetails()`
-or `decodeActivityMetricRow()`.
+`decodeActivityMetricRows()` supports both payload-level and per-row descriptors, which allows
+channel order to change between rows. Missing samples become `null`; malformed rows are skipped.
+Location-like metrics are redacted by default. If a private local process intentionally needs
+latitude/longitude values, pass `{ redactLocation: false }` to `decodeActivityMetricRows()`,
+`summarizeActivityDetails()`, or `decodeActivityMetricRow()`.
 
 ## Experimental Workout Writes
 

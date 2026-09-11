@@ -47,6 +47,7 @@ try {
         const sdk = await import('garmin-connect-sdk');
         const required = [
           'decodeActivityMetricRow',
+          'decodeActivityMetricRows',
           'GarminConnectSDK',
           'GarminAuthError',
           'GarminBotChallengeError',
