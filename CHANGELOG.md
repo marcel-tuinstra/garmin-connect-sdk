@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add a public `GarminNotFoundError` for plain HTTP `404` responses while preserving stronger
+  authentication, challenge, rate-limit, and service-error classifications.
+
 ## 1.1.0 - 2026-09-05
 
 ### License Change For 1.1.0

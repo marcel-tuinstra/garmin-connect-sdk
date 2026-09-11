@@ -33,6 +33,8 @@ export class GarminAuthError extends GarminRequestError {}
 
 export class GarminBotChallengeError extends GarminRequestError {}
 
+export class GarminNotFoundError extends GarminRequestError {}
+
 export class GarminRateLimitError extends GarminRequestError {
   readonly retryAfterMs?: number;
 
@@ -101,6 +103,14 @@ export function errorFromResponse(
   if (isSessionRejectionCode(responseEvidence.code, endpoint) || statusCode === 401) {
     return new GarminSessionExpiredError({
       message: 'Garmin session is expired or unauthorized.',
+      statusCode,
+      endpoint,
+    });
+  }
+
+  if (statusCode === 404) {
+    return new GarminNotFoundError({
+      message: 'Garmin resource was not found (404).',
       statusCode,
       endpoint,
     });
