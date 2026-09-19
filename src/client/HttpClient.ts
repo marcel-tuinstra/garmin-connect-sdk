@@ -142,9 +142,9 @@ export class HttpClient {
     onAuthenticatedDispatch?: (tokens: GarminTokens, generation: number) => void,
   ): Promise<T> {
     const headers = new Headers({
-      accept: 'application/json',
+      accept: options.responseType === 'bytes' ? '*/*' : 'application/json',
       nk: 'NT',
-      'user-agent': 'garmin-connect-sdk/1.1.0',
+      'user-agent': 'garmin-connect-sdk/1.1.1',
     });
 
     if (!options.skipAuth) {
