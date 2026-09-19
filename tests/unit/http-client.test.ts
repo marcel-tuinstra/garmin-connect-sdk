@@ -143,8 +143,9 @@ describe('HttpClient', () => {
       'https://connectapi.garmin.com/write?start=0&limit=20&includePrivate=false',
     );
     expect(init?.method).toBe('POST');
-    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.1.0');
+    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.1.1');
     expect(new Headers(init?.headers).get('authorization')).toBeNull();
+    expect(new Headers(init?.headers).get('accept')).toBe('application/json');
     expect(new Headers(init?.headers).get('content-type')).toBe('application/json');
     expect(init?.body).toBe(JSON.stringify({ name: 'Workout' }));
   });
@@ -161,9 +162,9 @@ describe('HttpClient', () => {
     expect(result).toBeUndefined();
   });
 
-  it('returns binary responses without parsing JSON', async () => {
+  it('requests and returns arbitrary binary responses without parsing JSON', async () => {
     // Arrange
-    const bytes = new Uint8Array([1, 2, 3]);
+    const bytes = new Uint8Array([0, 255, 254, 128, 1, 2, 3]);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(bytes));
     const http = httpClient(fetchMock, { maxRetries: 0 });
 
@@ -175,6 +176,49 @@ describe('HttpClient', () => {
 
     // Assert
     expect(result).toEqual(bytes);
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('accept')).toBe('*/*');
+  });
+
+  it('preserves an empty byte response', async () => {
+    // Arrange
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(new Uint8Array(), { status: 200 }));
+    const http = httpClient(fetchMock, { maxRetries: 0 });
+
+    // Act
+    const result = await http.request('/download', {
+      responseType: 'bytes',
+      skipAuth: true,
+    });
+
+    // Assert
+    expect(result).toEqual(new Uint8Array());
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('accept')).toBe('*/*');
+  });
+
+  it('keeps a 406 response non-retryable with endpoint context', async () => {
+    // Arrange
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('Not Acceptable', { status: 406 }));
+    const http = httpClient(fetchMock, { maxRetries: 3 });
+
+    // Act
+    const error = await http
+      .request('/download-service/export/tcx/activity/123', {
+        responseType: 'bytes',
+        skipAuth: true,
+      })
+      .catch((caught: unknown) => caught);
+
+    // Assert
+    expect(error).toBeInstanceOf(GarminRequestError);
+    expect((error as GarminRequestError).statusCode).toBe(406);
+    expect((error as GarminRequestError).endpoint).toBe(
+      '/download-service/export/tcx/activity/123',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('shares one token refresh across concurrent authenticated requests', async () => {
