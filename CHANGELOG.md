@@ -9,6 +9,14 @@
 - Add a public `GarminNotFoundError` for plain HTTP `404` responses while preserving stronger
   authentication, challenge, rate-limit, and service-error classifications.
 
+## 1.1.1 - 2026-09-19
+
+### Fixes
+
+- Send `Accept: */*` for activity downloads while preserving `Accept: application/json` for
+  ordinary API requests. This restores original, TCX, GPX, KML, and CSV downloads that Garmin
+  rejected with HTTP 406. See [GitHub issue #29](https://github.com/marcel-tuinstra/garmin-connect-sdk/issues/29).
+
 ## 1.1.0 - 2026-09-05
 
 ### License Change For 1.1.0
