@@ -75,8 +75,6 @@ describe('endpoints', () => {
       endDate: '2026-05-31',
       sortOrder: 'desc',
     });
-    await endpoint.download(123);
-    await endpoint.download(123, 'gpx');
     await endpoint.getTypes();
     await endpoint.get(123);
     await endpoint.getDetails(123);
@@ -99,18 +97,52 @@ describe('endpoints', () => {
       body: undefined,
       responseType: undefined,
     });
-    expect(http.calls[2]).toMatchObject({
-      path: '/download-service/export/tcx/activity/123',
-      responseType: 'bytes',
-    });
-    expect(http.calls[3]).toMatchObject({
-      path: '/download-service/export/gpx/activity/123',
-      responseType: 'bytes',
-    });
-    expect(http.calls[4]?.path).toBe('/activity-service/activity/activityTypes');
-    expect(http.calls[5]?.path).toBe('/activity-service/activity/123');
-    expect(http.calls[6]?.path).toBe('/activity-service/activity/123/details');
-    expect(http.calls[7]?.path).toBe('/activity-service/activity/123/typedsplits');
+    expect(http.calls[2]?.path).toBe('/activity-service/activity/activityTypes');
+    expect(http.calls[3]?.path).toBe('/activity-service/activity/123');
+    expect(http.calls[4]?.path).toBe('/activity-service/activity/123/details');
+    expect(http.calls[5]?.path).toBe('/activity-service/activity/123/typedsplits');
+  });
+
+  it('requests every activity download format as bytes', async () => {
+    // Arrange
+    const http = new MockHttp();
+    const endpoint = new ActivitiesEndpoint(http as any);
+
+    // Act
+    await endpoint.download(123);
+    await endpoint.download(123, 'original');
+    await endpoint.download(123, 'tcx');
+    await endpoint.download(123, 'gpx');
+    await endpoint.download(123, 'kml');
+    await endpoint.download(123, 'csv');
+
+    // Assert
+    expect(http.calls).toEqual([
+      expect.objectContaining({
+        path: '/download-service/export/tcx/activity/123',
+        responseType: 'bytes',
+      }),
+      expect.objectContaining({
+        path: '/download-service/files/activity/123',
+        responseType: 'bytes',
+      }),
+      expect.objectContaining({
+        path: '/download-service/export/tcx/activity/123',
+        responseType: 'bytes',
+      }),
+      expect.objectContaining({
+        path: '/download-service/export/gpx/activity/123',
+        responseType: 'bytes',
+      }),
+      expect.objectContaining({
+        path: '/download-service/export/kml/activity/123',
+        responseType: 'bytes',
+      }),
+      expect.objectContaining({
+        path: '/download-service/export/csv/activity/123',
+        responseType: 'bytes',
+      }),
+    ]);
   });
 
   it('paginates activity lists with conservative bounds', async () => {
