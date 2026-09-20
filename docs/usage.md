@@ -68,10 +68,28 @@ if (!restored) {
 }
 ```
 
+Calling `login()` starts an account transition: the SDK immediately invalidates the current
+in-memory session, persisted tokens, and cached profile before contacting Garmin. If login or
+new-account profile resolution fails, the instance remains unauthenticated and does not fall
+back to the previous account. Create a separate SDK instance when two account sessions must
+remain active at the same time.
+
 `FileTokenStorage('./.garmin-tokens')` stores tokens in `./.garmin-tokens/tokens.json`.
 It does not store email or password values, but the token file is a bearer secret and can
 include limited session metadata such as display name and client ID. The SDK does not
 encrypt token files.
+
+On POSIX systems, `FileTokenStorage` creates and tightens its final storage directory to
+mode `0700` and token, refresh-lock, and temporary files to `0600`. Saves use an exclusive,
+cryptographically random temporary filename in the same directory followed by an atomic
+rename. Loads, saves, clears, and refresh locks reject detected symbolic links in the token
+path and require token and lock paths to be regular files. `clear()` removes only the token
+file; it never recursively removes the containing directory.
+
+Windows does not provide POSIX mode guarantees. The same regular-file and symbolic-link
+checks are applied where Node exposes them, but directory and file access must be restricted
+with Windows ACLs. For stronger platform-managed protection, provide a custom `TokenStorage`
+backed by the operating-system credential store or another secret manager.
 
 `restoreSession()` returns `false` if storage has no session. For stored tokens, it refreshes
 them when needed and makes an authenticated profile request before returning `true`, even
@@ -81,6 +99,12 @@ prove that the session is invalid; keep the stored tokens and retry the read lat
 
 Call `logout()` to clear stored tokens and the SDK's cached profile. Keep token storage on
 a persistent volume for containers so deployments can reuse the session.
+
+OAuth expiry values are treated as untrusted input. A JWT `exp` is used only when it is a
+finite, positive value that can be represented as an ISO timestamp. Otherwise the SDK falls
+back to a valid `expires_in`, or to one hour when `expires_in` is absent. Explicit
+`expires_in` and `refresh_token_expires_in` values must be finite, positive, and representable;
+an invalid value rejects the token response without replacing the established session.
 
 For an authenticated `GET` or `HEAD` that Garmin rejects, the SDK attempts one token refresh
 and repeats the read once. This also applies to the profile read during `restoreSession()`.

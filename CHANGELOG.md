@@ -6,6 +6,9 @@
   profile path segments; and confine SDK requests to their configured Garmin origin and path.
 - Add `GarminInputError`, a `TypeError` subtype for caller input rejected before authentication or
   network dispatch.
+- Make repeated login and restore transitions generation-safe: invalidate the previous account at
+  login start, roll back failed profile resolution, and prevent late auth/profile responses from
+  replacing newer session state.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no

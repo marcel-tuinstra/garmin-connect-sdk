@@ -51,6 +51,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "audit:dependencies": "pnpm audit --audit-level high",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "lint": "eslint .",
