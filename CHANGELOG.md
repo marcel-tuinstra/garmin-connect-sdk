@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an opt-in maintainer workflow for privacy-preserving npm, GitHub traffic, and public repository
+  evidence collection. Keep the tooling outside the npm package, store explicit source failures, and
+  publish sanitized, idempotent history separately from SDK runtime behavior.
 - Make activity-detail `firstMetricRow` use the same row-local descriptor resolution and location
   redaction as the public whole-activity decoder.
 - Limit each sleep-range read to four concurrent daily requests while preserving date order and

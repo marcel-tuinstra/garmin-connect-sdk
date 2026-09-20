@@ -129,6 +129,8 @@ For lost write responses, follow the [endpoint-specific read-back steps](./docs/
 - [Security policy](./SECURITY.md): sensitive data handling and private vulnerability reports.
 - [Disclaimer](./DISCLAIMER.md): unofficial/private endpoint and legal-use boundaries.
 - [Contributing](./CONTRIBUTING.md): local setup, tests, package smoke checks, and PR expectations.
+- [Adoption measurement](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/main/docs/operations/adoption-measurement.md):
+  privacy-preserving public metrics, source limitations, retention, and recovery.
 - [Changelog](./CHANGELOG.md): release history.
 
 ## Status
