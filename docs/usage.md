@@ -199,6 +199,11 @@ epoch-shaped number identifies the correct UTC instant. When instant accuracy ma
 corresponding Garmin GMT data when present and convert it with an IANA timezone selected by the
 caller.
 
+`getSleepRange()` sends one daily-sleep request per date, with no more than four requests in flight
+for one range call. It returns results in date order. The first observed daily-request failure
+rejects the range without a partial result. Requests already in flight may finish, but the SDK does
+not start queued dates after that failure.
+
 ## Heart-rate And Power Zones
 
 The health namespace reads your configured heart-rate and power zones. Garmin sport keys use
