@@ -4,6 +4,8 @@
 
 - Limit each sleep-range read to four concurrent daily requests while preserving date order and
   stopping queued work after the first observed failure.
+- Tolerate a refresh lock disappearing between inspection and open during normal cross-process
+  contention.
 - Accept string and finite numeric Garmin local sleep timestamps without rewriting their timezone
   semantics, and document the upstream local-offset caveat.
 - Add typed read-only heart-rate and power-zone methods to `garmin.health`, including safe Garmin
