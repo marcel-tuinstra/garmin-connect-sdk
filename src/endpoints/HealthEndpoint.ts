@@ -1,11 +1,24 @@
 import type { HttpClient } from '../client/HttpClient.js';
+import { GarminInputError } from '../client/GarminRequestError.js';
 import {
   bodyBatterySchema,
+  heartRateZonesSchema,
   heartRateSchema,
   hrvStatusSchema,
+  powerZoneSchema,
+  powerZonesSchema,
   stressSchema,
 } from '../schemas/health.schema.js';
-import type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from '../types/health.js';
+import type {
+  BodyBattery,
+  DateRange,
+  HeartRate,
+  HeartRateZones,
+  HrvStatus,
+  PowerZone,
+  PowerZones,
+  Stress,
+} from '../types/health.js';
 import { formatDate } from '../utils/dates.js';
 import { encodePathSegment } from '../utils/pathSegments.js';
 import type { UserEndpoint } from './UserEndpoint.js';
@@ -53,4 +66,35 @@ export class HealthEndpoint {
       schema: hrvStatusSchema,
     });
   }
+
+  getHeartRateZones(): Promise<HeartRateZones> {
+    return this.#http.request('/biometric-service/heartRateZones', {
+      schema: heartRateZonesSchema,
+    });
+  }
+
+  getPowerZones(): Promise<PowerZones> {
+    return this.#http.request('/biometric-service/powerZones/sports/all', {
+      schema: powerZonesSchema,
+    });
+  }
+
+  getPowerZonesForSport(sport: string): Promise<PowerZone> {
+    const sportKey = encodePathSegment(normalizeSportKey(sport), 'sport');
+    return this.#http.request(`/biometric-service/powerZones/sport/${sportKey}`, {
+      schema: powerZoneSchema,
+    });
+  }
+}
+
+function normalizeSportKey(sport: unknown): string {
+  if (typeof sport === 'string') {
+    const trimmed = sport.trim();
+    if (/^[A-Za-z]+(?:_[A-Za-z]+)*$/.test(trimmed)) return trimmed.toUpperCase();
+  }
+
+  throw new GarminInputError(
+    'sport must be a Garmin sport key containing letter groups separated by underscores.',
+    ['sport'],
+  );
 }

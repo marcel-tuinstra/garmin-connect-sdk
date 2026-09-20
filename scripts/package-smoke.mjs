@@ -78,6 +78,14 @@ try {
         }
         const garmin = new sdk.GarminConnectSDK();
         if (
+          !garmin.health ||
+          typeof garmin.health.getHeartRateZones !== 'function' ||
+          typeof garmin.health.getPowerZones !== 'function' ||
+          typeof garmin.health.getPowerZonesForSport !== 'function'
+        ) {
+          throw new Error('Missing public health zone reads.');
+        }
+        if (
           !garmin.weight ||
           typeof garmin.weight.getDailyWeighIns !== 'function' ||
           typeof garmin.weight.getWeighIns !== 'function' ||
