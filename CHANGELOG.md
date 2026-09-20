@@ -4,6 +4,21 @@
 
 - Make activity-detail `firstMetricRow` use the same row-local descriptor resolution and location
   redaction as the public whole-activity decoder.
+- Limit each sleep-range read to four concurrent daily requests while preserving date order and
+  stopping queued work after the first observed failure.
+- Tolerate a refresh lock disappearing between inspection and open during normal cross-process
+  contention.
+- Accept string and finite numeric Garmin local sleep timestamps without rewriting their timezone
+  semantics, and document the upstream local-offset caveat.
+- Add typed read-only heart-rate and power-zone methods to `garmin.health`, including safe Garmin
+  sport-key normalization and response schemas that tolerate optional and unknown fields.
+- Reject unsafe activity, workout, and schedule identifiers before dispatch; encode wellness
+  profile path segments; and confine SDK requests to their configured Garmin origin and path.
+- Add `GarminInputError`, a `TypeError` subtype for caller input rejected before authentication or
+  network dispatch.
+- Make repeated login and restore transitions generation-safe: invalidate the previous account at
+  login start, roll back failed profile resolution, and prevent late auth/profile responses from
+  replacing newer session state.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no

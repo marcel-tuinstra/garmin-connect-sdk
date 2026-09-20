@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GarminAuthError } from '../../src/client/GarminRequestError.js';
+import { GarminAuthError, GarminInputError } from '../../src/client/GarminRequestError.js';
 import { ActivitiesEndpoint } from '../../src/endpoints/ActivitiesEndpoint.js';
 import { CalendarEndpoint } from '../../src/endpoints/CalendarEndpoint.js';
 import { DevicesEndpoint } from '../../src/endpoints/DevicesEndpoint.js';
@@ -211,6 +211,9 @@ describe('endpoints', () => {
     await health.getStress('2026-05-12');
     await health.getBodyBattery('2026-05-12');
     await health.getHrvStatus('2026-05-12');
+    await health.getHeartRateZones();
+    await health.getPowerZones();
+    await health.getPowerZonesForSport(' cross_country_skiing ');
     await devices.list();
     await workouts.list({ limit: 2 });
     await workouts.getTypes();
@@ -239,17 +242,65 @@ describe('endpoints', () => {
       body: undefined,
     });
     expect(http.calls[5]?.path).toBe('/hrv-service/hrv/2026-05-12');
-    expect(http.calls[6]?.path).toBe('/device-service/deviceregistration/devices');
-    expect(http.calls[7]).toEqual({
+    expect(http.calls[6]).toMatchObject({
+      path: '/biometric-service/heartRateZones',
+      method: undefined,
+      body: undefined,
+    });
+    expect(http.calls[7]).toMatchObject({
+      path: '/biometric-service/powerZones/sports/all',
+      method: undefined,
+      body: undefined,
+    });
+    expect(http.calls[8]).toMatchObject({
+      path: '/biometric-service/powerZones/sport/CROSS_COUNTRY_SKIING',
+      method: undefined,
+      body: undefined,
+    });
+    expect(http.calls[9]?.path).toBe('/device-service/deviceregistration/devices');
+    expect(http.calls[10]).toEqual({
       path: '/workout-service/workouts',
       method: undefined,
       query: { start: 0, limit: 2, myWorkoutsOnly: true },
       body: undefined,
     });
-    expect(http.calls[8]?.path).toBe('/workout-service/workout/types');
-    expect(http.calls[9]?.path).toBe('/workout-service/workout/456');
-    expect(http.calls[10]?.path).toBe('/calendar-service/year/2026/month/5');
-    expect(http.calls[11]?.path).toBe('/calendar-service/year/2026/month/5/day/15/start/0');
+    expect(http.calls[11]?.path).toBe('/workout-service/workout/types');
+    expect(http.calls[12]?.path).toBe('/workout-service/workout/456');
+    expect(http.calls[13]?.path).toBe('/calendar-service/year/2026/month/5');
+    expect(http.calls[14]?.path).toBe('/calendar-service/year/2026/month/5/day/15/start/0');
+  });
+
+  it.each([
+    '',
+    '   ',
+    'cycling/running',
+    'cycling\\running',
+    'cycling-running',
+    '%2F',
+    '_RUNNING',
+    'RUNNING_',
+    'RUNNING__TRAIL',
+    'RUNNING 2',
+    'ß',
+    'ﬃ',
+  ])('rejects malformed power-zone sport key %j before dispatch', (sport) => {
+    // Arrange
+    const http = new MockHttp();
+    const health = new HealthEndpoint(http as any, new UserEndpoint(http as any));
+
+    // Act / Assert
+    expect(() => health.getPowerZonesForSport(sport)).toThrow(GarminInputError);
+    expect(http.calls).toEqual([]);
+  });
+
+  it('rejects a non-string power-zone sport key before dispatch', () => {
+    // Arrange
+    const http = new MockHttp();
+    const health = new HealthEndpoint(http as any, new UserEndpoint(http as any));
+
+    // Act / Assert
+    expect(() => health.getPowerZonesForSport(123 as never)).toThrow(GarminInputError);
+    expect(http.calls).toEqual([]);
   });
 
   it('builds weight day and range reads', async () => {

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const localTimestampSchema = z.union([z.string(), z.number().finite()]).nullable().optional();
+
 const sleepLevelSchema = z
   .object({
     startGMT: z.string().optional(),
@@ -13,8 +15,8 @@ export const dailySleepSchema = z
     dailySleepDTO: z
       .object({
         calendarDate: z.string().optional(),
-        sleepStartTimestampLocal: z.string().nullable().optional(),
-        sleepEndTimestampLocal: z.string().nullable().optional(),
+        sleepStartTimestampLocal: localTimestampSchema,
+        sleepEndTimestampLocal: localTimestampSchema,
         sleepTimeSeconds: z.number().nullable().optional(),
         deepSleepSeconds: z.number().nullable().optional(),
         lightSleepSeconds: z.number().nullable().optional(),

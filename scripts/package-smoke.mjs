@@ -51,6 +51,7 @@ try {
           'GarminConnectSDK',
           'GarminAuthError',
           'GarminBotChallengeError',
+          'GarminInputError',
           'GarminMfaRequiredError',
           'GarminNotFoundError',
           'GarminRateLimitError',
@@ -76,6 +77,14 @@ try {
           if (name in sdk) throw new Error(\`Unexpected internal export: \${name}\`);
         }
         const garmin = new sdk.GarminConnectSDK();
+        if (
+          !garmin.health ||
+          typeof garmin.health.getHeartRateZones !== 'function' ||
+          typeof garmin.health.getPowerZones !== 'function' ||
+          typeof garmin.health.getPowerZonesForSport !== 'function'
+        ) {
+          throw new Error('Missing public health zone reads.');
+        }
         if (
           !garmin.weight ||
           typeof garmin.weight.getDailyWeighIns !== 'function' ||
