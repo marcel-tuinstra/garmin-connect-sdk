@@ -68,10 +68,28 @@ if (!restored) {
 }
 ```
 
+Calling `login()` starts an account transition: the SDK immediately invalidates the current
+in-memory session, persisted tokens, and cached profile before contacting Garmin. If login or
+new-account profile resolution fails, the instance remains unauthenticated and does not fall
+back to the previous account. Create a separate SDK instance when two account sessions must
+remain active at the same time.
+
 `FileTokenStorage('./.garmin-tokens')` stores tokens in `./.garmin-tokens/tokens.json`.
 It does not store email or password values, but the token file is a bearer secret and can
 include limited session metadata such as display name and client ID. The SDK does not
 encrypt token files.
+
+On POSIX systems, `FileTokenStorage` creates and tightens its final storage directory to
+mode `0700` and token, refresh-lock, and temporary files to `0600`. Saves use an exclusive,
+cryptographically random temporary filename in the same directory followed by an atomic
+rename. Loads, saves, clears, and refresh locks reject detected symbolic links in the token
+path and require token and lock paths to be regular files. `clear()` removes only the token
+file; it never recursively removes the containing directory.
+
+Windows does not provide POSIX mode guarantees. The same regular-file and symbolic-link
+checks are applied where Node exposes them, but directory and file access must be restricted
+with Windows ACLs. For stronger platform-managed protection, provide a custom `TokenStorage`
+backed by the operating-system credential store or another secret manager.
 
 `restoreSession()` returns `false` if storage has no session. For stored tokens, it refreshes
 them when needed and makes an authenticated profile request before returning `true`, even
@@ -81,6 +99,12 @@ prove that the session is invalid; keep the stored tokens and retry the read lat
 
 Call `logout()` to clear stored tokens and the SDK's cached profile. Keep token storage on
 a persistent volume for containers so deployments can reuse the session.
+
+OAuth expiry values are treated as untrusted input. A JWT `exp` is used only when it is a
+finite, positive value that can be represented as an ISO timestamp. Otherwise the SDK falls
+back to a valid `expires_in`, or to one hour when `expires_in` is absent. Explicit
+`expires_in` and `refresh_token_expires_in` values must be finite, positive, and representable;
+an invalid value rejects the token response without replacing the established session.
 
 For an authenticated `GET` or `HEAD` that Garmin rejects, the SDK attempts one token refresh
 and repeats the read once. This also applies to the profile read during `restoreSession()`.
@@ -150,19 +174,51 @@ Only implemented namespaces are listed. Public package-root methods and exported
 follow Semantic Versioning from `1.0.0`. Workout, calendar, and weight writes remain operationally
 experimental because Garmin does not support the underlying endpoints.
 
-| Namespace           | Methods                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `garmin.activities` | `count()`, `list()`, `listAll()`, `download()`, `get()`, `getDetails()`, `getSplits()`, `getTypes()`                            |
-| `garmin.sleep`      | `getDailySleep()`, `getSleepRange()`                                                                                            |
-| `garmin.health`     | `getHeartRate()`, `getStress()`, `getBodyBattery()`, `getHrvStatus()`                                                           |
-| `garmin.weight`     | `getDailyWeighIns()`, `getWeighIns()`, experimental writes: `addWeighIn()`, `removeWeighIn()`                                   |
-| `garmin.user`       | `getProfile()`                                                                                                                  |
-| `garmin.devices`    | `list()`                                                                                                                        |
-| `garmin.workouts`   | `list()`, `get()`, `getTypes()`, `create()`, `createRaw()`, `update()`, `updateRaw()`, `schedule()`, `unschedule()`, `delete()` |
-| `garmin.calendar`   | `getMonth()`, `getWeek()`, `addWorkout()`, `removeWorkout()`                                                                    |
+| Namespace           | Methods                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `garmin.activities` | `count()`, `list()`, `listAll()`, `download()`, `get()`, `getDetails()`, `getSplits()`, `getTypes()`                                       |
+| `garmin.sleep`      | `getDailySleep()`, `getSleepRange()`                                                                                                       |
+| `garmin.health`     | `getHeartRate()`, `getStress()`, `getBodyBattery()`, `getHrvStatus()`, `getHeartRateZones()`, `getPowerZones()`, `getPowerZonesForSport()` |
+| `garmin.weight`     | `getDailyWeighIns()`, `getWeighIns()`, experimental writes: `addWeighIn()`, `removeWeighIn()`                                              |
+| `garmin.user`       | `getProfile()`                                                                                                                             |
+| `garmin.devices`    | `list()`                                                                                                                                   |
+| `garmin.workouts`   | `list()`, `get()`, `getTypes()`, `create()`, `createRaw()`, `update()`, `updateRaw()`, `schedule()`, `unschedule()`, `delete()`            |
+| `garmin.calendar`   | `getMonth()`, `getWeek()`, `addWorkout()`, `removeWorkout()`                                                                               |
 
 Type declarations ship with the package and are the best source for request and response
 shapes.
+
+## Sleep Timestamp Representations
+
+Garmin may return `sleepStartTimestampLocal` and `sleepEndTimestampLocal` as timestamp strings,
+finite epoch-millisecond numbers, `null`, or omit them. The SDK returns these values unchanged. It
+does not parse them, convert them to `Date`, or apply a timezone offset.
+
+Garmin's `*Local` values can contain an unexpected upstream timezone offset. Do not assume that an
+epoch-shaped number identifies the correct UTC instant. When instant accuracy matters, use the
+corresponding Garmin GMT data when present and convert it with an IANA timezone selected by the
+caller.
+
+`getSleepRange()` sends one daily-sleep request per date, with no more than four requests in flight
+for one range call. It returns results in date order. The first observed daily-request failure
+rejects the range without a partial result. Requests already in flight may finish, but the SDK does
+not start queued dates after that failure.
+
+## Heart-rate And Power Zones
+
+The health namespace reads your configured heart-rate and power zones. Garmin sport keys use
+uppercase letters and underscores. The SDK trims and normalizes keys such as
+`cross_country_skiing` before sending the request.
+
+```ts
+const heartRateZones = await garmin.health.getHeartRateZones();
+const powerZones = await garmin.health.getPowerZones();
+const cyclingPowerZone = await garmin.health.getPowerZonesForSport('cycling');
+```
+
+Garmin may omit fields for unconfigured zones and may add fields over time. The returned types
+keep known fields optional and preserve unknown fields. Treat zone responses as health data and
+keep them out of logs.
 
 ## Weight Reads And Experimental Writes
 
@@ -219,6 +275,7 @@ classified errors.
 ```ts
 import {
   GarminBotChallengeError,
+  GarminInputError,
   GarminMfaRequiredError,
   GarminNotFoundError,
   GarminRateLimitError,
@@ -229,6 +286,11 @@ import {
 try {
   await garmin.activities.list({ limit: 5 });
 } catch (error) {
+  if (error instanceof GarminInputError) {
+    // Fix the caller-supplied identifier or path value. No request was sent.
+    throw error;
+  }
+
   if (error instanceof GarminNotFoundError) {
     // The requested Garmin resource is absent. The error exposes only sanitized diagnostics.
     throw error;
@@ -289,8 +351,9 @@ console.log({
 ```
 
 `decodeActivityMetricRows()` supports both payload-level and per-row descriptors, which allows
-channel order to change between rows. Missing samples become `null`; malformed rows are skipped.
-Location-like metrics are redacted by default. If a private local process intentionally needs
+channel order to change between rows. `summarizeActivityDetails().firstMetricRow` uses that same
+row-local resolution. Missing samples become `null`; malformed rows are skipped. Location-like
+metrics are redacted by default. If a private local process intentionally needs
 latitude/longitude values, pass `{ redactLocation: false }` to `decodeActivityMetricRows()`,
 `summarizeActivityDetails()`, or `decodeActivityMetricRow()`.
 
@@ -383,6 +446,7 @@ not logs or public bug reports. Logging an outcome such as `needsReview: true` i
 
 | Error or symptom            | Action                                                                                  |
 | --------------------------- | --------------------------------------------------------------------------------------- |
+| `GarminInputError`          | Fix the caller-supplied value. Authentication and network dispatch have not started.    |
 | `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                        |
 | `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually.     |
 | `GarminNotFoundError`       | Treat the requested resource as absent; verify its identifier when that is unexpected.  |

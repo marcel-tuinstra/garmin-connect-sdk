@@ -17,6 +17,7 @@ import type {
   ListActivitiesOptions,
 } from '../types/activity.js';
 import { formatDate } from '../utils/dates.js';
+import { positiveIntegerPathSegment } from '../utils/pathSegments.js';
 
 const ACTIVITY_DOWNLOAD_PATHS: Record<ActivityDownloadFormat, string> = {
   original: '/download-service/files/activity',
@@ -79,7 +80,8 @@ export class ActivitiesEndpoint {
     activityId: string | number,
     format: ActivityDownloadFormat = 'tcx',
   ): Promise<Uint8Array> {
-    return this.#http.request(`${ACTIVITY_DOWNLOAD_PATHS[format]}/${activityId}`, {
+    const id = positiveIntegerPathSegment(activityId, 'activityId');
+    return this.#http.request(`${ACTIVITY_DOWNLOAD_PATHS[format]}/${id}`, {
       responseType: 'bytes',
     });
   }
@@ -91,13 +93,15 @@ export class ActivitiesEndpoint {
   }
 
   get(activityId: string | number): Promise<ActivityDetail> {
-    return this.#http.request(`/activity-service/activity/${activityId}`, {
+    const id = positiveIntegerPathSegment(activityId, 'activityId');
+    return this.#http.request(`/activity-service/activity/${id}`, {
       schema: activityDetailSchema,
     });
   }
 
   getDetails(activityId: string | number, options: ActivityDetailsOptions = {}): Promise<unknown> {
-    return this.#http.request(`/activity-service/activity/${activityId}/details`, {
+    const id = positiveIntegerPathSegment(activityId, 'activityId');
+    return this.#http.request(`/activity-service/activity/${id}/details`, {
       query: {
         maxChartSize: options.maxChartSize,
         maxPolylineSize: options.maxPolylineSize,
@@ -107,7 +111,8 @@ export class ActivitiesEndpoint {
   }
 
   getSplits(activityId: string | number): Promise<unknown> {
-    return this.#http.request(`/activity-service/activity/${activityId}/typedsplits`, {
+    const id = positiveIntegerPathSegment(activityId, 'activityId');
+    return this.#http.request(`/activity-service/activity/${id}/typedsplits`, {
       schema: activitySplitsSchema,
     });
   }

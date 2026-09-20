@@ -549,6 +549,267 @@ describe('AuthService', () => {
     expect(auth.tokens).toBeNull();
     expect(await storage.load()).toBeNull();
   });
+
+  describe('OAuth expiry normalization', () => {
+    it.each([
+      ['missing', jwt({ client_id: DI_CLIENT_ID })],
+      ['string', jwt({ exp: '3600', client_id: DI_CLIENT_ID })],
+      ['zero', jwt({ exp: 0, client_id: DI_CLIENT_ID })],
+      ['negative', jwt({ exp: -1, client_id: DI_CLIENT_ID })],
+      ['exponent overflow', jwtFromJson('{"exp":1e309}')],
+      ['extremely large finite', jwt({ exp: Number.MAX_VALUE, client_id: DI_CLIENT_ID })],
+    ])('falls back safely when JWT exp is %s', async (_label, accessToken) => {
+      // Arrange
+      const before = Date.now();
+      const { auth, storage } = await setupAuthWithSession({
+        tokens: storedTokens({
+          accessToken: 'previous-access-token',
+          refreshToken: 'previous-refresh-token',
+          accessTokenExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+          clientId: DI_CLIENT_ID,
+        }),
+        responses: [
+          jsonResponse({
+            access_token: accessToken,
+            refresh_token: 'safe-refresh-token',
+            expires_in: 120,
+          }),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const refreshed = await auth.refresh();
+
+      // Assert
+      const expiry = Date.parse(refreshed.accessTokenExpiresAt);
+      expect(expiry).toBeGreaterThanOrEqual(before + 120_000);
+      expect(expiry).toBeLessThanOrEqual(Date.now() + 120_000);
+      expect(await storage.load()).toEqual(refreshed);
+    });
+
+    it('preserves a representable fractional JWT expiry', async () => {
+      // Arrange
+      const exp = futureSeconds() + 0.5;
+      const { auth } = await setupAuthWithSession({
+        tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+        responses: [
+          jsonResponse({
+            access_token: jwt({ exp, client_id: DI_CLIENT_ID }),
+            refresh_token: 'fractional-refresh-token',
+            expires_in: 120,
+          }),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const refreshed = await auth.refresh();
+
+      // Assert
+      expect(refreshed.accessTokenExpiresAt).toBe(new Date(exp * 1000).toISOString());
+    });
+
+    it('accepts the maximum representable JWT expiry boundary', async () => {
+      // Arrange
+      const exp = 8_640_000_000_000;
+      const { auth } = await setupAuthWithSession({
+        tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+        responses: [
+          jsonResponse({
+            access_token: jwt({ exp, client_id: DI_CLIENT_ID }),
+            refresh_token: 'boundary-refresh-token',
+            expires_in: 120,
+          }),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const refreshed = await auth.refresh();
+
+      // Assert
+      expect(refreshed.accessTokenExpiresAt).toBe(new Date(8_640_000_000_000_000).toISOString());
+    });
+
+    it('uses documented defaults when explicit expiry values are missing', async () => {
+      // Arrange
+      const before = Date.now();
+      const { auth } = await setupAuthWithSession({
+        tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+        responses: [
+          jsonResponse({
+            access_token: jwt({ client_id: DI_CLIENT_ID }),
+            refresh_token: 'default-refresh-token',
+          }),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const refreshed = await auth.refresh();
+
+      // Assert
+      const expiry = Date.parse(refreshed.accessTokenExpiresAt);
+      expect(expiry).toBeGreaterThanOrEqual(before + 3_600_000);
+      expect(expiry).toBeLessThanOrEqual(Date.now() + 3_600_000);
+      expect(refreshed.refreshTokenExpiresAt).toBeUndefined();
+    });
+
+    it('accepts normal and fractional explicit expiry durations', async () => {
+      // Arrange
+      const before = Date.now();
+      const { auth } = await setupAuthWithSession({
+        tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+        responses: [
+          jsonResponse({
+            access_token: jwt({ client_id: DI_CLIENT_ID }),
+            refresh_token: 'normal-refresh-token',
+            expires_in: 120.5,
+            refresh_token_expires_in: 3_600,
+          }),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const refreshed = await auth.refresh();
+
+      // Assert
+      expect(Date.parse(refreshed.accessTokenExpiresAt)).toBeGreaterThanOrEqual(before + 120_500);
+      expect(Date.parse(refreshed.refreshTokenExpiresAt ?? '')).toBeGreaterThanOrEqual(
+        before + 3_600_000,
+      );
+    });
+
+    it('accepts the maximum representable explicit expiry boundary', async () => {
+      // Arrange
+      vi.useFakeTimers();
+      vi.setSystemTime(0);
+      try {
+        const { auth } = await setupAuthWithSession({
+          tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+          responses: [
+            jsonResponse({
+              access_token: jwt({ client_id: DI_CLIENT_ID }),
+              refresh_token: 'boundary-duration-refresh-token',
+              expires_in: 8_640_000_000_000,
+              refresh_token_expires_in: 8_640_000_000_000,
+            }),
+          ],
+        });
+        await auth.restoreSession();
+
+        // Act
+        const refreshed = await auth.refresh();
+
+        // Assert
+        const boundary = new Date(8_640_000_000_000_000).toISOString();
+        expect(refreshed.accessTokenExpiresAt).toBe(boundary);
+        expect(refreshed.refreshTokenExpiresAt).toBe(boundary);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it.each([
+      ['string access duration', 'expires_in', '3600'],
+      ['zero access duration', 'expires_in', 0],
+      ['negative access duration', 'expires_in', -1],
+      ['huge finite access duration', 'expires_in', Number.MAX_VALUE],
+      ['string refresh duration', 'refresh_token_expires_in', '3600'],
+      ['zero refresh duration', 'refresh_token_expires_in', 0],
+      ['negative refresh duration', 'refresh_token_expires_in', -1],
+      ['huge finite refresh duration', 'refresh_token_expires_in', Number.MAX_VALUE],
+    ] as const)(
+      'rejects %s without changing the established session',
+      async (_label, field, value) => {
+        // Arrange
+        const previous = storedTokens({
+          accessToken: 'previous-access-token',
+          refreshToken: 'previous-refresh-token',
+          accessTokenExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+          clientId: DI_CLIENT_ID,
+        });
+        const { auth, storage } = await setupAuthWithSession({
+          tokens: previous,
+          responses: [
+            jsonResponse({
+              access_token: jwt({ exp: futureSeconds(), client_id: DI_CLIENT_ID }),
+              refresh_token: 'untrusted-refresh-token',
+              [field]: value,
+            }),
+          ],
+        });
+        await auth.restoreSession();
+
+        // Act
+        const error = await auth.refresh().catch((caught: unknown) => caught);
+
+        // Assert
+        expect(error).toBeInstanceOf(GarminAuthError);
+        expect(error).not.toBeInstanceOf(RangeError);
+        expect(String(error)).not.toContain('untrusted-refresh-token');
+        expect(auth.tokens).toEqual(previous);
+        expect(await storage.load()).toEqual(previous);
+      },
+    );
+
+    it('rejects exponent-overflow durations without leaking or replacing tokens', async () => {
+      // Arrange
+      const previous = storedTokens({
+        accessToken: 'previous-access-token',
+        refreshToken: 'previous-refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        clientId: DI_CLIENT_ID,
+      });
+      const accessToken = jwt({ exp: futureSeconds(), client_id: DI_CLIENT_ID });
+      const { auth, storage } = await setupAuthWithSession({
+        tokens: previous,
+        responses: [
+          textResponse(
+            `{"access_token":"${accessToken}","refresh_token":"overflow-refresh-token","expires_in":1e309}`,
+          ),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const error = await auth.refresh().catch((caught: unknown) => caught);
+
+      // Assert
+      expect(error).toBeInstanceOf(GarminAuthError);
+      expect(error).not.toBeInstanceOf(RangeError);
+      expect(String(error)).not.toContain('overflow-refresh-token');
+      expect(auth.tokens).toEqual(previous);
+      expect(await storage.load()).toEqual(previous);
+    });
+
+    it('can refresh normally after rejecting a malformed expiry response', async () => {
+      // Arrange
+      const { auth, storage } = await setupAuthWithSession({
+        tokens: storedTokens({ clientId: DI_CLIENT_ID }),
+        responses: [
+          jsonResponse({
+            access_token: jwt({ exp: futureSeconds(), client_id: DI_CLIENT_ID }),
+            refresh_token: 'rejected-refresh-token',
+            refresh_token_expires_in: -1,
+          }),
+          tokenResponse('accepted-refresh-token'),
+        ],
+      });
+      await auth.restoreSession();
+
+      // Act
+      const firstError = await auth.refresh().catch((caught: unknown) => caught);
+      const refreshed = await auth.refresh();
+
+      // Assert
+      expect(firstError).toBeInstanceOf(GarminAuthError);
+      expect(refreshed.refreshToken).toBe('accepted-refresh-token');
+      expect((await storage.load())?.refreshToken).toBe('accepted-refresh-token');
+    });
+  });
 });
 
 interface AuthFixture {
@@ -596,4 +857,12 @@ function ssoStatusResponse(
   init: ResponseInit = {},
 ): Response {
   return jsonResponse({ responseStatus: { type }, ...extra }, init);
+}
+
+function jwtFromJson(payload: string): string {
+  return [
+    Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url'),
+    Buffer.from(payload).toString('base64url'),
+    'signature',
+  ].join('.');
 }

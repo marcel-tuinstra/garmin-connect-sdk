@@ -25,6 +25,7 @@ Run the same checks CI runs before opening a PR:
 ```bash
 pnpm typecheck
 pnpm lint
+pnpm audit:dependencies
 pnpm test
 pnpm coverage
 pnpm build

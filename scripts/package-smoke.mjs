@@ -56,6 +56,7 @@ try {
           'GarminConnectSDK',
           'GarminAuthError',
           'GarminBotChallengeError',
+          'GarminInputError',
           'GarminMfaRequiredError',
           'GarminNotFoundError',
           'GarminRateLimitError',
@@ -83,6 +84,14 @@ try {
         const garmin = new sdk.GarminConnectSDK();
         if (telemetryRequests.length !== 0) {
           throw new Error('Package import or default construction made a telemetry request.');
+        }
+        if (
+          !garmin.health ||
+          typeof garmin.health.getHeartRateZones !== 'function' ||
+          typeof garmin.health.getPowerZones !== 'function' ||
+          typeof garmin.health.getPowerZonesForSport !== 'function'
+        ) {
+          throw new Error('Missing public health zone reads.');
         }
         if (
           !garmin.weight ||
