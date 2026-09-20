@@ -128,45 +128,9 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  collect-voluntary-opt-in:
-    name: Collect voluntary private/unindexed registrations
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: adoption-opt-in-aggregate
-    steps:
-      - name: Checkout trusted collector
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Setup Node 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-
-      - name: Collect thresholded voluntary registration aggregates
-        env:
-          ADOPTION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
-          ADOPTION_AGGREGATE_TOKEN: ${{ secrets.ADOPTION_AGGREGATE_TOKEN }}
-          ADOPTION_AGGREGATE_URL: ${{ vars.ADOPTION_AGGREGATE_URL }}
-        run: >-
-          node tools/adoption/cli.mjs collect
-          --source voluntary-opt-in
-          --output staging/voluntary-opt-in.json
-          --run-id "$ADOPTION_RUN_ID"
-
-      - name: Stage aggregate-only voluntary observations
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: adoption-voluntary-opt-in
-          path: staging/voluntary-opt-in.json
-          if-no-files-found: error
-          retention-days: 30
-
   publish:
     name: Publish sanitized history
-    needs: [collect-npm, collect-traffic, collect-adopters, collect-voluntary-opt-in]
+    needs: [collect-npm, collect-traffic, collect-adopters]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
