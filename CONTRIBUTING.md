@@ -37,6 +37,12 @@ It also checks the installed package's license text and metadata against the sou
 reference. This checks packaging consistency, not ownership or legal permission.
 It does not publish anything.
 
+Maintainer adoption collection lives under `tools/adoption` and is deliberately excluded from the
+package. Changes to it must keep npm downloads, GitHub repository traffic, public repository evidence,
+and active installations separate; preserve explicit missing/failure states; and update the
+[operations guide](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/main/docs/operations/adoption-measurement.md).
+Never use real source tokens or unsanitized public-code responses in tests.
+
 Unit tests use Arrange/Act/Assert style and should cover meaningful behavior, including
 edge cases and failure paths. Coverage is enforced at 70% minimum for runtime SDK code.
 

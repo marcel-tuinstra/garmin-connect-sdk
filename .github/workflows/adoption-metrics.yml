@@ -1,0 +1,196 @@
+name: Adoption metrics
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adoption-metrics-writer
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  collect-npm:
+    name: Collect npm downloads
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted collector
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Collect npm observations
+        env:
+          ADOPTION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: >-
+          node tools/adoption/cli.mjs collect
+          --source npm
+          --output staging/npm.json
+          --run-id "$ADOPTION_RUN_ID"
+
+      - name: Stage sanitized npm observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: adoption-npm
+          path: staging/npm.json
+          if-no-files-found: error
+          retention-days: 30
+
+  collect-traffic:
+    name: Collect GitHub traffic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: adoption-traffic
+    steps:
+      - name: Checkout trusted collector
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Collect traffic observations
+        env:
+          ADOPTION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          ADOPTION_TRAFFIC_TOKEN: ${{ secrets.ADOPTION_TRAFFIC_TOKEN }}
+        run: >-
+          node tools/adoption/cli.mjs collect
+          --source github-traffic
+          --output staging/github-traffic.json
+          --run-id "$ADOPTION_RUN_ID"
+
+      - name: Stage sanitized traffic observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: adoption-traffic
+          path: staging/github-traffic.json
+          if-no-files-found: error
+          retention-days: 30
+
+  collect-adopters:
+    name: Collect public repository evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: adoption-discovery
+    steps:
+      - name: Checkout trusted collector
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Load public repository suppressions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          encoded="$(gh api "repos/${GITHUB_REPOSITORY}/contents/data/adoption/adopters/suppressions.json?ref=adoption-metrics" --jq .content)"
+          printf '%s' "$encoded" | base64 --decode > staging/suppressions.json
+
+      - name: Collect public evidence
+        env:
+          ADOPTION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          ADOPTION_DISCOVERY_TOKEN: ${{ secrets.ADOPTION_DISCOVERY_TOKEN }}
+        run: >-
+          node tools/adoption/cli.mjs collect
+          --source github-adopters
+          --output staging/github-adopters.json
+          --suppressions staging/suppressions.json
+          --run-id "$ADOPTION_RUN_ID"
+
+      - name: Stage sanitized public evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: adoption-adopters
+          path: staging/github-adopters.json
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish sanitized history
+    needs: [collect-npm, collect-traffic, collect-adopters]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: adoption-publication
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout trusted collector
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: source
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Ensure the data branch exists
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ github.token }}
+        working-directory: source
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/adoption-metrics" >/dev/null 2>&1; then
+            exit 0
+          fi
+          base_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${DEFAULT_BRANCH}" --jq .object.sha)"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref=refs/heads/adoption-metrics -f sha="$base_sha"
+
+      - name: Checkout the data branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: adoption-metrics
+          path: publication
+
+      - name: Download sanitized source artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: adoption-*
+          path: staging
+          merge-multiple: true
+
+      - name: Validate and publish the snapshot
+        run: >-
+          node source/tools/adoption/cli.mjs publish
+          --input-dir staging
+          --data-dir publication/data/adoption
+          --report-dir publication/docs/adoption
+
+      - name: Commit the updated history
+        working-directory: publication
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/adoption docs/adoption
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore(metrics): update adoption evidence"
+          git push origin HEAD:adoption-metrics

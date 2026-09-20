@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an opt-in maintainer workflow for privacy-preserving npm, GitHub traffic, and public repository
+  evidence collection. Keep the tooling outside the npm package, store explicit source failures, and
+  publish sanitized, idempotent history separately from SDK runtime behavior.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no

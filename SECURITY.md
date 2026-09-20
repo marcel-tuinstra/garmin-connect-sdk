@@ -49,3 +49,16 @@ shapes and field names in examples.
 
 CLI `--raw` output can expose health, location, device, workout, and schedule identifiers. Use it
 only in a private local terminal and redact it before sharing.
+
+## Adoption Metrics
+
+Maintainer adoption measurements never run inside the published SDK. They collect sanitized npm,
+GitHub traffic, and public-repository signals through a separate scheduled workflow. Do not add
+postinstall hooks, background requests, device identifiers, account identifiers, or runtime
+telemetry to support those reports.
+
+The public repository index must not contain profiles, names, email addresses, contributors, commit
+authors, source snippets, private repositories, Garmin data, traffic referrers, or visited paths.
+Report an incorrect entry or request an opt out through private vulnerability reporting. The
+[operations guide](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/main/docs/operations/adoption-measurement.md)
+documents the source credentials, retention, recovery, and limitations.

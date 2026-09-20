@@ -44,6 +44,11 @@ try {
       '--eval',
       `
         import { existsSync } from 'node:fs';
+        const telemetryRequests = [];
+        globalThis.fetch = async (...args) => {
+          telemetryRequests.push(args);
+          throw new Error('Unexpected network request during package smoke.');
+        };
         const sdk = await import('garmin-connect-sdk');
         const required = [
           'decodeActivityMetricRow',
@@ -76,6 +81,9 @@ try {
           if (name in sdk) throw new Error(\`Unexpected internal export: \${name}\`);
         }
         const garmin = new sdk.GarminConnectSDK();
+        if (telemetryRequests.length !== 0) {
+          throw new Error('Package import or default construction made a telemetry request.');
+        }
         if (
           !garmin.weight ||
           typeof garmin.weight.getDailyWeighIns !== 'function' ||
@@ -95,6 +103,19 @@ try {
         }
         if (!existsSync('node_modules/garmin-connect-sdk/dist/index.d.ts')) {
           throw new Error('Missing dist/index.d.ts in installed package.');
+        }
+        if (existsSync('node_modules/garmin-connect-sdk/tools/adoption')) {
+          throw new Error('Maintainer adoption tooling leaked into the published package.');
+        }
+        const installedManifest = JSON.parse(
+          await import('node:fs/promises').then(({ readFile }) =>
+            readFile('node_modules/garmin-connect-sdk/package.json', 'utf8'),
+          ),
+        );
+        for (const lifecycle of ['preinstall', 'install', 'postinstall']) {
+          if (installedManifest.scripts?.[lifecycle]) {
+            throw new Error(\`Unexpected package lifecycle script: \${lifecycle}\`);
+          }
         }
         const blockedImports = [
           'garmin-connect-sdk/auth/AuthService',
