@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept string and finite numeric Garmin local sleep timestamps without rewriting their timezone
+  semantics, and document the upstream local-offset caveat.
 - Add typed read-only heart-rate and power-zone methods to `garmin.health`, including safe Garmin
   sport-key normalization and response schemas that tolerate optional and unknown fields.
 - Reject unsafe activity, workout, and schedule identifiers before dispatch; encode wellness
