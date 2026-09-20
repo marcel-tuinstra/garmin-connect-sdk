@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reject unsafe activity, workout, and schedule identifiers before dispatch; encode wellness
+  profile path segments; and confine SDK requests to their configured Garmin origin and path.
+- Add `GarminInputError`, a `TypeError` subtype for caller input rejected before authentication or
+  network dispatch.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no

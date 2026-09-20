@@ -17,6 +17,7 @@ import type {
   WorkoutUpdateRequest,
 } from '../types/workout.js';
 import { formatDate } from '../utils/dates.js';
+import { positiveIntegerPathSegment } from '../utils/pathSegments.js';
 import { buildWorkoutPayload, isCreateWorkoutInput } from '../utils/workoutPayload.js';
 
 /**
@@ -46,7 +47,8 @@ export class WorkoutsEndpoint {
   }
 
   get(workoutId: string | number): Promise<Workout> {
-    return this.#http.request(`/workout-service/workout/${workoutId}`, {
+    const id = positiveIntegerPathSegment(workoutId, 'workoutId');
+    return this.#http.request(`/workout-service/workout/${id}`, {
       schema: workoutSchema,
     });
   }
@@ -81,19 +83,19 @@ export class WorkoutsEndpoint {
    * interrupted, reconcile with {@link get} before deciding whether another replacement is safe.
    */
   async update(workoutId: string | number, input: WorkoutUpdateRequest): Promise<Workout> {
-    assertPositiveWorkoutId(workoutId);
+    positiveIntegerPathSegment(workoutId, 'workoutId');
     const payload = isCreateWorkoutInput(input) ? buildWorkoutPayload(input) : input;
     return this.updateRaw(workoutId, payload);
   }
 
   async updateRaw(workoutId: string | number, payload: GarminWorkoutPayload): Promise<Workout> {
-    assertPositiveWorkoutId(workoutId);
+    const id = positiveIntegerPathSegment(workoutId, 'workoutId');
     assertWorkoutPayload(payload);
 
     // Copy the top-level payload before overriding the path identifier. No read-modify-write or
     // retry is implicit here: an uncertain PUT may already have fully replaced the workout.
     const replacement = { ...payload, workoutId };
-    return this.#http.request(`/workout-service/workout/${workoutId}`, {
+    return this.#http.request(`/workout-service/workout/${id}`, {
       method: 'PUT',
       body: replacement,
       schema: workoutSchema,
@@ -106,7 +108,8 @@ export class WorkoutsEndpoint {
    * relevant calendar week or month before attempting another schedule.
    */
   schedule(options: ScheduleWorkoutOptions): Promise<WorkoutSchedule> {
-    return this.#http.request(`/workout-service/schedule/${options.workoutId}`, {
+    const workoutId = positiveIntegerPathSegment(options.workoutId, 'workoutId');
+    return this.#http.request(`/workout-service/schedule/${workoutId}`, {
       method: 'POST',
       body: { date: formatDate(options.date) },
       schema: workoutScheduleSchema,
@@ -119,7 +122,8 @@ export class WorkoutsEndpoint {
    * the relevant calendar week or month before attempting another removal.
    */
   unschedule(scheduleId: string | number): Promise<unknown> {
-    return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
+    const id = positiveIntegerPathSegment(scheduleId, 'scheduleId');
+    return this.#http.request(`/workout-service/schedule/${id}`, {
       method: 'DELETE',
       retry: { maxRetries: 0 },
     });
@@ -130,23 +134,11 @@ export class WorkoutsEndpoint {
    * {@link get} to reconcile the workout's availability before deciding whether to retry.
    */
   delete(workoutId: string | number): Promise<unknown> {
-    return this.#http.request(`/workout-service/workout/${workoutId}`, {
+    const id = positiveIntegerPathSegment(workoutId, 'workoutId');
+    return this.#http.request(`/workout-service/workout/${id}`, {
       method: 'DELETE',
       retry: { maxRetries: 0 },
     });
-  }
-}
-
-function assertPositiveWorkoutId(workoutId: string | number): void {
-  if (typeof workoutId === 'number') {
-    if (!Number.isSafeInteger(workoutId) || workoutId <= 0) {
-      throw new TypeError('workoutId must be a positive integer.');
-    }
-    return;
-  }
-
-  if (typeof workoutId !== 'string' || !/^\d+$/.test(workoutId) || BigInt(workoutId) <= 0n) {
-    throw new TypeError('workoutId must be a positive integer.');
   }
 }
 

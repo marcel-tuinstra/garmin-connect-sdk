@@ -7,6 +7,7 @@ import {
 } from '../schemas/health.schema.js';
 import type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from '../types/health.js';
 import { formatDate } from '../utils/dates.js';
+import { encodePathSegment } from '../utils/pathSegments.js';
 import type { UserEndpoint } from './UserEndpoint.js';
 
 export class HealthEndpoint {
@@ -20,7 +21,8 @@ export class HealthEndpoint {
 
   async getHeartRate(date: Date | string): Promise<HeartRate> {
     const displayName = await this.#user.getDisplayName();
-    return this.#http.request(`/wellness-service/wellness/dailyHeartRate/${displayName}`, {
+    const profileSegment = encodePathSegment(displayName, 'displayName');
+    return this.#http.request(`/wellness-service/wellness/dailyHeartRate/${profileSegment}`, {
       query: { date: formatDate(date) },
       schema: heartRateSchema,
     });

@@ -4,6 +4,7 @@ export {
   GarminBotChallengeError,
   GarminMfaRequiredError,
   GarminNotFoundError,
+  GarminInputError,
   GarminRateLimitError,
   GarminRequestError,
   GarminSessionExpiredError,
