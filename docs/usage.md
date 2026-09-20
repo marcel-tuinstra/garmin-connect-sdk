@@ -442,69 +442,6 @@ Connect. Do not automatically create duplicates, delete possible matches, or rec
 across accounts. Read-back results and identifiers belong in private application state,
 not logs or public bug reports. Logging an outcome such as `needsReview: true` is enough.
 
-## Voluntary Private/Unindexed Adoption Registration
-
-The SDK does not report adoption automatically. If your project is private or is not indexed by
-GitHub and you deliberately want it represented in aggregate adoption reporting, run:
-
-```bash
-npx garmin-connect-adoption share --visibility private --dry-run
-npx garmin-connect-adoption share --visibility private
-```
-
-These commands remain disabled until the maintainer explicitly selects and configures a production
-HTTPS intake origin. This repository does not infer or reserve a hostname automatically.
-
-Use `unindexed` for a public repository that public code search cannot find, or
-`private-unindexed` when both labels apply. The command always previews the fixed destination and
-the exact payload before it asks `Share this exact payload? [y/N]`. Pressing Enter or answering no
-sends nothing and writes no state. `--dry-run` does not prompt, send, or store anything.
-
-The payload contains only:
-
-```json
-{
-  "schemaVersion": 1,
-  "consentVersion": 1,
-  "consent": true,
-  "sdkVersion": "1.2.0",
-  "visibility": "private"
-}
-```
-
-It does not include a repository name or URL, Git remote, path, source, dependency file, personal
-identity, IP address in the stored registration, Garmin credential/session/profile/device/health
-data, usage frequency, or commercial-use information. The intake edge necessarily processes a
-network address to accept and rate-limit the request, but the application stores only a keyed hash
-for the short-lived rate-limit window and does not retain raw request addresses or user agents.
-The request also carries a random registration ID, bearer management capability, fresh request ID,
-and current timestamp. The service stores keyed hashes of the stable ID and capability, so this is
-pseudonymous rather than anonymous processing. The full consent and retention terms are in the
-[versioned privacy notice](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/v1.2.0/docs/operations/adoption-measurement.md#voluntary-registration-privacy).
-
-After consent and before the first request, a random registration ID and separate management
-capability are stored in the OS user-state directory with owner-only file permissions where
-supported. This pending state lets a retry recover the same registration if the server commits but
-its response is lost. Do not commit or copy that file. The active registration expires after 90 days
-unless you deliberately run `share` again.
-
-```bash
-npx garmin-connect-adoption status
-npx garmin-connect-adoption withdraw
-```
-
-`withdraw` asks for confirmation, deletes the active server record, then removes local management
-state. If the remote deletion fails, local state is retained so you can retry. Withdrawal retains
-only keyed registration/capability hashes in a 24-hour replay-prevention tombstone; encrypted
-operator backups can retain the deleted active row for at most 30 days. Already published rounded,
-thresholded historical aggregates remain in project history and cannot be removed per registration.
-Losing the local management capability means the pseudonymous record cannot be linked to an owner by
-the service; it will expire automatically.
-
-Voluntary registrations are unverified self-reports. They are reported separately from npm
-downloads, GitHub traffic, public repository evidence, people, and active installations. They are
-not used as evidence of commercial use or license compliance.
-
 ## Troubleshooting
 
 | Error or symptom            | Action                                                                                  |

@@ -124,6 +124,12 @@ try {
             readFile('node_modules/garmin-connect-sdk/package.json', 'utf8'),
           ),
         );
+        if (installedManifest.bin?.['garmin-connect-adoption']) {
+          throw new Error('Unexpected voluntary adoption CLI in the published package.');
+        }
+        if (existsSync('node_modules/garmin-connect-sdk/scripts/garmin-adoption.mjs')) {
+          throw new Error('Unexpected voluntary adoption client in the published package.');
+        }
         for (const lifecycle of ['preinstall', 'install', 'postinstall']) {
           if (installedManifest.scripts?.[lifecycle]) {
             throw new Error(\`Unexpected package lifecycle script: \${lifecycle}\`);
@@ -149,7 +155,6 @@ try {
     consumerDir,
   );
   run('pnpm', ['exec', 'garmin-connect', 'help'], consumerDir);
-  run('pnpm', ['exec', 'garmin-connect-adoption', 'help'], consumerDir);
 
   console.log('Package smoke check passed.');
 } finally {

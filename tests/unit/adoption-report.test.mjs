@@ -3,45 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { renderAdoptionReport } from '../../tools/adoption/report.mjs';
 
 describe('adoption report', () => {
-  it('labels voluntary private registrations separately and as unverified', () => {
-    const report = renderAdoptionReport({
-      metricDate: '2026-09-20',
-      retrievals: [
-        {
-          retrievedAt: '2026-09-20T10:00:00.000Z',
-          sourceStatuses: [{ source: 'private_opt_in_self_report', status: 'success' }],
-        },
-      ],
-      measurements: [
-        {
-          source: 'private_opt_in_self_report',
-          metric: 'active_registrations',
-          metricDate: '2026-09-20',
-          status: 'observed',
-          value: 5,
-        },
-        {
-          source: 'private_opt_in_self_report',
-          metric: 'sdk_version_registrations',
-          metricDate: '2026-09-20',
-          dimension: '1.2',
-          status: 'observed',
-          value: 5,
-        },
-      ],
-      adopters: [],
-    });
-
-    expect(report).toContain('Voluntary private/unindexed registrations');
-    expect(report).toContain('unverified self-reports');
-    expect(report).toContain('| active\\_registrations | — | 2026-09-20 | 5 | observed |');
-    expect(report).toContain(
-      '| sdk\\_version\\_registrations | 1\\.2 | 2026-09-20 | 5 | observed |',
-    );
-    expect(report).not.toContain('5 users');
-    expect(report).not.toContain('5 installations');
-  });
-
   it('keeps downloads, traffic, public evidence, and active installations separate', () => {
     const report = renderAdoptionReport({
       schemaVersion: 1,

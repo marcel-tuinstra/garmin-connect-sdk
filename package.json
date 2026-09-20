@@ -38,7 +38,6 @@
     "LICENSE"
   ],
   "bin": {
-    "garmin-connect-adoption": "scripts/garmin-adoption.mjs",
     "garmin-connect": "scripts/garmin.mjs",
     "garmin-connect-smoke": "scripts/garmin-smoke.mjs"
   },

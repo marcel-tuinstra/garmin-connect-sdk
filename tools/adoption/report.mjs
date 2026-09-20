@@ -6,9 +6,6 @@ export function renderAdoptionReport(snapshot) {
     ({ source, metric }) => source === 'npm' && metric === 'version_downloads_last_week',
   );
   const traffic = snapshot.measurements.filter(({ source }) => source === 'github');
-  const voluntary = snapshot.measurements.filter(
-    ({ source }) => source === 'private_opt_in_self_report',
-  );
   const adopters = snapshot.adopters ?? [];
   const latestRetrieval = [...(snapshot.retrievals ?? [])]
     .sort((left, right) => left.retrievedAt.localeCompare(right.retrievedAt))
@@ -18,7 +15,7 @@ export function renderAdoptionReport(snapshot) {
 
 Generated from the ${inline(snapshot.metricDate)} snapshot at ${inline(latestRetrieval?.retrievedAt ?? 'not yet collected')}.
 
-These signals are deliberately separate. npm downloads are package retrievals, GitHub traffic describes this repository, public repository evidence is static evidence found in indexed public code, and voluntary private/unindexed registrations are unverified self-reports. Active installations: not measured. None of these signals identifies an individual SDK user or proves commercial use.
+These signals are deliberately separate. npm downloads are package retrievals, GitHub traffic describes this repository, and public repository evidence is static evidence found in indexed public code. Active installations: not measured. None of these signals identifies an individual SDK user or proves commercial use.
 
 ## Collection status
 
@@ -54,21 +51,6 @@ ${table(
   traffic.map((item) => [item.metric, item.metricDate, displayValue(item), item.status]),
 )}
 
-## Voluntary private/unindexed registrations
-
-These are pseudonymous, time-limited and unverified self-reports. They are not repository discoveries, identifiable people, active installations, usage-frequency measurements, or license evidence. Counts are suppressed below five and released only in rounded groups of five by the intake service.
-
-${table(
-  ['Metric', 'Dimension', 'Date', 'Value', 'Status'],
-  voluntary.map((item) => [
-    item.metric,
-    item.dimension ?? '—',
-    item.metricDate,
-    displayValue(item),
-    item.status,
-  ]),
-)}
-
 ## Public repository evidence
 
 This index contains public repository identifiers and evidence URLs only. Archived and forked repositories remain visible but are excluded from the adopter count. Static active-use evidence is not runtime proof.
@@ -91,7 +73,6 @@ ${table(
 - npm downloads can include caches, CI and repeat downloads.
 - GitHub traffic is repository-level and its rolling history cannot be backfilled after the source window expires.
 - GitHub public code search can be delayed, incomplete, rate-limited or truncated and does not include private or unindexed repositories.
-- Voluntary registrations may be stale, duplicated across projects or omitted entirely; they are unverified and expire unless deliberately renewed.
 - A dependency, lockfile, import or static callsite is evidence with a stated confidence level, not proof of a running installation or license violation.
 `;
 }
