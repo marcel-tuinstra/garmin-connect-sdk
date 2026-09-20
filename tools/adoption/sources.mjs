@@ -193,6 +193,7 @@ export async function collectPublicRepositoryEvidence({
 
   const matches = [];
   let partial = false;
+  let invalidSearchHit = false;
   const deadlineAt = Date.now() + DISCOVERY_BUDGET_MS;
   const searchStatuses = [];
   for (const [index, query] of (queries ?? []).entries()) {
@@ -230,6 +231,7 @@ export async function collectPublicRepositoryEvidence({
   for (const match of matches) {
     const fullName = match?.repository?.full_name;
     if (!validRepositorySlug(fullName)) {
+      invalidSearchHit = true;
       partial = true;
       continue;
     }
@@ -240,6 +242,7 @@ export async function collectPublicRepositoryEvidence({
       !validApiUrl(match?.url) ||
       !validGitHubUrl(match?.html_url)
     ) {
+      invalidSearchHit = true;
       partial = true;
       continue;
     }
@@ -282,6 +285,15 @@ export async function collectPublicRepositoryEvidence({
 
   const detailedStatuses = [
     ...searchStatuses,
+    ...(invalidSearchHit
+      ? [
+          {
+            source: 'github_public_search_hits',
+            status: 'failed',
+            reasonCode: 'invalid_payload',
+          },
+        ]
+      : []),
     aggregateOptionalStatus('github_public_metadata', metadataStatuses),
     aggregateOptionalStatus('github_public_content', contentStatuses),
   ].filter(Boolean);
