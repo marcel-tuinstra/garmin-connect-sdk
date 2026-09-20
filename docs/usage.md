@@ -351,8 +351,9 @@ console.log({
 ```
 
 `decodeActivityMetricRows()` supports both payload-level and per-row descriptors, which allows
-channel order to change between rows. Missing samples become `null`; malformed rows are skipped.
-Location-like metrics are redacted by default. If a private local process intentionally needs
+channel order to change between rows. `summarizeActivityDetails().firstMetricRow` uses that same
+row-local resolution. Missing samples become `null`; malformed rows are skipped. Location-like
+metrics are redacted by default. If a private local process intentionally needs
 latitude/longitude values, pass `{ redactLocation: false }` to `decodeActivityMetricRows()`,
 `summarizeActivityDetails()`, or `decodeActivityMetricRow()`.
 

@@ -70,24 +70,8 @@ export function decodeActivityMetricRows(
   const payloadDescriptors = normalizeMetricDescriptors(arrayValue(details.metricDescriptors));
 
   return metrics.reduce<DecodedActivityMetricRow[]>((rows, metric) => {
-    const metricValue = objectValue(metric);
-    if (!metricValue) return rows;
-
-    if (!Array.isArray(metricValue.metrics)) return rows;
-    const values = metricValue.metrics;
-    // A row's descriptors describe that row's indexes and take precedence
-    // over the payload-level set. If a malformed row descriptor set contains
-    // no usable descriptors, use the payload-level set as a safe fallback.
-    const rowDescriptors = usableMetricDescriptors(
-      normalizeMetricDescriptors(arrayValue(metricValue.metricDescriptors)),
-    );
-    const descriptors = rowDescriptors.length > 0 ? rowDescriptors : payloadDescriptors;
-    if (values.length === 0) {
-      rows.push({});
-      return rows;
-    }
-
-    rows.push(decodeActivityMetricRow(values, descriptors, options));
+    const decoded = decodeMetricEntry(metric, payloadDescriptors, options);
+    if (decoded !== undefined) rows.push(decoded);
     return rows;
   }, []);
 }
@@ -99,6 +83,9 @@ export function summarizeActivityDetails(
   if (!isObject(details)) return { type: typeof details };
 
   const metrics = arrayValue(details.activityDetailMetrics);
+  const payloadMetricDescriptors = normalizeMetricDescriptors(
+    arrayValue(details.metricDescriptors),
+  );
   const descriptors = arrayValue(details.metricDescriptors).concat(
     metrics.flatMap((metric) => arrayValue(objectValue(metric)?.metricDescriptors)),
   );
@@ -123,7 +110,6 @@ export function summarizeActivityDetails(
   const speedValues = arrayValue(objectValue(details.speedDTO)?.speedValues).concat(
     arrayValue(details.speedDTOs).flatMap((dto) => arrayValue(objectValue(dto)?.speedValues)),
   );
-  const firstMetric = isObject(metrics[0]) ? arrayValue(metrics[0].metrics) : [];
 
   return {
     detailsAvailable: booleanValue(details.detailsAvailable),
@@ -133,10 +119,7 @@ export function summarizeActivityDetails(
     metricRows: metrics.length,
     metricDescriptorCount: metricDescriptors.length,
     metricDescriptors,
-    firstMetricRow:
-      firstMetric.length > 0
-        ? decodeActivityMetricRow(firstMetric, metricDescriptors, options)
-        : null,
+    firstMetricRow: firstDecodedMetricRow(metrics, payloadMetricDescriptors, options),
     hasPolyline: geoPolyline.length > 0,
     polylinePoints: geoPolyline.length,
     heartRateSamples: heartRateValues.length + metricRowHeartRateSamples,
@@ -305,6 +288,44 @@ function usableMetricDescriptors(
   return descriptors.filter(
     (descriptor) => isSafeMetricKey(descriptor.key) && isValidMetricIndex(descriptor.index),
   );
+}
+
+function resolveMetricDescriptors(
+  metric: Record<string, unknown>,
+  payloadDescriptors: ActivityMetricDescriptor[],
+): ActivityMetricDescriptor[] {
+  const rowDescriptors = usableMetricDescriptors(
+    normalizeMetricDescriptors(arrayValue(metric.metricDescriptors)),
+  );
+  return rowDescriptors.length > 0 ? rowDescriptors : payloadDescriptors;
+}
+
+function decodeMetricEntry(
+  metric: unknown,
+  payloadDescriptors: ActivityMetricDescriptor[],
+  options: DecodeActivityMetricOptions,
+): DecodedActivityMetricRow | undefined {
+  const metricValue = objectValue(metric);
+  if (!metricValue || !Array.isArray(metricValue.metrics)) return undefined;
+  if (metricValue.metrics.length === 0) return {};
+
+  return decodeActivityMetricRow(
+    metricValue.metrics,
+    resolveMetricDescriptors(metricValue, payloadDescriptors),
+    options,
+  );
+}
+
+function firstDecodedMetricRow(
+  metrics: unknown[],
+  payloadDescriptors: ActivityMetricDescriptor[],
+  options: DecodeActivityMetricOptions,
+): DecodedActivityMetricRow | null {
+  for (const metric of metrics) {
+    const decoded = decodeMetricEntry(metric, payloadDescriptors, options);
+    if (decoded !== undefined) return decoded;
+  }
+  return null;
 }
 
 function isHeartRateMetric(key: string): boolean {

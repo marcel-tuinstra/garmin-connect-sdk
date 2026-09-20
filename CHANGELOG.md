@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make activity-detail `firstMetricRow` use the same row-local descriptor resolution and location
+  redaction as the public whole-activity decoder.
 - Limit each sleep-range read to four concurrent daily requests while preserving date order and
   stopping queued work after the first observed failure.
 - Tolerate a refresh lock disappearing between inspection and open during normal cross-process
