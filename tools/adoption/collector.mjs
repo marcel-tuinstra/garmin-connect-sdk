@@ -2,6 +2,7 @@ import {
   collectGitHubTraffic,
   collectNpmDownloads,
   collectPublicRepositoryEvidence,
+  collectVoluntaryRegistrations,
 } from './sources.mjs';
 
 export const DEFAULT_SEARCH_QUERIES = Object.freeze([
@@ -22,10 +23,12 @@ export async function collectAdoption({
   repository = 'marcel-tuinstra/garmin-connect-sdk',
   trafficToken = '',
   discoveryToken = '',
+  aggregateToken = '',
   suppressions = [],
   npmCollector = collectNpmDownloads,
   trafficCollector = collectGitHubTraffic,
   adopterCollector = collectPublicRepositoryEvidence,
+  voluntaryCollector = collectVoluntaryRegistrations,
 }) {
   const retrievedAt = validDateObject(now).toISOString();
   const metricDate = retrievedAt.slice(0, 10);
@@ -53,6 +56,8 @@ export async function collectAdoption({
       queries: DEFAULT_SEARCH_QUERIES,
       excludeRepositories: [repository, ...suppressions],
     });
+  } else if (source === 'voluntary-opt-in') {
+    result = await voluntaryCollector({ fetchImpl, token: aggregateToken, retrievedAt });
   } else {
     throw new Error(`Unsupported adoption source: ${source}`);
   }

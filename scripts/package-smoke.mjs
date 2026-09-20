@@ -116,6 +116,9 @@ try {
         if (existsSync('node_modules/garmin-connect-sdk/tools/adoption')) {
           throw new Error('Maintainer adoption tooling leaked into the published package.');
         }
+        if (existsSync('node_modules/garmin-connect-sdk/infra/adoption-intake')) {
+          throw new Error('Adoption intake infrastructure leaked into the published package.');
+        }
         const installedManifest = JSON.parse(
           await import('node:fs/promises').then(({ readFile }) =>
             readFile('node_modules/garmin-connect-sdk/package.json', 'utf8'),
@@ -146,6 +149,7 @@ try {
     consumerDir,
   );
   run('pnpm', ['exec', 'garmin-connect', 'help'], consumerDir);
+  run('pnpm', ['exec', 'garmin-connect-adoption', 'help'], consumerDir);
 
   console.log('Package smoke check passed.');
 } finally {

@@ -1,0 +1,37 @@
+services:
+  adoption-intake:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    network_mode: host
+    environment:
+      ADOPTION_DB_PATH: /data/adoption-intake.sqlite
+      ADOPTION_REGISTRATION_PEPPER_FILE: /run/secrets/adoption_registration_pepper
+      ADOPTION_AGGREGATE_TOKEN_FILE: /run/secrets/adoption_aggregate_token
+      ADOPTION_AGGREGATE_THRESHOLD: 5
+      ADOPTION_RATE_LIMIT_PER_HOUR: 30
+    secrets:
+      - adoption_registration_pepper
+      - adoption_aggregate_token
+    volumes:
+      - adoption-data:/data
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:8787/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  adoption-data:
+
+secrets:
+  adoption_registration_pepper:
+    file: ${ADOPTION_REGISTRATION_PEPPER_FILE:?required}
+  adoption_aggregate_token:
+    file: ${ADOPTION_AGGREGATE_TOKEN_FILE:?required}

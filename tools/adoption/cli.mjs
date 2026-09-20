@@ -33,6 +33,7 @@ export async function main(args) {
         runId,
         trafficToken: process.env.ADOPTION_TRAFFIC_TOKEN ?? '',
         discoveryToken: process.env.ADOPTION_DISCOVERY_TOKEN ?? '',
+        aggregateToken: process.env.ADOPTION_AGGREGATE_TOKEN ?? '',
         suppressions: await readSuppressions(options.get('suppressions')),
       });
     } catch (error) {
@@ -110,6 +111,7 @@ function sourceStatusName(source) {
   if (source === 'npm') return 'npm_collection';
   if (source === 'github-traffic') return 'github_traffic';
   if (source === 'github-adopters') return 'github_public_search';
+  if (source === 'voluntary-opt-in') return 'private_opt_in_self_report';
   return 'unknown_collection';
 }
 

@@ -17,15 +17,18 @@ describe('adoption measurement operations contract', () => {
     expect(workflow).toContain('collect-npm:');
     expect(workflow).toContain('collect-traffic:');
     expect(workflow).toContain('collect-adopters:');
+    expect(workflow).toContain('collect-voluntary-opt-in:');
     expect(workflow).toContain('publish:');
     expect(workflow).toContain('ADOPTION_TRAFFIC_TOKEN: ${{ secrets.ADOPTION_TRAFFIC_TOKEN }}');
     expect(workflow).toContain('ADOPTION_DISCOVERY_TOKEN: ${{ secrets.ADOPTION_DISCOVERY_TOKEN }}');
+    expect(workflow).toContain('ADOPTION_AGGREGATE_TOKEN: ${{ secrets.ADOPTION_AGGREGATE_TOKEN }}');
     expect(workflow).toContain('contents: write');
     expect(workflow).toContain('cancel-in-progress: false');
     expect(workflow).toContain('environment: adoption-traffic');
     expect(workflow).toContain('environment: adoption-discovery');
     expect(workflow).toContain('environment: adoption-publication');
-    expect(workflow.match(/if: always\(\)/g)).toHaveLength(4);
+    expect(workflow).toContain('environment: adoption-opt-in-aggregate');
+    expect(workflow.match(/if: always\(\)/g)).toHaveLength(5);
     expect(workflow).toContain('--suppressions staging/suppressions.json');
     expect(workflow).toContain('ref=adoption-metrics');
     expect(workflow).not.toContain("printf '[]");
@@ -45,9 +48,11 @@ describe('adoption measurement operations contract', () => {
       'npm downloads',
       'GitHub repository traffic',
       'public repository evidence',
+      'voluntary private/unindexed registrations',
       'active installations',
       'ADOPTION_TRAFFIC_TOKEN',
       'ADOPTION_DISCOVERY_TOKEN',
+      'ADOPTION_AGGREGATE_TOKEN',
       'Retention',
       'Recovery',
       'adoption-metrics',
@@ -58,6 +63,13 @@ describe('adoption measurement operations contract', () => {
     expect(operations).toContain(
       'https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/adoption-metrics/docs/adoption/latest.md',
     );
+    expect(operations).toContain('pseudonymous');
+    expect(operations).not.toMatch(/anonymous/iu);
+    expect(operations).toContain('24-hour replay-prevention tombstone');
+    expect(operations).toContain('Encrypted operator backups');
+    expect(operations).toMatch(/no\s+more than 30 days/u);
+    expect(operations).toContain('rounds released counts down to a');
+    expect(operations).toContain('cannot be configured below');
     expect(readme).toContain('docs/operations/adoption-measurement.md');
   });
 

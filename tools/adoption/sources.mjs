@@ -5,6 +5,7 @@ import { buildAdopterIndex, extractRepositoryEvidence, normalizeSourceStatus } f
 
 const NPM_API = 'https://api.npmjs.org';
 const GITHUB_API = 'https://api.github.com';
+const VOLUNTARY_AGGREGATE_URL = 'https://adoption.tuinstra.dev/v1/aggregate';
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_SEARCH_RESULTS = 100;
 const MAX_REPOSITORIES = 20;
@@ -13,6 +14,88 @@ const DISCOVERY_CONCURRENCY = 6;
 const DISCOVERY_BUDGET_MS = 12 * 60_000;
 const MAX_SOURCE_BYTES = 262_144;
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+
+export async function collectVoluntaryRegistrations({
+  fetchImpl = globalThis.fetch,
+  token,
+  retrievedAt,
+}) {
+  const source = 'private_opt_in_self_report';
+  const metricDate = retrievedAt.slice(0, 10);
+  if (!token) return failedVoluntaryCollection('missing', 'token_missing', null, retrievedAt);
+
+  const result = await requestJson(fetchImpl, VOLUNTARY_AGGREGATE_URL, { token });
+  if (!result.ok) {
+    const status = sourceFailure(source, result);
+    return failedVoluntaryCollection(
+      status.status,
+      status.reasonCode,
+      status.httpStatus,
+      retrievedAt,
+    );
+  }
+  const aggregate = normalizeVoluntaryAggregate(result.body);
+  if (!aggregate) return failedVoluntaryCollection('failed', 'invalid_payload', null, retrievedAt);
+
+  const measurements = [
+    aggregate.activeRegistrations === null
+      ? missingMeasurement(
+          source,
+          'active_registrations',
+          metricDate,
+          'suppressed',
+          VOLUNTARY_AGGREGATE_URL,
+          retrievedAt,
+        )
+      : observedMeasurement(
+          source,
+          'active_registrations',
+          metricDate,
+          aggregate.activeRegistrations,
+          'registrations',
+          VOLUNTARY_AGGREGATE_URL,
+          retrievedAt,
+        ),
+    ...aggregateMeasurements(
+      aggregate.sdkVersions,
+      'sdk_version_registrations',
+      metricDate,
+      retrievedAt,
+    ),
+    ...aggregateMeasurements(
+      aggregate.visibility,
+      'visibility_registrations',
+      metricDate,
+      retrievedAt,
+    ),
+  ];
+  const status = { source, status: 'success' };
+  return { status, statuses: [status], measurements };
+}
+
+function failedVoluntaryCollection(statusName, reasonCode, httpStatus, retrievedAt) {
+  const source = 'private_opt_in_self_report';
+  const status = {
+    source,
+    status: statusName,
+    ...(reasonCode ? { reasonCode } : {}),
+    ...(httpStatus ? { httpStatus } : {}),
+  };
+  return {
+    status,
+    statuses: [status],
+    measurements: [
+      missingMeasurement(
+        source,
+        'active_registrations',
+        retrievedAt.slice(0, 10),
+        statusName,
+        httpStatus ? VOLUNTARY_AGGREGATE_URL : null,
+        retrievedAt,
+      ),
+    ],
+  };
+}
 
 export async function collectNpmDownloads({
   fetchImpl = globalThis.fetch,
@@ -443,6 +526,76 @@ function sourceFailure(source, result) {
     status: result.status ?? 'failed',
     reasonCode: result.reasonCode ?? 'request_failed',
   };
+}
+
+function normalizeVoluntaryAggregate(body) {
+  const keys = Object.keys(body ?? {}).sort();
+  const expected = [
+    'activeRegistrations',
+    'measuredAt',
+    'schemaVersion',
+    'sdkVersions',
+    'threshold',
+    'visibility',
+  ];
+  if (
+    keys.length !== expected.length ||
+    keys.some((key, index) => key !== expected[index]) ||
+    body.schemaVersion !== 1 ||
+    typeof body.measuredAt !== 'string' ||
+    !Number.isFinite(Date.parse(body.measuredAt)) ||
+    (!validCount(body.activeRegistrations) && body.activeRegistrations !== null) ||
+    !Number.isSafeInteger(body.threshold) ||
+    body.threshold < 5 ||
+    !validAggregateBuckets(body.sdkVersions, body.threshold) ||
+    !validAggregateBuckets(body.visibility, body.threshold) ||
+    (body.activeRegistrations !== null &&
+      body.activeRegistrations !== 0 &&
+      body.activeRegistrations < body.threshold) ||
+    (body.activeRegistrations !== null && body.activeRegistrations % body.threshold !== 0) ||
+    (body.activeRegistrations === null &&
+      (Object.keys(body.sdkVersions).length > 0 || Object.keys(body.visibility).length > 0)) ||
+    (body.activeRegistrations !== null &&
+      (sumCounts(body.sdkVersions) > body.activeRegistrations ||
+        sumCounts(body.visibility) > body.activeRegistrations))
+  ) {
+    return null;
+  }
+  return body;
+}
+
+function validAggregateBuckets(value, threshold) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.entries(value).every(
+      ([dimension, count]) =>
+        validDimension(dimension) &&
+        validCount(count) &&
+        count >= threshold &&
+        count % threshold === 0,
+    )
+  );
+}
+
+function sumCounts(buckets) {
+  return Object.values(buckets).reduce((sum, count) => sum + count, 0);
+}
+
+function aggregateMeasurements(buckets, metric, metricDate, retrievedAt) {
+  return Object.entries(buckets).map(([dimension, value]) => ({
+    ...observedMeasurement(
+      'private_opt_in_self_report',
+      metric,
+      metricDate,
+      value,
+      'registrations',
+      VOLUNTARY_AGGREGATE_URL,
+      retrievedAt,
+    ),
+    dimension,
+  }));
 }
 
 function parseNpmDaily(body, sourceUrl, retrievedAt, startDate, endDate, packageName) {

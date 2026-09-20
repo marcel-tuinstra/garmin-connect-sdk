@@ -6,6 +6,7 @@ import {
   collectGitHubTraffic,
   collectNpmDownloads,
   collectPublicRepositoryEvidence,
+  collectVoluntaryRegistrations,
 } from '../../tools/adoption/sources.mjs';
 
 const retrievedAt = '2026-09-20T10:00:00.000Z';
@@ -32,6 +33,110 @@ function trafficSeries(count, uniques) {
 }
 
 describe('adoption source adapters', () => {
+  it('collects only thresholded aggregate voluntary registrations', async () => {
+    const result = await collectVoluntaryRegistrations({
+      fetchImpl: vi.fn().mockResolvedValue(
+        response(200, {
+          schemaVersion: 1,
+          measuredAt: retrievedAt,
+          activeRegistrations: 5,
+          threshold: 5,
+          sdkVersions: { 1.2: 5 },
+          visibility: { private: 5 },
+        }),
+      ),
+      token: 'aggregate-only-secret',
+      retrievedAt,
+    });
+
+    expect(result.status).toEqual({ source: 'private_opt_in_self_report', status: 'success' });
+    expect(result.measurements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'private_opt_in_self_report',
+          metric: 'active_registrations',
+          value: 5,
+        }),
+        expect.objectContaining({
+          metric: 'sdk_version_registrations',
+          dimension: '1.2',
+          value: 5,
+        }),
+        expect.objectContaining({
+          metric: 'visibility_registrations',
+          dimension: 'private',
+          value: 5,
+        }),
+      ]),
+    );
+    expect(JSON.stringify(result)).not.toContain('aggregate-only-secret');
+  });
+
+  it.each([
+    ['missing token', '', vi.fn(), 'missing'],
+    ['rate limited', 'token', vi.fn().mockResolvedValue(response(429, {})), 'rate_limited'],
+    [
+      'malformed response',
+      'token',
+      vi.fn().mockResolvedValue(response(200, { activeRegistrations: 0 })),
+      'failed',
+    ],
+  ])('keeps aggregate source %s distinct from zero', async (_label, token, fetchImpl, status) => {
+    const result = await collectVoluntaryRegistrations({ fetchImpl, token, retrievedAt });
+    expect(result.status.status).toBe(status);
+    expect(result.measurements).toEqual([
+      expect.objectContaining({ metric: 'active_registrations', value: null, status }),
+    ]);
+  });
+
+  it('rejects a below-threshold non-zero aggregate instead of publishing it', async () => {
+    const result = await collectVoluntaryRegistrations({
+      fetchImpl: vi.fn().mockResolvedValue(
+        response(200, {
+          schemaVersion: 1,
+          measuredAt: retrievedAt,
+          activeRegistrations: 1,
+          threshold: 5,
+          sdkVersions: {},
+          visibility: {},
+        }),
+      ),
+      token: 'aggregate-only-secret',
+      retrievedAt,
+    });
+
+    expect(result.status).toMatchObject({ status: 'failed', reasonCode: 'invalid_payload' });
+    expect(result.measurements[0]).toMatchObject({ status: 'failed', value: null });
+  });
+
+  it.each([
+    ['threshold below five', 5, 4, { 1.2: 4 }, { private: 4 }],
+    ['non-rounded total', 6, 5, { 1.2: 5 }, { private: 5 }],
+    ['non-rounded bucket', 10, 5, { 1.2: 6 }, { private: 10 }],
+    ['bucket sum above total', 5, 5, { 1.1: 5, 1.2: 5 }, { private: 5 }],
+  ])(
+    'rejects an aggregate with %s',
+    async (_label, activeRegistrations, threshold, sdkVersions, visibility) => {
+      const result = await collectVoluntaryRegistrations({
+        fetchImpl: vi.fn().mockResolvedValue(
+          response(200, {
+            schemaVersion: 1,
+            measuredAt: retrievedAt,
+            activeRegistrations,
+            threshold,
+            sdkVersions,
+            visibility,
+          }),
+        ),
+        token: 'aggregate-only-secret',
+        retrievedAt,
+      });
+
+      expect(result.status).toMatchObject({ status: 'failed', reasonCode: 'invalid_payload' });
+      expect(result.measurements[0]).toMatchObject({ status: 'failed', value: null });
+    },
+  );
+
   it('collects npm daily and version-level downloads without conflating their windows', async () => {
     const fetchImpl = vi
       .fn()
