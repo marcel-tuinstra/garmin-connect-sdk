@@ -76,7 +76,10 @@ console.log({
 
 Prefer `restoreSession()` and token refresh over repeated password login. `FileTokenStorage`
 stores tokens, not email or password values, but token files still grant account access
-and should be protected like credentials.
+and should be protected like credentials. On POSIX systems it enforces owner-only directory
+and file modes, rejects symbolic links in the storage path, and replaces token files
+atomically through exclusive, randomly named temporary files. Windows permissions are
+governed by ACLs; use a locked-down directory or a custom `TokenStorage` there.
 
 `restoreSession()` validates stored tokens with an authenticated profile read before returning
 `true`. It returns `false` for empty storage and throws if validation fails. See
