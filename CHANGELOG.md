@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept string and finite numeric Garmin local sleep timestamps without rewriting their timezone
+  semantics, and document the upstream local-offset caveat.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no

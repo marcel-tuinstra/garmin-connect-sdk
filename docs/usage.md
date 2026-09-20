@@ -164,6 +164,17 @@ experimental because Garmin does not support the underlying endpoints.
 Type declarations ship with the package and are the best source for request and response
 shapes.
 
+## Sleep Timestamp Representations
+
+Garmin may return `sleepStartTimestampLocal` and `sleepEndTimestampLocal` as timestamp strings,
+finite epoch-millisecond numbers, `null`, or omit them. The SDK returns these values unchanged. It
+does not parse them, convert them to `Date`, or apply a timezone offset.
+
+Garmin's `*Local` values can contain an unexpected upstream timezone offset. Do not assume that an
+epoch-shaped number identifies the correct UTC instant. When instant accuracy matters, use the
+corresponding Garmin GMT data when present and convert it with an IANA timezone selected by the
+caller.
+
 ## Weight Reads And Experimental Writes
 
 Garmin returns weight and mass fields from its read endpoints in grams. The write method accepts
