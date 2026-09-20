@@ -7,7 +7,13 @@ export interface GarminErrorOptions {
 
 /** Internal, sanitized evidence extracted from an unsuccessful response. */
 export interface ResponseErrorEvidence {
-  code?: 'invalid_token' | 'invalid_grant' | 'invalid_client' | 'captcha_required' | 'bot_challenge' | 'challenge_required';
+  code?:
+    | 'invalid_token'
+    | 'invalid_grant'
+    | 'invalid_client'
+    | 'captcha_required'
+    | 'bot_challenge'
+    | 'challenge_required';
   challenge?: boolean;
 }
 
@@ -49,6 +55,17 @@ export class GarminSessionExpiredError extends GarminAuthError {}
 export class GarminMfaRequiredError extends GarminAuthError {}
 
 export class GarminTimeoutError extends GarminRequestError {}
+
+/** A caller-supplied value was rejected locally before authentication or network dispatch. */
+export class GarminInputError extends TypeError {
+  readonly issues: string[];
+
+  constructor(message: string, issues: string[]) {
+    super(message);
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
 
 export class GarminValidationError extends GarminRequestError {
   readonly issues: string[];
@@ -127,16 +144,15 @@ export function errorFromResponse(
  * Reads a small, structured subset of a failed response without retaining or
  * surfacing its body. Only exact OAuth-style values are accepted as evidence.
  */
-export async function readResponseErrorEvidence(response: Response): Promise<ResponseErrorEvidence> {
+export async function readResponseErrorEvidence(
+  response: Response,
+): Promise<ResponseErrorEvidence> {
   const headerEvidence = headerErrorEvidence(response.headers);
-  if (
-    response.status !== 400 &&
-    response.status !== 401 &&
-    response.status !== 403
-  ) {
+  if (response.status !== 400 && response.status !== 401 && response.status !== 403) {
     return headerEvidence;
   }
-  if (headerEvidence.code || headerEvidence.challenge || !isJsonResponse(response)) return headerEvidence;
+  if (headerEvidence.code || headerEvidence.challenge || !isJsonResponse(response))
+    return headerEvidence;
 
   const body = await readCappedBody(response);
   if (!body) return headerEvidence;
@@ -183,7 +199,9 @@ function headerErrorEvidence(headers: Headers): ResponseErrorEvidence {
 
 function readBearerError(value: string | null): string | undefined {
   if (!value) return undefined;
-  const bearer = /(?:^|,\s*)Bearer\s+(.+?)(?=,\s*[A-Za-z][A-Za-z0-9_-]*\s+\w+\s*=|$)/i.exec(value)?.[1];
+  const bearer = /(?:^|,\s*)Bearer\s+(.+?)(?=,\s*[A-Za-z][A-Za-z0-9_-]*\s+\w+\s*=|$)/i.exec(
+    value,
+  )?.[1];
   return bearer ? /(?:^|,\s*)error\s*=\s*"([^"]+)"/i.exec(bearer)?.[1] : undefined;
 }
 
@@ -243,7 +261,10 @@ async function readCappedBody(response: Response): Promise<string | undefined> {
   }
 }
 
-async function readWithTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T | undefined> {
+async function readWithTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+): Promise<T | undefined> {
   let timeout: number | undefined;
   try {
     return await Promise.race([

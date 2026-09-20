@@ -7,6 +7,7 @@ import type {
   WorkoutSchedule,
 } from '../types/workout.js';
 import { formatDate } from '../utils/dates.js';
+import { positiveIntegerPathSegment } from '../utils/pathSegments.js';
 
 /**
  * Experimental Garmin calendar APIs.
@@ -42,7 +43,8 @@ export class CalendarEndpoint {
    * {@link getWeek} or {@link getMonth} before attempting another schedule.
    */
   addWorkout(options: ScheduleWorkoutOptions): Promise<WorkoutSchedule> {
-    return this.#http.request(`/workout-service/schedule/${options.workoutId}`, {
+    const workoutId = positiveIntegerPathSegment(options.workoutId, 'workoutId');
+    return this.#http.request(`/workout-service/schedule/${workoutId}`, {
       method: 'POST',
       body: { date: formatDate(options.date) },
       schema: workoutScheduleSchema,
@@ -55,7 +57,8 @@ export class CalendarEndpoint {
    * {@link getWeek} or {@link getMonth} before attempting another removal.
    */
   removeWorkout(scheduleId: string | number): Promise<unknown> {
-    return this.#http.request(`/workout-service/schedule/${scheduleId}`, {
+    const id = positiveIntegerPathSegment(scheduleId, 'scheduleId');
+    return this.#http.request(`/workout-service/schedule/${id}`, {
       method: 'DELETE',
       retry: { maxRetries: 0 },
     });

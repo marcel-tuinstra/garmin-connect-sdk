@@ -8,6 +8,11 @@ import { SleepEndpoint } from '../endpoints/SleepEndpoint.js';
 import { UserEndpoint } from '../endpoints/UserEndpoint.js';
 import { WeightEndpoint } from '../endpoints/WeightEndpoint.js';
 import { WorkoutsEndpoint } from '../endpoints/WorkoutsEndpoint.js';
+import {
+  GarminAuthError,
+  GarminRequestError,
+  GarminSessionExpiredError,
+} from './GarminRequestError.js';
 import { HttpClient } from './HttpClient.js';
 
 export class GarminConnectSDK {
@@ -50,26 +55,71 @@ export class GarminConnectSDK {
   }
 
   async login(options: LoginOptions): Promise<void> {
-    const tokens = await this.#auth.login(options);
-    if (tokens.displayName) {
-      this.user.setCachedProfile({ displayName: tokens.displayName });
-    } else {
-      await this.user.getProfile();
+    this.user.clearCachedProfile();
+    const loginPromise = this.#auth.login(options, { deferCompletion: true });
+    const generation = this.#auth.sessionGeneration;
+    const transitionCapability = this.#auth.sessionTransitionCapability(generation);
+    let tokens: Awaited<ReturnType<AuthService['login']>> | undefined;
+    let resolvedProfile: Awaited<ReturnType<UserEndpoint['getProfile']>> | undefined;
+
+    try {
+      tokens = await loginPromise;
+      if (generation !== this.#auth.sessionGeneration) throw transitionCancelled('login');
+
+      if (tokens.displayName?.trim()) {
+        this.user.setCachedProfile({ displayName: tokens.displayName });
+      } else {
+        resolvedProfile = await this.user.getProfile({
+          sessionTransitionCapability: transitionCapability,
+        });
+        if (!resolvedProfile.displayName?.trim()) {
+          throw new GarminAuthError({
+            message: 'Garmin profile does not contain displayName.',
+          });
+        }
+      }
+
+      if (generation !== this.#auth.sessionGeneration) throw transitionCancelled('login');
+      if (resolvedProfile) this.user.setCachedProfile(resolvedProfile);
+      this.#auth.completeSessionTransition(generation);
+    } catch (error) {
+      if (generation === this.#auth.sessionGeneration) {
+        this.user.clearCachedProfile();
+        try {
+          await this.#auth.abortSessionTransition(generation);
+        } finally {
+          this.user.clearCachedProfile();
+        }
+      }
+      throw error;
     }
   }
 
   async restoreSession(): Promise<boolean> {
     this.user.clearCachedProfile();
+    const restorePromise = this.#auth.restoreSession({ deferCompletion: true });
+    const generation = this.#auth.sessionGeneration;
+    const transitionCapability = this.#auth.sessionTransitionCapability(generation);
 
     try {
-      const restored = await this.#auth.restoreSession();
+      const restored = await restorePromise;
+      if (generation !== this.#auth.sessionGeneration) throw transitionCancelled('restore');
       if (!restored) return false;
 
-      await this.user.getProfile();
+      const profile = await this.user.getProfile({
+        sessionTransitionCapability: transitionCapability,
+      });
+      if (generation !== this.#auth.sessionGeneration) throw transitionCancelled('restore');
+      this.user.setCachedProfile(profile);
+      this.#auth.completeSessionTransition(generation);
       return true;
     } catch (error) {
-      this.#auth.clearSessionCache();
-      this.user.clearCachedProfile();
+      if (generation === this.#auth.sessionGeneration) {
+        this.#auth.clearSessionCache({
+          quarantinePersistedSession: !(error instanceof GarminSessionExpiredError),
+        });
+        this.user.clearCachedProfile();
+      }
       throw error;
     }
   }
@@ -78,4 +128,10 @@ export class GarminConnectSDK {
     this.user.clearCachedProfile();
     await this.#auth.logout();
   }
+}
+
+function transitionCancelled(operation: 'login' | 'restore'): GarminRequestError {
+  return new GarminRequestError({
+    message: `Garmin ${operation} was superseded by another session transition.`,
+  });
 }

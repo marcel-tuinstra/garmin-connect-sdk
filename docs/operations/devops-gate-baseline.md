@@ -6,12 +6,22 @@ This repo already has a focused Node CI workflow. Baseline devops work should st
 
 - `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
 - CI uses Node 24, Corepack, pnpm, typecheck, lint, unit tests, coverage, build, and package smoke validation.
+- Third-party GitHub Actions are pinned to reviewed full commit SHAs. Their release tags remain
+  in comments for update review, and checkout credentials are discarded after fetch.
+- `pnpm audit:dependencies` audits the committed `pnpm-lock.yaml`, including development tooling.
+  The blocking threshold is `high`, so high and critical findings fail CI.
 - `package.json` exposes the same cheap local checks through `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm coverage`, `pnpm build`, and `pnpm package:smoke`.
 - Live Garmin smoke commands exist, but they require user credentials and must remain opt-in.
 
 ## Baseline readiness checklist
 
 - Keep default CI credential-free and fixture-based.
+- Keep workflow permissions at `contents: read` unless a narrowly scoped job documents why it
+  needs more. Never persist checkout credentials in the default test job.
+- Review the source and release notes behind an Action commit before changing a pinned SHA; the
+  tag comment is context, not the security boundary.
+- Treat a dependency-audit registry or authentication failure as a failed gate, never as zero
+  vulnerabilities. Retry the workflow only after confirming the registry is healthy.
 - Do not add scheduled live endpoint tests unless rate-limit, credential, and terms-of-use risks are explicitly accepted.
 - Treat package smoke validation as the release-readiness boundary for exported files and CLI entries.
 - If dependency automation is enabled later, route major dependency changes through the existing CI matrix and review changes that touch auth, HTTP, schema parsing, or packaging.
@@ -35,6 +45,11 @@ For package or workflow changes:
 
 ```sh
 pnpm typecheck
+pnpm audit:dependencies
 pnpm test
 pnpm package:smoke
 ```
+
+The audit command requires npm-registry access. It is lockfile-aware and intentionally checks
+both runtime and development dependencies because build and test tooling are part of the package
+supply chain. Findings below `high` remain visible in the audit output but do not block this gate.
