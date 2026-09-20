@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Record malformed public GitHub Code Search hits as an explicit `invalid_payload` source failure
+  while keeping the overall discovery run partial instead of treating missing evidence as zero.
 - Add an opt-in maintainer workflow for privacy-preserving npm, GitHub traffic, and public repository
   evidence collection. Keep the tooling outside the npm package, store explicit source failures, and
   publish sanitized, idempotent history separately from SDK runtime behavior.

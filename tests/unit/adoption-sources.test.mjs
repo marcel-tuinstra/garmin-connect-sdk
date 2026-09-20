@@ -497,7 +497,7 @@ describe('adoption source adapters', () => {
       fetchImpl: vi.fn().mockResolvedValue(
         response(200, {
           incomplete_results: false,
-          total_count: 1,
+          total_count: 2,
           items: [
             {
               path: 'package.json',
@@ -505,6 +505,15 @@ describe('adoption source adapters', () => {
               url: 'https://api.github.com/repositories/1/contents/package.json',
               repository: {
                 full_name: 'example/app',
+                url: 'https://api.github.com/repos/example/app',
+              },
+            },
+            {
+              path: 'pnpm-lock.yaml',
+              html_url: 'https://github.com/example/app/blob/main/pnpm-lock.yaml',
+              url: 'https://api.github.com/repositories/1/contents/pnpm-lock.yaml',
+              repository: {
+                full_name: 'invalid-repository-slug',
                 url: 'https://api.github.com/repos/example/app',
               },
             },
@@ -517,6 +526,23 @@ describe('adoption source adapters', () => {
     });
 
     expect(result.status.status).toBe('partial');
+    expect(result.statuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'github_public_search_hits',
+          status: 'failed',
+          reasonCode: 'invalid_payload',
+        }),
+      ]),
+    );
+    expect(
+      result.statuses.filter(
+        ({ source, status, reasonCode }) =>
+          source === 'github_public_search_hits' &&
+          status === 'failed' &&
+          reasonCode === 'invalid_payload',
+      ),
+    ).toHaveLength(1);
     expect(result.observations).toEqual([]);
   });
 });
