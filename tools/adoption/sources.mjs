@@ -5,7 +5,6 @@ import { buildAdopterIndex, extractRepositoryEvidence, normalizeSourceStatus } f
 
 const NPM_API = 'https://api.npmjs.org';
 const GITHUB_API = 'https://api.github.com';
-const VOLUNTARY_AGGREGATE_URL = 'https://adoption.tuinstra.dev/v1/aggregate';
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_SEARCH_RESULTS = 100;
 const MAX_REPOSITORIES = 20;
@@ -19,12 +18,17 @@ export async function collectVoluntaryRegistrations({
   fetchImpl = globalThis.fetch,
   token,
   retrievedAt,
+  aggregateUrl = '',
 }) {
   const source = 'private_opt_in_self_report';
   const metricDate = retrievedAt.slice(0, 10);
-  if (!token) return failedVoluntaryCollection('missing', 'token_missing', null, retrievedAt);
+  if (!token) return failedVoluntaryCollection('missing', 'token_missing', null, retrievedAt, null);
+  const sourceUrl = configuredAggregateUrl(aggregateUrl);
+  if (!sourceUrl) {
+    return failedVoluntaryCollection('missing', 'endpoint_unconfigured', null, retrievedAt, null);
+  }
 
-  const result = await requestJson(fetchImpl, VOLUNTARY_AGGREGATE_URL, { token });
+  const result = await requestJson(fetchImpl, sourceUrl, { token });
   if (!result.ok) {
     const status = sourceFailure(source, result);
     return failedVoluntaryCollection(
@@ -32,10 +36,13 @@ export async function collectVoluntaryRegistrations({
       status.reasonCode,
       status.httpStatus,
       retrievedAt,
+      sourceUrl,
     );
   }
   const aggregate = normalizeVoluntaryAggregate(result.body);
-  if (!aggregate) return failedVoluntaryCollection('failed', 'invalid_payload', null, retrievedAt);
+  if (!aggregate) {
+    return failedVoluntaryCollection('failed', 'invalid_payload', null, retrievedAt, sourceUrl);
+  }
 
   const measurements = [
     aggregate.activeRegistrations === null
@@ -44,7 +51,7 @@ export async function collectVoluntaryRegistrations({
           'active_registrations',
           metricDate,
           'suppressed',
-          VOLUNTARY_AGGREGATE_URL,
+          sourceUrl,
           retrievedAt,
         )
       : observedMeasurement(
@@ -53,7 +60,7 @@ export async function collectVoluntaryRegistrations({
           metricDate,
           aggregate.activeRegistrations,
           'registrations',
-          VOLUNTARY_AGGREGATE_URL,
+          sourceUrl,
           retrievedAt,
         ),
     ...aggregateMeasurements(
@@ -61,19 +68,21 @@ export async function collectVoluntaryRegistrations({
       'sdk_version_registrations',
       metricDate,
       retrievedAt,
+      sourceUrl,
     ),
     ...aggregateMeasurements(
       aggregate.visibility,
       'visibility_registrations',
       metricDate,
       retrievedAt,
+      sourceUrl,
     ),
   ];
   const status = { source, status: 'success' };
   return { status, statuses: [status], measurements };
 }
 
-function failedVoluntaryCollection(statusName, reasonCode, httpStatus, retrievedAt) {
+function failedVoluntaryCollection(statusName, reasonCode, httpStatus, retrievedAt, sourceUrl) {
   const source = 'private_opt_in_self_report';
   const status = {
     source,
@@ -90,7 +99,7 @@ function failedVoluntaryCollection(statusName, reasonCode, httpStatus, retrieved
         'active_registrations',
         retrievedAt.slice(0, 10),
         statusName,
-        httpStatus ? VOLUNTARY_AGGREGATE_URL : null,
+        httpStatus ? sourceUrl : null,
         retrievedAt,
       ),
     ],
@@ -583,7 +592,7 @@ function sumCounts(buckets) {
   return Object.values(buckets).reduce((sum, count) => sum + count, 0);
 }
 
-function aggregateMeasurements(buckets, metric, metricDate, retrievedAt) {
+function aggregateMeasurements(buckets, metric, metricDate, retrievedAt, sourceUrl) {
   return Object.entries(buckets).map(([dimension, value]) => ({
     ...observedMeasurement(
       'private_opt_in_self_report',
@@ -591,11 +600,31 @@ function aggregateMeasurements(buckets, metric, metricDate, retrievedAt) {
       metricDate,
       value,
       'registrations',
-      VOLUNTARY_AGGREGATE_URL,
+      sourceUrl,
       retrievedAt,
     ),
     dimension,
   }));
+}
+
+function configuredAggregateUrl(value) {
+  if (typeof value !== 'string' || value.length === 0) return null;
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      url.pathname !== '/v1/aggregate'
+    ) {
+      return null;
+    }
+    return url.href;
+  } catch {
+    return null;
+  }
 }
 
 function parseNpmDaily(body, sourceUrl, retrievedAt, startDate, endDate, packageName) {

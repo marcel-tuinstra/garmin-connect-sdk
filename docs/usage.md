@@ -452,6 +452,9 @@ npx garmin-connect-adoption share --visibility private --dry-run
 npx garmin-connect-adoption share --visibility private
 ```
 
+These commands remain disabled until the maintainer explicitly selects and configures a production
+HTTPS intake origin. This repository does not infer or reserve a hostname automatically.
+
 Use `unindexed` for a public repository that public code search cannot find, or
 `private-unindexed` when both labels apply. The command always previews the fixed destination and
 the exact payload before it asks `Share this exact payload? [y/N]`. Pressing Enter or answering no

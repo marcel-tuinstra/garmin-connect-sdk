@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  ADOPTION_INTAKE_ORIGIN,
   ADOPTION_PRIVACY_NOTICE_URL,
   createMemoryAdoptionStateStore,
   runAdoptionCommand,
@@ -10,6 +9,8 @@ import {
   createAdoptionIntake,
   createMemoryRegistrationStore,
 } from '../../infra/adoption-intake/handler.mjs';
+
+const TEST_INTAKE_ORIGIN = 'https://adoption.example.test';
 
 function captureOutput() {
   const values = [];
@@ -20,6 +21,22 @@ function captureOutput() {
 }
 
 describe('voluntary adoption opt-in CLI', () => {
+  it('refuses network and state access when no maintainer-authorized origin is configured', async () => {
+    const fetchImpl = vi.fn();
+    const stateStore = createMemoryAdoptionStateStore();
+    await expect(
+      runAdoptionCommand({
+        args: ['share', '--visibility', 'private'],
+        fetchImpl,
+        stateStore,
+        output: captureOutput().stream,
+        confirm: vi.fn(),
+      }),
+    ).rejects.toThrow(/maintainer must authorize an HTTPS origin/i);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    await expect(stateStore.load()).resolves.toBeNull();
+  });
+
   it('previews the exact minimal payload and defaults confirmation to no', async () => {
     const fetchImpl = vi.fn();
     const stateStore = createMemoryAdoptionStateStore();
@@ -31,13 +48,14 @@ describe('voluntary adoption opt-in CLI', () => {
       stateStore,
       output: output.stream,
       confirm: async () => false,
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     });
 
     expect(exitCode).toBe(0);
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(await stateStore.load()).toBeNull();
     const rendered = output.values.join('');
-    expect(rendered).toContain(`Destination: ${ADOPTION_INTAKE_ORIGIN}`);
+    expect(rendered).toContain(`Destination: ${TEST_INTAKE_ORIGIN}`);
     expect(rendered).toContain(ADOPTION_PRIVACY_NOTICE_URL);
     expect(rendered).toContain('pseudonymous');
     expect(rendered).toContain('bearer management capability');
@@ -64,6 +82,7 @@ describe('voluntary adoption opt-in CLI', () => {
       stateStore,
       output: captureOutput().stream,
       confirm,
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     });
 
     expect(exitCode).toBe(0);
@@ -95,11 +114,12 @@ describe('voluntary adoption opt-in CLI', () => {
       confirm: async () => true,
       randomBytes: deterministicRandom,
       now: () => new Date('2026-09-20T12:00:00.000Z'),
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     });
 
     expect(exitCode).toBe(0);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl.mock.calls[0][0]).toBe(`${ADOPTION_INTAKE_ORIGIN}/v1/registrations`);
+    expect(fetchImpl.mock.calls[0][0]).toBe(`${TEST_INTAKE_ORIGIN}/v1/registrations`);
     expect(await stateStore.load()).toMatchObject({
       schemaVersion: 1,
       sdkVersion: '1.1.1',
@@ -121,6 +141,7 @@ describe('voluntary adoption opt-in CLI', () => {
         fetchImpl,
         stateStore: createMemoryAdoptionStateStore(),
         output: captureOutput().stream,
+        intakeOrigin: TEST_INTAKE_ORIGIN,
       }),
     ).rejects.toThrow();
     expect(fetchImpl).not.toHaveBeenCalled();
@@ -142,6 +163,7 @@ describe('voluntary adoption opt-in CLI', () => {
       fetchImpl: async () => new globalThis.Response('busy', { status: 503 }),
       stateStore,
       output: output.stream,
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     });
 
     expect(exitCode).toBe(1);
@@ -163,6 +185,7 @@ describe('voluntary adoption opt-in CLI', () => {
       confirm: async () => true,
       randomBytes: deterministicRandom,
       now: () => new Date('2026-09-20T12:00:00.000Z'),
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     };
 
     expect(await runAdoptionCommand({ ...common, fetchImpl: failedFetch })).toBe(1);
@@ -212,6 +235,7 @@ describe('voluntary adoption opt-in CLI', () => {
         confirm: async () => true,
         randomBytes: deterministicRandom,
         now: () => new Date('2026-09-20T12:00:00.000Z'),
+        intakeOrigin: TEST_INTAKE_ORIGIN,
       }),
     ).rejects.toThrow('simulated active-state write failure');
     await expect(backingStore.load()).resolves.toMatchObject({
@@ -239,6 +263,7 @@ describe('voluntary adoption opt-in CLI', () => {
       stateStore,
       output: captureOutput().stream,
       confirm: async () => true,
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     });
 
     expect(exitCode).toBe(0);
@@ -262,6 +287,7 @@ describe('voluntary adoption opt-in CLI', () => {
       confirm: async () => true,
       randomBytes: deterministicRandom,
       now: () => new Date('2026-09-20T12:00:00.000Z'),
+      intakeOrigin: TEST_INTAKE_ORIGIN,
     };
 
     expect(

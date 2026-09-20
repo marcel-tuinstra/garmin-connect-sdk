@@ -10,6 +10,7 @@ import {
 } from '../../tools/adoption/sources.mjs';
 
 const retrievedAt = '2026-09-20T10:00:00.000Z';
+const aggregateUrl = 'https://adoption.example.test/v1/aggregate';
 
 function response(status, body, headers = {}) {
   return {
@@ -46,6 +47,7 @@ describe('adoption source adapters', () => {
         }),
       ),
       token: 'aggregate-only-secret',
+      aggregateUrl,
       retrievedAt,
     });
 
@@ -82,12 +84,35 @@ describe('adoption source adapters', () => {
       'failed',
     ],
   ])('keeps aggregate source %s distinct from zero', async (_label, token, fetchImpl, status) => {
-    const result = await collectVoluntaryRegistrations({ fetchImpl, token, retrievedAt });
+    const result = await collectVoluntaryRegistrations({
+      fetchImpl,
+      token,
+      aggregateUrl,
+      retrievedAt,
+    });
     expect(result.status.status).toBe(status);
     expect(result.measurements).toEqual([
       expect.objectContaining({ metric: 'active_registrations', value: null, status }),
     ]);
   });
+
+  it.each(['', 'http://adoption.example.test/v1/aggregate', 'https://example.test/other'])(
+    'keeps an unauthorized aggregate endpoint %j missing without a request',
+    async (configuredUrl) => {
+      const fetchImpl = vi.fn();
+      const result = await collectVoluntaryRegistrations({
+        fetchImpl,
+        token: 'aggregate-only-secret',
+        aggregateUrl: configuredUrl,
+        retrievedAt,
+      });
+      expect(result.status).toMatchObject({
+        status: 'missing',
+        reasonCode: 'endpoint_unconfigured',
+      });
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
 
   it('rejects a below-threshold non-zero aggregate instead of publishing it', async () => {
     const result = await collectVoluntaryRegistrations({
@@ -102,6 +127,7 @@ describe('adoption source adapters', () => {
         }),
       ),
       token: 'aggregate-only-secret',
+      aggregateUrl,
       retrievedAt,
     });
 
@@ -129,6 +155,7 @@ describe('adoption source adapters', () => {
           }),
         ),
         token: 'aggregate-only-secret',
+        aggregateUrl,
         retrievedAt,
       });
 

@@ -8,9 +8,12 @@ It is not part of the npm package. The public protocol and privacy boundaries ar
 
 - Node 24 or the included container image
 - a private persistent volume mounted at `/data`
-- HTTPS termination at `adoption.tuinstra.dev`
+- HTTPS termination at a hostname explicitly approved by the maintainer before release
 - a Linux host-network deployment with a reverse proxy on the same host; the service binds to
   `127.0.0.1` by default
+
+This repository does not select, reserve or provision that hostname. DNS, TLS and deployment require
+separate maintainer authorization.
 
 Generate independent random values for the registration pepper and aggregate token. Put them in two
 owner-readable secret files outside this checkout and point `ADOPTION_REGISTRATION_PEPPER_FILE` and

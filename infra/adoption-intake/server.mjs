@@ -45,7 +45,7 @@ const server = createServer(async (incoming, outgoing) => {
       : forwarded?.split(',')[0]?.trim();
     const clientAddress = trustedProxy && forwardedAddress ? forwardedAddress : peerAddress;
     headers.set('cf-connecting-ip', clientAddress);
-    const request = new globalThis.Request(`https://adoption.tuinstra.dev${incoming.url ?? '/'}`, {
+    const request = new globalThis.Request(`https://localhost${incoming.url ?? '/'}`, {
       method: incoming.method,
       headers,
       ...(incoming.method === 'GET' || incoming.method === 'HEAD' ? {} : { body }),

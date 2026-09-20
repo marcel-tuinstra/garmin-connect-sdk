@@ -24,11 +24,16 @@ describe('adoption collection orchestration', () => {
       now,
       runId: 'run-voluntary',
       aggregateToken: 'aggregate-only',
+      aggregateUrl: 'https://adoption.example.test/v1/aggregate',
       voluntaryCollector,
     });
 
     expect(voluntaryCollector).toHaveBeenCalledWith(
-      expect.objectContaining({ token: 'aggregate-only', retrievedAt: now.toISOString() }),
+      expect.objectContaining({
+        token: 'aggregate-only',
+        aggregateUrl: 'https://adoption.example.test/v1/aggregate',
+        retrievedAt: now.toISOString(),
+      }),
     );
     expect(result).toMatchObject({
       collectionSource: 'voluntary-opt-in',

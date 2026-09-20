@@ -22,6 +22,7 @@ describe('adoption measurement operations contract', () => {
     expect(workflow).toContain('ADOPTION_TRAFFIC_TOKEN: ${{ secrets.ADOPTION_TRAFFIC_TOKEN }}');
     expect(workflow).toContain('ADOPTION_DISCOVERY_TOKEN: ${{ secrets.ADOPTION_DISCOVERY_TOKEN }}');
     expect(workflow).toContain('ADOPTION_AGGREGATE_TOKEN: ${{ secrets.ADOPTION_AGGREGATE_TOKEN }}');
+    expect(workflow).toContain('ADOPTION_AGGREGATE_URL: ${{ vars.ADOPTION_AGGREGATE_URL }}');
     expect(workflow).toContain('contents: write');
     expect(workflow).toContain('cancel-in-progress: false');
     expect(workflow).toContain('environment: adoption-traffic');

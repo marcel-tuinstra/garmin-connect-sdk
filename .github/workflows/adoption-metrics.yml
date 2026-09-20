@@ -148,6 +148,7 @@ jobs:
         env:
           ADOPTION_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           ADOPTION_AGGREGATE_TOKEN: ${{ secrets.ADOPTION_AGGREGATE_TOKEN }}
+          ADOPTION_AGGREGATE_URL: ${{ vars.ADOPTION_AGGREGATE_URL }}
         run: >-
           node tools/adoption/cli.mjs collect
           --source voluntary-opt-in

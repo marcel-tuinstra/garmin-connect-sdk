@@ -34,6 +34,7 @@ export async function main(args) {
         trafficToken: process.env.ADOPTION_TRAFFIC_TOKEN ?? '',
         discoveryToken: process.env.ADOPTION_DISCOVERY_TOKEN ?? '',
         aggregateToken: process.env.ADOPTION_AGGREGATE_TOKEN ?? '',
+        aggregateUrl: process.env.ADOPTION_AGGREGATE_URL ?? '',
         suppressions: await readSuppressions(options.get('suppressions')),
       });
     } catch (error) {

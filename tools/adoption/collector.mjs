@@ -24,6 +24,7 @@ export async function collectAdoption({
   trafficToken = '',
   discoveryToken = '',
   aggregateToken = '',
+  aggregateUrl = '',
   suppressions = [],
   npmCollector = collectNpmDownloads,
   trafficCollector = collectGitHubTraffic,
@@ -57,7 +58,12 @@ export async function collectAdoption({
       excludeRepositories: [repository, ...suppressions],
     });
   } else if (source === 'voluntary-opt-in') {
-    result = await voluntaryCollector({ fetchImpl, token: aggregateToken, retrievedAt });
+    result = await voluntaryCollector({
+      fetchImpl,
+      token: aggregateToken,
+      aggregateUrl,
+      retrievedAt,
+    });
   } else {
     throw new Error(`Unsupported adoption source: ${source}`);
   }

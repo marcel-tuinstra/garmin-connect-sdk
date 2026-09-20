@@ -6,7 +6,6 @@ import { homedir } from 'node:os';
 import { basename, dirname, join, parse, resolve, sep } from 'node:path';
 import process from 'node:process';
 
-export const ADOPTION_INTAKE_ORIGIN = 'https://adoption.tuinstra.dev';
 export const ADOPTION_PRIVACY_NOTICE_URL =
   'https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/v1.2.0/docs/operations/adoption-measurement.md#voluntary-registration-privacy';
 
@@ -32,22 +31,48 @@ export async function runAdoptionCommand({
   confirm = async () => false,
   randomBytes = nodeRandomBytes,
   now = () => new Date(),
+  intakeOrigin = null,
 } = {}) {
   const [command = 'help', ...options] = args ?? [];
   if (command === 'help' || command === '--help' || command === '-h') {
     output.write(helpText());
     return 0;
   }
+  const configuredOrigin = configuredIntakeOrigin(intakeOrigin);
   if (command === 'share') {
-    return share({ options, fetchImpl, stateStore, output, confirm, randomBytes, now });
+    return share({
+      options,
+      fetchImpl,
+      stateStore,
+      output,
+      confirm,
+      randomBytes,
+      now,
+      intakeOrigin: configuredOrigin,
+    });
   }
   if (command === 'status') {
     rejectOptions(options);
-    return status({ fetchImpl, stateStore, output, randomBytes, now });
+    return status({
+      fetchImpl,
+      stateStore,
+      output,
+      randomBytes,
+      now,
+      intakeOrigin: configuredOrigin,
+    });
   }
   if (command === 'withdraw') {
     rejectOptions(options);
-    return withdraw({ fetchImpl, stateStore, output, confirm, randomBytes, now });
+    return withdraw({
+      fetchImpl,
+      stateStore,
+      output,
+      confirm,
+      randomBytes,
+      now,
+      intakeOrigin: configuredOrigin,
+    });
   }
   throw new Error(`Unknown adoption command: ${command}`);
 }
@@ -380,7 +405,16 @@ function secureRandomSuffix() {
   return nodeRandomBytes(16).toString('hex');
 }
 
-async function share({ options, fetchImpl, stateStore, output, confirm, randomBytes, now }) {
+async function share({
+  options,
+  fetchImpl,
+  stateStore,
+  output,
+  confirm,
+  randomBytes,
+  now,
+  intakeOrigin,
+}) {
   const { visibility, dryRun } = parseShareOptions(options);
   const payload = Object.freeze({
     schemaVersion: 1,
@@ -392,7 +426,7 @@ async function share({ options, fetchImpl, stateStore, output, confirm, randomBy
   output.write(
     [
       'Voluntary pseudonymous adoption registration',
-      `Destination: ${ADOPTION_INTAKE_ORIGIN}`,
+      `Destination: ${intakeOrigin}`,
       `Privacy notice (consent version 1): ${ADOPTION_PRIVACY_NOTICE_URL}`,
       'Exact payload:',
       JSON.stringify(payload, null, 2),
@@ -443,6 +477,7 @@ async function share({ options, fetchImpl, stateStore, output, confirm, randomBy
       body: payload,
       randomBytes,
       now,
+      intakeOrigin,
     });
     if (!response.ok) {
       output.write(
@@ -471,7 +506,7 @@ async function share({ options, fetchImpl, stateStore, output, confirm, randomBy
   });
 }
 
-async function status({ fetchImpl, stateStore, output, randomBytes, now }) {
+async function status({ fetchImpl, stateStore, output, randomBytes, now, intakeOrigin }) {
   const state = await stateStore.load();
   if (!state) {
     output.write('No local voluntary adoption registration.\n');
@@ -483,6 +518,7 @@ async function status({ fetchImpl, stateStore, output, randomBytes, now }) {
     credentials: state,
     randomBytes,
     now,
+    intakeOrigin,
   });
   if (!response.ok) {
     output.write(`Remote registration status unavailable (HTTP ${response.status}).\n`);
@@ -497,7 +533,15 @@ async function status({ fetchImpl, stateStore, output, randomBytes, now }) {
   return 0;
 }
 
-async function withdraw({ fetchImpl, stateStore, output, confirm, randomBytes, now }) {
+async function withdraw({
+  fetchImpl,
+  stateStore,
+  output,
+  confirm,
+  randomBytes,
+  now,
+  intakeOrigin,
+}) {
   const state = await stateStore.load();
   if (!state) {
     output.write('No local voluntary adoption registration to withdraw.\n');
@@ -519,6 +563,7 @@ async function withdraw({ fetchImpl, stateStore, output, confirm, randomBytes, n
       credentials: current,
       randomBytes,
       now,
+      intakeOrigin,
     });
     if (response.status !== 204) {
       output.write(`Withdrawal unavailable (HTTP ${response.status}); local state was kept.\n`);
@@ -530,10 +575,13 @@ async function withdraw({ fetchImpl, stateStore, output, confirm, randomBytes, n
   });
 }
 
-async function request(path, { method, fetchImpl, credentials, body, randomBytes, now }) {
+async function request(
+  path,
+  { method, fetchImpl, credentials, body, randomBytes, now, intakeOrigin },
+) {
   validateCredentialShape(credentials);
   try {
-    return await fetchImpl(`${ADOPTION_INTAKE_ORIGIN}${path}`, {
+    return await fetchImpl(`${intakeOrigin}${path}`, {
       method,
       headers: {
         authorization: `Bearer ${credentials.managementToken}`,
@@ -548,6 +596,31 @@ async function request(path, { method, fetchImpl, credentials, body, randomBytes
   } catch {
     return new globalThis.Response(null, { status: 503 });
   }
+}
+
+function configuredIntakeOrigin(value) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(
+      'Voluntary adoption intake is not configured; the maintainer must authorize an HTTPS origin before release.',
+    );
+  }
+  let url;
+  try {
+    url = new globalThis.URL(value);
+  } catch {
+    throw new Error('Voluntary adoption intake origin is invalid.');
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    !['', '/'].includes(url.pathname)
+  ) {
+    throw new Error('Voluntary adoption intake origin must be a bare HTTPS origin.');
+  }
+  return url.origin;
 }
 
 function parseShareOptions(options) {

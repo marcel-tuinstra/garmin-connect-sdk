@@ -85,6 +85,8 @@ Keep the source secrets in their matching environment, not as unrestricted repos
   accepted; anything other than `public` is discarded.
 - `ADOPTION_AGGREGATE_TOKEN`: a read-only capability for the intake's aggregate endpoint. It cannot
   list, modify, renew, or delete registrations and belongs only in `adoption-opt-in-aggregate`.
+- `ADOPTION_AGGREGATE_URL`: a non-secret environment variable containing the explicitly approved
+  HTTPS aggregate URL. No production hostname is selected by this branch.
 
 The collection jobs have `contents: read`. Source tokens exist only in their matching environment
 and step. The publisher receives neither token; its separately restricted environment alone gets
@@ -119,8 +121,13 @@ guarantee is made.
 
 ## Voluntary Registration Privacy
 
-`garmin-connect-adoption share` uses the fixed `https://adoption.tuinstra.dev` origin. It previews
-the exact five-field payload and asks for final confirmation with a default of no. Decline and
+No production intake origin is selected or authorized by this branch. Until the maintainer
+explicitly approves and configures one, the consumer command refuses to share, inspect, or withdraw
+a registration and the aggregate collector records the endpoint as missing without a request. This
+is a release blocker, not an invitation to infer a hostname from the project or maintainer identity.
+
+Once an origin is explicitly approved, `garmin-connect-adoption share` previews that exact HTTPS
+origin and the five-field payload, then asks for final confirmation with a default of no. Decline and
 `--dry-run` make no request and write no state. The allowlist is `schemaVersion`, `consentVersion`,
 `consent`, `sdkVersion`, and `visibility`; the service rejects unknown fields, oversized bodies,
 invalid versions, public visibility, non-HTTPS requests and malformed credentials.
