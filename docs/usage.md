@@ -73,6 +73,18 @@ It does not store email or password values, but the token file is a bearer secre
 include limited session metadata such as display name and client ID. The SDK does not
 encrypt token files.
 
+On POSIX systems, `FileTokenStorage` creates and tightens its final storage directory to
+mode `0700` and token, refresh-lock, and temporary files to `0600`. Saves use an exclusive,
+cryptographically random temporary filename in the same directory followed by an atomic
+rename. Loads, saves, clears, and refresh locks reject detected symbolic links in the token
+path and require token and lock paths to be regular files. `clear()` removes only the token
+file; it never recursively removes the containing directory.
+
+Windows does not provide POSIX mode guarantees. The same regular-file and symbolic-link
+checks are applied where Node exposes them, but directory and file access must be restricted
+with Windows ACLs. For stronger platform-managed protection, provide a custom `TokenStorage`
+backed by the operating-system credential store or another secret manager.
+
 `restoreSession()` returns `false` if storage has no session. For stored tokens, it refreshes
 them when needed and makes an authenticated profile request before returning `true`, even
 if the access token has not reached its local expiry time. A failed check throws the
