@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make activity-detail `firstMetricRow` use the same row-local descriptor resolution and location
+  redaction as the public whole-activity decoder.
 - Add a public whole-activity metric-row decoder with per-row descriptor support, deterministic
   malformed-data handling, safe key filtering, and location redaction by default.
 - Add typed and raw full-replacement workout updates with validation, immutable caller input, no
