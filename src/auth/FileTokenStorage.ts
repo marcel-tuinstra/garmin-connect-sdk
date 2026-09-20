@@ -397,7 +397,15 @@ async function removeStaleLock(path: string): Promise<void> {
   if (pathStats === null) return;
   assertRegularFile(path, pathStats);
 
-  const file = await openRegularFile(path, constants.O_RDONLY);
+  let file: FileHandle;
+  try {
+    file = await openRegularFile(path, constants.O_RDONLY);
+  } catch (error) {
+    // The current owner may release the lock after our lstat but before open.
+    // That is normal contention, not a storage failure.
+    if (isNotFound(error)) return;
+    throw error;
+  }
   let openedStats: Stats;
   try {
     await tightenFileMode(file);
