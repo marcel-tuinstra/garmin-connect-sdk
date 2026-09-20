@@ -94,6 +94,12 @@ prove that the session is invalid; keep the stored tokens and retry the read lat
 Call `logout()` to clear stored tokens and the SDK's cached profile. Keep token storage on
 a persistent volume for containers so deployments can reuse the session.
 
+OAuth expiry values are treated as untrusted input. A JWT `exp` is used only when it is a
+finite, positive value that can be represented as an ISO timestamp. Otherwise the SDK falls
+back to a valid `expires_in`, or to one hour when `expires_in` is absent. Explicit
+`expires_in` and `refresh_token_expires_in` values must be finite, positive, and representable;
+an invalid value rejects the token response without replacing the established session.
+
 For an authenticated `GET` or `HEAD` that Garmin rejects, the SDK attempts one token refresh
 and repeats the read once. This also applies to the profile read during `restoreSession()`.
 It does not retain your password or call `login()` for this recovery. Concurrent rejected
