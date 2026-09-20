@@ -1,8 +1,10 @@
 # Adoption measurement
 
-This repository measures a few public signals without adding telemetry to the SDK. The collector is
-maintainer tooling under `tools/adoption`; it is not included in the npm package and is never run by
-an SDK consumer.
+This repository measures public signals and a separate voluntary private/unindexed registration
+signal without adding implicit telemetry to the SDK. Maintainer collection lives under
+`tools/adoption` and is not included in the npm package. The published package contains only the
+separately invoked `garmin-connect-adoption` consent command; installation, import, SDK
+construction, authentication, and normal use never run it or make an adoption request.
 
 The latest generated report lives on the data branch:
 [SDK adoption evidence](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/adoption-metrics/docs/adoption/latest.md).
@@ -18,6 +20,9 @@ The underlying dated snapshots are available in the same branch under `data/adop
 - **public repository evidence** is static evidence found in indexed public files. Dependency
   declarations, lockfile resolutions, SDK imports and strict constructor callsites stay distinct.
   A callsite is active-use evidence, not proof that a deployment is running.
+- **voluntary private/unindexed registrations** are pseudonymous, time-limited and unverified
+  self-reports submitted only after a consumer runs the dedicated command and confirms its exact
+  payload. The collector receives thresholded aggregates, never raw registrations.
 - **active installations** are not measured. None of the other metrics is used as a substitute.
 
 There is no combined “users” number. Missing, delayed, denied, failed and rate-limited observations
@@ -34,7 +39,8 @@ window cannot be reconstructed.
 
 The workflow keeps collection and publication separate:
 
-1. Three read-only jobs collect npm data, repository traffic and public code evidence independently.
+1. Four read-only jobs collect npm data, repository traffic, public code evidence and thresholded
+   voluntary-registration aggregates independently.
 2. Each job uploads a sanitized staging artifact for at most 30 days.
 3. A publisher with no source credentials validates those files, performs deterministic upserts and
    normally pushes one commit to the `adoption-metrics` branch. It never force-pushes.
@@ -62,12 +68,13 @@ reports.
 
 ## Access and secrets
 
-The npm source needs no credential. Before merging or enabling the workflow, create three GitHub
+The npm source needs no credential. Before merging or enabling the workflow, create four GitHub
 Actions environments and restrict each deployment branch to the default branch:
 
 - `adoption-traffic`
 - `adoption-discovery`
 - `adoption-publication`
+- `adoption-opt-in-aggregate`
 
 Keep the source secrets in their matching environment, not as unrestricted repository secrets:
 
@@ -76,6 +83,10 @@ Keep the source secrets in their matching environment, not as unrestricted repos
 - `ADOPTION_DISCOVERY_TOKEN`: a separate identity with no private-repository access. A no-scope token
   for public information is preferred. Repository visibility is checked again before evidence is
   accepted; anything other than `public` is discarded.
+- `ADOPTION_AGGREGATE_TOKEN`: a read-only capability for the intake's aggregate endpoint. It cannot
+  list, modify, renew, or delete registrations and belongs only in `adoption-opt-in-aggregate`.
+- `ADOPTION_AGGREGATE_URL`: a non-secret environment variable containing the explicitly approved
+  HTTPS aggregate URL. No production hostname is selected by this branch.
 
 The collection jobs have `contents: read`. Source tokens exist only in their matching environment
 and step. The publisher receives neither token; its separately restricted environment alone gets
@@ -108,11 +119,70 @@ suppression took effect. Because Git history is durable and forks may exist, the
 assess whether history rewriting or a GitHub support request is appropriate; no automatic erasure
 guarantee is made.
 
+## Voluntary Registration Privacy
+
+No production intake origin is selected or authorized by this branch. Until the maintainer
+explicitly approves and configures one, the consumer command refuses to share, inspect, or withdraw
+a registration and the aggregate collector records the endpoint as missing without a request. This
+is a release blocker, not an invitation to infer a hostname from the project or maintainer identity.
+
+Once an origin is explicitly approved, `garmin-connect-adoption share` previews that exact HTTPS
+origin and the five-field payload, then asks for final confirmation with a default of no. Decline and
+`--dry-run` make no request and write no state. The allowlist is `schemaVersion`, `consentVersion`,
+`consent`, `sdkVersion`, and `visibility`; the service rejects unknown fields, oversized bodies,
+invalid versions, public visibility, non-HTTPS requests and malformed credentials.
+
+The client generates a random 128-bit registration ID and an independent 256-bit management
+capability. Each request also carries a fresh random request ID and current request timestamp for
+replay resistance. The server stores keyed hashes of the stable registration ID and management
+capability, not their raw values. It stores only SDK version, coarse visibility, consent version,
+creation/update timestamps and expiry. It does not accept repository identity, URLs, paths, source,
+arbitrary metadata, Garmin data, credentials, profiles, devices, health data, usage frequency,
+personal identity, or commercial-use claims. This is pseudonymous processing: the capability is
+stable until withdrawal or expiry even though the service does not ask who owns it.
+
+After explicit consent and before the first request, the client saves the management capability as
+pending owner-only local state. If the server commits but its response is lost, rerunning `share`
+reuses that capability and can recover or revoke the same record instead of creating an orphan.
+
+The edge processes a network address to serve and rate-limit a request. Before persistence, the
+application converts it to a keyed hash used only in the current hourly rate-limit window. Request
+bodies, authorization values, raw IP addresses, user agents, registration IDs and management
+capabilities must not enter application, proxy or tracing logs. The SQLite registry is private,
+encrypted at the host/storage layer, access-restricted to the service account, and never copied into
+Git or workflow artifacts. Encrypted, access-restricted backups expire within 30 days and must be
+purged on that schedule.
+
+Active registrations expire 90 days after their most recent deliberate share. `status` checks the
+active record using the management capability. `withdraw` deletes that record before local state is
+removed, writes only keyed registration/capability hashes to a 24-hour replay-prevention tombstone,
+and checkpoints/truncates SQLite's WAL before returning success. Creation and renewal atomically
+check that tombstone, so an in-flight renewal cannot resurrect a withdrawn registration. A deleted
+active row can remain in an encrypted operator backup for at most 30 days. Historical aggregate
+reports cannot be reliably decremented and remain under the report retention policy. Lost
+pseudonymous management capabilities cannot be recovered or linked to an owner by the service; the
+active record expires naturally.
+
+The aggregate endpoint requires a separate read-only token. Its threshold cannot be configured below
+five; it suppresses every non-zero total or bucket below five and rounds released counts down to a
+multiple of five. Rounding reduces small-cohort and day-to-day differencing risk but cannot make a
+published historical aggregate retractable. Published source name: `private_opt_in_self_report`.
+Reports call it an unverified voluntary registration and never a verified repository, unique user,
+active install, commercial user, or license violation.
+
+Authenticated traffic triggers expiry maintenance at most once every five minutes. Unauthenticated
+aggregate requests do not run maintenance, and the rate-limit store indexes its expiry window so
+cleanup remains bounded as the table grows.
+
 ## Retention
 
-Sanitized snapshots, reports and public repository evidence remain in the `adoption-metrics` Git
-history for the lifetime of the project. Staging artifacts expire after 30 days. Raw API responses
-are never retained. If a public repository becomes private, deleted or opts out, its current index
+Sanitized snapshots, reports, public repository evidence and thresholded voluntary aggregates remain
+in the `adoption-metrics` Git history for the lifetime of the project. Staging artifacts expire
+after 30 days. Raw API responses and raw voluntary registrations never enter Git or artifacts. An
+active voluntary registration expires after 90 days. An authenticated withdrawal transactionally
+deletes its active row, retains a keyed replay-prevention tombstone for 24 hours, and checkpoints the
+SQLite WAL before success is returned. Encrypted operator backups may retain the deleted row for no
+more than 30 days. If a public repository becomes private, deleted or opts out, its current index
 entry is suppressed on the next run.
 
 ## Recovery
@@ -138,3 +208,7 @@ not a census. Ranged or malformed dependency declarations remain labeled as such
 lock resolution does not establish an installed version. Archived and forked repositories are
 reported separately. npm downloads, organization names, imports, traffic and static callsites do not
 establish commercial use or a license violation.
+
+Voluntary registrations are self-selected and unverified. One project can register more than once
+from separately initialized environments, many consumers will never opt in, small cohorts are
+hidden, and expiry measures recent deliberate registrations rather than active installations.

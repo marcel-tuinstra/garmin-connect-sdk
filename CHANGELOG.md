@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add a separate `garmin-connect-adoption` command for an explicit, pseudonymous and revocable
+  private/unindexed-project registration. It previews the exact five-field payload, defaults consent
+  to no, expires registrations after 90 days, and never runs during install, import, authentication,
+  SDK construction, or normal use. Reports keep thresholded voluntary self-reports separate from
+  downloads, repository traffic, public code evidence, users, and active installations.
 - Record malformed public GitHub Code Search hits as an explicit `invalid_payload` source failure
   while keeping the overall discovery run partial instead of treating missing evidence as zero.
 - Add an opt-in maintainer workflow for privacy-preserving npm, GitHub traffic, and public repository

@@ -108,7 +108,7 @@ function completeSourceSet(results) {
   const [first] = results;
   const runIds = new Set(results.map(({ runId }) => runId));
   if (runIds.size !== 1) throw new Error('Collection files must use the same run ID.');
-  const expected = ['npm', 'github-traffic', 'github-adopters'];
+  const expected = ['npm', 'github-traffic', 'github-adopters', 'voluntary-opt-in'];
   const coverage = new Map(expected.map((source) => [source, 0]));
   for (const result of results) {
     for (const source of coveredSources(result)) coverage.set(source, coverage.get(source) + 1);
@@ -125,7 +125,11 @@ function completeSourceSet(results) {
 }
 
 function coveredSources(result) {
-  if (['npm', 'github-traffic', 'github-adopters'].includes(result.collectionSource)) {
+  if (
+    ['npm', 'github-traffic', 'github-adopters', 'voluntary-opt-in'].includes(
+      result.collectionSource,
+    )
+  ) {
     return [result.collectionSource];
   }
   const statuses = result.sourceStatuses ?? [];
@@ -137,6 +141,9 @@ function coveredSources(result) {
   if (statuses.some(({ source }) => source.startsWith('github_public_'))) {
     covered.push('github-adopters');
   }
+  if (statuses.some(({ source }) => source === 'private_opt_in_self_report')) {
+    covered.push('voluntary-opt-in');
+  }
   return covered;
 }
 
@@ -146,7 +153,9 @@ function missingSourceResult(source, base) {
       ? 'npm_collection'
       : source === 'github-traffic'
         ? 'github_traffic'
-        : 'github_public_search';
+        : source === 'github-adopters'
+          ? 'github_public_search'
+          : 'private_opt_in_self_report';
   return {
     schemaVersion: 1,
     collectionSource: source,

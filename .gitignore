@@ -11,3 +11,4 @@ coverage/
 garmin-tokens.json
 *.log
 *.tgz
+infra/adoption-intake/secrets/

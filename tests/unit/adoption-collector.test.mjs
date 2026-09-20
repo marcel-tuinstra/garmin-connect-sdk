@@ -5,6 +5,42 @@ import { combineCollectionResults, collectAdoption } from '../../tools/adoption/
 const now = new Date('2026-09-20T10:00:00.000Z');
 
 describe('adoption collection orchestration', () => {
+  it('keeps voluntary registrations as a separate unverified collection source', async () => {
+    const voluntaryCollector = vi.fn().mockResolvedValue({
+      statuses: [{ source: 'private_opt_in_self_report', status: 'success' }],
+      measurements: [
+        {
+          source: 'private_opt_in_self_report',
+          metric: 'active_registrations',
+          metricDate: '2026-09-20',
+          status: 'observed',
+          value: 5,
+        },
+      ],
+    });
+
+    const result = await collectAdoption({
+      source: 'voluntary-opt-in',
+      now,
+      runId: 'run-voluntary',
+      aggregateToken: 'aggregate-only',
+      aggregateUrl: 'https://adoption.example.test/v1/aggregate',
+      voluntaryCollector,
+    });
+
+    expect(voluntaryCollector).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'aggregate-only',
+        aggregateUrl: 'https://adoption.example.test/v1/aggregate',
+        retrievedAt: now.toISOString(),
+      }),
+    );
+    expect(result).toMatchObject({
+      collectionSource: 'voluntary-opt-in',
+      runStatus: 'complete',
+    });
+  });
+
   it('uses the previous 14 complete UTC days and returns a complete run', async () => {
     const npmCollector = vi.fn().mockResolvedValue({
       statuses: [{ source: 'npm_downloads', status: 'success' }],

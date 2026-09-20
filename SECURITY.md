@@ -52,13 +52,32 @@ only in a private local terminal and redact it before sharing.
 
 ## Adoption Metrics
 
-Maintainer adoption measurements never run inside the published SDK. They collect sanitized npm,
-GitHub traffic, and public-repository signals through a separate scheduled workflow. Do not add
-postinstall hooks, background requests, device identifiers, account identifiers, or runtime
-telemetry to support those reports.
+Maintainer adoption measurements never run inside the SDK. They collect sanitized npm, GitHub
+traffic, public-repository signals, and thresholded voluntary-registration aggregates through a
+separate scheduled workflow. Package installation, import, SDK construction, authentication, and
+normal runtime behavior make no adoption request. Do not add postinstall hooks, background or
+recurring requests, device identifiers, account identifiers, or implicit runtime telemetry.
+
+Private or unindexed consumers can deliberately run `garmin-connect-adoption share`. The command
+shows the fixed HTTPS destination and exact payload, then asks for confirmation with a default of
+no. It never reads a repository, Git remote, manifest, lockfile, source file, path, Garmin session,
+credential, profile, device, or health data. A local random management capability controls status,
+renewal, and withdrawal; it is saved before the first request so an ambiguous response can be retried
+without orphaning the registration. Keep that file private and out of source control. A withdrawal
+deletes the active intake row, keeps only keyed hashes in a 24-hour replay-prevention tombstone, and
+cannot erase already published rounded, thresholded historical aggregates. Encrypted operator
+backups expire within 30 days and may retain the deleted row until then.
+
+The intake stores keyed hashes instead of the client registration ID or management token. It keeps
+only SDK version, coarse private/unindexed visibility, consent version, timestamps, and expiry.
+Registrations expire after 90 days without deliberate renewal. Logs must not retain request bodies,
+authorization headers, raw IP addresses, user agents, registration IDs, or management capabilities.
+The aggregate endpoint suppresses non-zero cohorts below five and rounds released counts down to a
+multiple of five.
 
 The public repository index must not contain profiles, names, email addresses, contributors, commit
 authors, source snippets, private repositories, Garmin data, traffic referrers, or visited paths.
 Report an incorrect entry or request an opt out through private vulnerability reporting. The
 [operations guide](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/main/docs/operations/adoption-measurement.md)
-documents the source credentials, retention, recovery, and limitations.
+documents consent, the exact data fields, source credentials, retention, withdrawal, recovery, and
+limitations.
