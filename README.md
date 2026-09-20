@@ -76,7 +76,10 @@ console.log({
 
 Prefer `restoreSession()` and token refresh over repeated password login. `FileTokenStorage`
 stores tokens, not email or password values, but token files still grant account access
-and should be protected like credentials.
+and should be protected like credentials. On POSIX systems it enforces owner-only directory
+and file modes, rejects symbolic links in the storage path, and replaces token files
+atomically through exclusive, randomly named temporary files. Windows permissions are
+governed by ACLs; use a locked-down directory or a custom `TokenStorage` there.
 
 `restoreSession()` validates stored tokens with an authenticated profile read before returning
 `true`. It returns `false` for empty storage and throws if validation fails. See
@@ -87,7 +90,7 @@ and should be protected like credentials.
 | Area             | Status                      | Examples                                                            |
 | ---------------- | --------------------------- | ------------------------------------------------------------------- |
 | Activities       | Read-oriented               | List, download, details, splits, type metadata                      |
-| Sleep and health | Read-oriented               | Daily sleep, sleep ranges, heart rate, stress, HRV, Body Battery    |
+| Sleep and health | Read-oriented               | Sleep, heart rate, stress, HRV, Body Battery, HR and power zones    |
 | Weight           | Reads + experimental writes | Daily/range weigh-ins plus manual creation and removal              |
 | User and devices | Read-oriented               | Profile and registered devices                                      |
 | Workouts         | Experimental writes         | List, create, replace, schedule, unschedule, delete                 |
@@ -104,6 +107,8 @@ are unsupported.
 - Do not log or paste raw health, location, activity, device, workout, or calendar payloads.
 - Isolate token storage per user/account in apps or plugins.
 - Back off on rate limits and expect private endpoint drift.
+- Treat activity, workout, and schedule identifiers as opaque positive integers. Unsafe dynamic
+  path input is rejected locally with `GarminInputError` before auth or network dispatch.
 - Treat workout/calendar/weight writes and write integration tests as live account changes. Weight
   writes mutate health history; workout and calendar changes may also sync to Garmin devices.
 - Workout creation, replacement, scheduling, unscheduling, deletion, and weight writes are not retried
