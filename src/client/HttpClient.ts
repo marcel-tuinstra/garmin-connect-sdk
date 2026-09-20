@@ -23,6 +23,8 @@ export interface RequestOptions<T> {
   skipAuth?: boolean;
   retry?: RetryOptions;
   timeoutMs?: number;
+  /** @internal Unforgeable capability for validating the owning SDK transition. */
+  sessionTransitionCapability?: symbol;
   /** Redacted path used in logs and errors while the real path is sent over the wire. */
   diagnosticPath?: string;
 }
@@ -155,7 +157,7 @@ export class HttpClient {
 
     if (!options.skipAuth) {
       const generation = this.#auth.sessionGeneration;
-      const tokens = await this.#auth.refreshIfNeeded();
+      const tokens = await this.#auth.refreshIfNeeded(options.sessionTransitionCapability);
       if (generation !== this.#auth.sessionGeneration) {
         throw new GarminRequestError({
           message: 'Garmin session changed before request dispatch.',
