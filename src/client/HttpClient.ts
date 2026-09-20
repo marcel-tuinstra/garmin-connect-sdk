@@ -2,6 +2,7 @@ import type { ZodIssue, ZodType } from 'zod';
 
 import {
   errorFromResponse,
+  GarminInputError,
   GarminRequestError,
   GarminSessionExpiredError,
   GarminTimeoutError,
@@ -60,7 +61,7 @@ export class HttpClient {
   }
 
   async request<T = unknown>(path: string, options: RequestOptions<T> = {}): Promise<T> {
-    const endpoint = buildPath(path, options.query);
+    const requestUrl = confinedRequestUrl(path, options.query ?? {}, this.baseUrl);
     const diagnosticEndpoint = buildPath(options.diagnosticPath ?? path, options.query);
     let dispatchedSession: DispatchedSession | undefined;
     const method = normalizeMethod(options.method);
@@ -74,9 +75,14 @@ export class HttpClient {
       return await withRetry(
         () => {
           dispatchedSession = undefined;
-          return this.#requestOnce(endpoint, diagnosticEndpoint, options, (tokens, generation) => {
-            dispatchedSession = { tokens, generation };
-          });
+          return this.#requestOnce(
+            requestUrl,
+            diagnosticEndpoint,
+            options,
+            (tokens, generation) => {
+              dispatchedSession = { tokens, generation };
+            },
+          );
         },
         {
           ...retry,
@@ -118,7 +124,7 @@ export class HttpClient {
       const replaySession: { current?: DispatchedSession } = {};
       try {
         return await this.#requestOnce(
-          endpoint,
+          requestUrl,
           diagnosticEndpoint,
           options,
           (tokens, generation) => {
@@ -138,7 +144,7 @@ export class HttpClient {
   }
 
   async #requestOnce<T>(
-    endpoint: string,
+    requestUrl: URL,
     diagnosticEndpoint: string,
     options: RequestOptions<T>,
     onAuthenticatedDispatch?: (tokens: GarminTokens, generation: number) => void,
@@ -167,7 +173,7 @@ export class HttpClient {
       body = JSON.stringify(options.body);
     }
 
-    const response = await this.#fetchWithTimeout(new URL(endpoint, this.baseUrl), {
+    const response = await this.#fetchWithTimeout(requestUrl, {
       method: normalizeMethod(options.method),
       headers,
       body,
@@ -278,6 +284,52 @@ export function buildPath(
   }
   const queryString = search.toString();
   return queryString ? `${path}?${queryString}` : path;
+}
+
+function confinedRequestUrl(
+  path: string,
+  query: Record<string, string | number | boolean | undefined>,
+  baseUrl: string,
+): URL {
+  if (
+    typeof path !== 'string' ||
+    !path.startsWith('/') ||
+    path.startsWith('//') ||
+    path.includes('\\') ||
+    path.includes('?') ||
+    path.includes('#') ||
+    hasControlCharacter(path) ||
+    /%(?![\da-f]{2})/i.test(path)
+  ) {
+    throw invalidRequestPath();
+  }
+
+  let base: URL;
+  let url: URL;
+  try {
+    base = new URL(baseUrl);
+    url = new URL(path, base);
+  } catch {
+    throw invalidRequestPath();
+  }
+
+  if (url.origin !== base.origin || url.pathname !== path) throw invalidRequestPath();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) url.searchParams.set(key, String(value));
+  }
+  return url;
+}
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint <= 0x1f || codePoint === 0x7f;
+  });
+}
+
+function invalidRequestPath(): GarminInputError {
+  return new GarminInputError('Garmin request path is invalid.', ['path']);
 }
 
 async function parseJson(response: Response): Promise<unknown> {

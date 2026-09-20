@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reject unsafe activity, workout, and schedule identifiers before dispatch; encode wellness
+  profile path segments; and confine SDK requests to their configured Garmin origin and path.
+- Add `GarminInputError`, a `TypeError` subtype for caller input rejected before authentication or
+  network dispatch.
 - Make repeated login and restore transitions generation-safe: invalidate the previous account at
   login start, roll back failed profile resolution, and prevent late auth/profile responses from
   replacing newer session state.

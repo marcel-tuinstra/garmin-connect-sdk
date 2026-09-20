@@ -51,6 +51,7 @@ try {
           'GarminConnectSDK',
           'GarminAuthError',
           'GarminBotChallengeError',
+          'GarminInputError',
           'GarminMfaRequiredError',
           'GarminNotFoundError',
           'GarminRateLimitError',

@@ -107,6 +107,8 @@ are unsupported.
 - Do not log or paste raw health, location, activity, device, workout, or calendar payloads.
 - Isolate token storage per user/account in apps or plugins.
 - Back off on rate limits and expect private endpoint drift.
+- Treat activity, workout, and schedule identifiers as opaque positive integers. Unsafe dynamic
+  path input is rejected locally with `GarminInputError` before auth or network dispatch.
 - Treat workout/calendar/weight writes and write integration tests as live account changes. Weight
   writes mutate health history; workout and calendar changes may also sync to Garmin devices.
 - Workout creation, replacement, scheduling, unscheduling, deletion, and weight writes are not retried

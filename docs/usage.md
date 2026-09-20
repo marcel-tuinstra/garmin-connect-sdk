@@ -243,6 +243,7 @@ classified errors.
 ```ts
 import {
   GarminBotChallengeError,
+  GarminInputError,
   GarminMfaRequiredError,
   GarminNotFoundError,
   GarminRateLimitError,
@@ -253,6 +254,11 @@ import {
 try {
   await garmin.activities.list({ limit: 5 });
 } catch (error) {
+  if (error instanceof GarminInputError) {
+    // Fix the caller-supplied identifier or path value. No request was sent.
+    throw error;
+  }
+
   if (error instanceof GarminNotFoundError) {
     // The requested Garmin resource is absent. The error exposes only sanitized diagnostics.
     throw error;
@@ -407,6 +413,7 @@ not logs or public bug reports. Logging an outcome such as `needsReview: true` i
 
 | Error or symptom            | Action                                                                                  |
 | --------------------------- | --------------------------------------------------------------------------------------- |
+| `GarminInputError`          | Fix the caller-supplied value. Authentication and network dispatch have not started.    |
 | `GarminMfaRequiredError`    | Pass a code or code-provider function as `mfaCode` to `login()`.                        |
 | `GarminBotChallengeError`   | Stop automated retries and complete any required Garmin account challenge manually.     |
 | `GarminNotFoundError`       | Treat the requested resource as absent; verify its identifier when that is unexpected.  |
