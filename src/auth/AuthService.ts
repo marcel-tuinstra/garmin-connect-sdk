@@ -9,7 +9,7 @@ import {
   errorFromResponse,
   readResponseErrorEvidence,
 } from '../client/GarminRequestError.js';
-import { noopLogger, redact, type Logger } from '../utils/logger.js';
+import { noopLogger, type Logger } from '../utils/logger.js';
 import { withRetry, type RetryOptions } from '../utils/retry.js';
 import { MemoryTokenStorage } from './MemoryTokenStorage.js';
 import type { TokenStorage } from './TokenStorage.js';
@@ -48,8 +48,10 @@ export class AuthService {
   #logger: Logger;
   #retry: RetryOptions;
   #tokens: GarminTokens | null = null;
-  #refreshPromise: Promise<GarminTokens> | null = null;
+  #refreshPromise: { generation: number; promise: Promise<GarminTokens> } | null = null;
   #sessionGeneration = 0;
+  #transitionGeneration: number | null = null;
+  #transitionCapability: symbol | null = null;
   #storageMutation: Promise<void> = Promise.resolve();
 
   constructor(options: AuthServiceOptions = {}) {
@@ -71,17 +73,37 @@ export class AuthService {
     return this.#sessionGeneration;
   }
 
-  async restoreSession(): Promise<boolean> {
+  async restoreSession(transition: { deferCompletion?: boolean } = {}): Promise<boolean> {
+    const restoreGeneration = ++this.#sessionGeneration;
+    this.#transitionGeneration = restoreGeneration;
+    this.#transitionCapability = Symbol('garmin-session-transition');
     this.#tokens = null;
     const tokens = await this.storage.load();
-    if (!tokens) return false;
+    if (restoreGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
+    if (!tokens) {
+      this.#transitionGeneration = null;
+      this.#transitionCapability = null;
+      return false;
+    }
     this.#tokens = tokens;
-    await this.refreshIfNeeded();
+    await this.#refresh({ skipIfFresh: true, generation: restoreGeneration });
+    if (restoreGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
+    if (!transition.deferCompletion) {
+      this.#transitionGeneration = null;
+      this.#transitionCapability = null;
+    }
     return true;
   }
 
-  async login(options: LoginOptions): Promise<GarminTokens> {
+  async login(
+    options: LoginOptions,
+    transition: { deferCompletion?: boolean } = {},
+  ): Promise<GarminTokens> {
     const loginGeneration = ++this.#sessionGeneration;
+    this.#transitionGeneration = loginGeneration;
+    this.#transitionCapability = Symbol('garmin-session-transition');
+    this.#tokens = null;
+    let resetComplete = false;
     const operation = async (): Promise<GarminTokens> => {
       const loginUrl = new URL(`${SSO_BASE_URL}/mobile/api/login`);
       loginUrl.search = new URLSearchParams({
@@ -149,22 +171,56 @@ export class AuthService {
       );
       const tokens = await this.#exchangeTicket(ticket);
       if (loginGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
-      this.#tokens = tokens;
       await this.#mutateStorage(() => this.storage.save(tokens));
-      this.#logger.info('Garmin login succeeded.', { tokens: redact(tokens) });
+      if (loginGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
+      this.#tokens = tokens;
+      this.#logger.info('Garmin login succeeded.');
       return { ...tokens };
     };
 
-    return withRetry(operation, {
-      ...this.#retry,
-      maxRetries: Math.min(this.#retry.maxRetries ?? 1, 1),
-      shouldRetry: (error) => error instanceof GarminRequestError && (error.statusCode ?? 0) >= 500,
-    });
+    try {
+      await this.#mutateStorage(() => this.storage.clear());
+      resetComplete = true;
+      if (loginGeneration !== this.#sessionGeneration) throw recoveryCancelledError();
+      const tokens = await withRetry(operation, {
+        ...this.#retry,
+        maxRetries: Math.min(this.#retry.maxRetries ?? 1, 1),
+        shouldRetry: (error) =>
+          error instanceof GarminRequestError && (error.statusCode ?? 0) >= 500,
+      });
+      if (!transition.deferCompletion && loginGeneration === this.#sessionGeneration) {
+        this.#transitionGeneration = null;
+        this.#transitionCapability = null;
+      }
+      return tokens;
+    } catch (error) {
+      if (loginGeneration === this.#sessionGeneration) {
+        this.#tokens = null;
+        try {
+          await this.#mutateStorage(() => this.storage.clear());
+        } catch {
+          throw new GarminRequestError({ message: 'Garmin login cleanup failed.' });
+        }
+      }
+      if (!resetComplete) {
+        throw new GarminRequestError({ message: 'Garmin login could not reset session state.' });
+      }
+      throw error;
+    }
   }
 
-  async refreshIfNeeded(): Promise<GarminTokens> {
+  async refreshIfNeeded(transitionCapability?: symbol): Promise<GarminTokens> {
+    const generation = this.#sessionGeneration;
+    if (
+      (transitionCapability !== undefined && transitionCapability !== this.#transitionCapability) ||
+      (this.#transitionGeneration === generation &&
+        transitionCapability !== this.#transitionCapability)
+    ) {
+      throw recoveryCancelledError();
+    }
     if (!this.#tokens) {
       const restored = await this.storage.load();
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
       if (!restored) {
         throw new GarminSessionExpiredError({ message: 'No Garmin session is available.' });
       }
@@ -172,14 +228,46 @@ export class AuthService {
     }
 
     if (requiresRefresh(this.#tokens)) {
-      return this.#refresh({ skipIfFresh: true });
+      return this.#refresh({ skipIfFresh: true, generation });
     }
 
+    if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
     return { ...this.#tokens };
   }
 
   async refresh(): Promise<GarminTokens> {
-    return this.#refresh({ skipIfFresh: false });
+    return this.#refresh({ skipIfFresh: false, generation: this.#sessionGeneration });
+  }
+
+  completeSessionTransition(generation: number): void {
+    if (generation === this.#sessionGeneration && this.#tokens) {
+      this.#transitionGeneration = null;
+      this.#transitionCapability = null;
+    }
+  }
+
+  sessionTransitionCapability(generation: number): symbol {
+    if (
+      generation !== this.#sessionGeneration ||
+      this.#transitionGeneration !== generation ||
+      !this.#transitionCapability
+    ) {
+      throw recoveryCancelledError();
+    }
+    return this.#transitionCapability;
+  }
+
+  async abortSessionTransition(generation: number): Promise<void> {
+    if (generation !== this.#sessionGeneration) return;
+    this.#sessionGeneration += 1;
+    this.#transitionGeneration = this.#sessionGeneration;
+    this.#transitionCapability = Symbol('garmin-session-transition');
+    this.#tokens = null;
+    try {
+      await this.#mutateStorage(() => this.storage.clear());
+    } catch {
+      throw new GarminRequestError({ message: 'Garmin session cleanup failed.' });
+    }
   }
 
   /**
@@ -195,7 +283,9 @@ export class AuthService {
       throw new GarminSessionExpiredError({ message: 'No Garmin refresh token is available.' });
     }
     if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
-    if (this.#refreshPromise) return { ...(await this.#refreshPromise) };
+    if (this.#refreshPromise?.generation === generation) {
+      return { ...(await this.#refreshPromise.promise) };
+    }
 
     const candidate = { ...rejected };
     const recoveryPromise = this.#withStorageRefreshLock(async () => {
@@ -247,34 +337,49 @@ export class AuthService {
         throw new GarminRequestError({ message: 'Garmin session recovery failed.' });
       }
     });
-    this.#refreshPromise = recoveryPromise;
+    this.#refreshPromise = { generation, promise: recoveryPromise };
 
     try {
       return { ...(await recoveryPromise) };
     } finally {
-      if (this.#refreshPromise === recoveryPromise) this.#refreshPromise = null;
+      if (this.#refreshPromise?.promise === recoveryPromise) this.#refreshPromise = null;
     }
   }
 
-  async #refresh({ skipIfFresh }: { skipIfFresh: boolean }): Promise<GarminTokens> {
-    if (this.#refreshPromise) return { ...(await this.#refreshPromise) };
+  async #refresh({
+    skipIfFresh,
+    generation,
+  }: {
+    skipIfFresh: boolean;
+    generation: number;
+  }): Promise<GarminTokens> {
+    if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+    if (this.#refreshPromise?.generation === generation) {
+      return { ...(await this.#refreshPromise.promise) };
+    }
 
     const refreshPromise = this.#withStorageRefreshLock(async () => {
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
       const stored = await this.storage.load();
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
       if (stored) this.#tokens = stored;
 
       if (skipIfFresh && this.#tokens && !requiresRefresh(this.#tokens)) {
         return { ...this.#tokens };
       }
 
-      return this.#refreshTokens();
+      return this.#refreshTokens({
+        canPersist: () => generation === this.#sessionGeneration,
+      });
     });
-    this.#refreshPromise = refreshPromise;
+    this.#refreshPromise = { generation, promise: refreshPromise };
 
     try {
-      return { ...(await refreshPromise) };
+      const tokens = await refreshPromise;
+      if (generation !== this.#sessionGeneration) throw recoveryCancelledError();
+      return { ...tokens };
     } finally {
-      if (this.#refreshPromise === refreshPromise) this.#refreshPromise = null;
+      if (this.#refreshPromise?.promise === refreshPromise) this.#refreshPromise = null;
     }
   }
 
@@ -354,7 +459,12 @@ export class AuthService {
     if (!response.ok) {
       const evidence = await readResponseErrorEvidence(response);
       const error = errorFromResponse(response, '/di-oauth2-service/oauth/token', evidence);
-      if (error instanceof GarminSessionExpiredError && clearOnSessionFailure) await this.logout();
+      if (
+        error instanceof GarminSessionExpiredError &&
+        clearOnSessionFailure &&
+        (!canPersist || canPersist())
+      )
+        await this.logout();
       throw error;
     }
 
@@ -363,23 +473,26 @@ export class AuthService {
     if (canPersist && !canPersist()) {
       throw new GarminRequestError({ message: 'Garmin session recovery was cancelled.' });
     }
-    this.#tokens = tokens;
     await this.#mutateStorage(() => this.storage.save(tokens));
     if (canPersist && !canPersist()) {
-      if (
-        this.#tokens?.accessToken === tokens.accessToken &&
-        this.#tokens.refreshToken === tokens.refreshToken
-      )
-        this.#tokens = null;
       throw recoveryCancelledError();
     }
+    this.#tokens = tokens;
     return { ...tokens };
   }
 
   async logout(): Promise<void> {
     this.#sessionGeneration += 1;
+    this.#transitionGeneration = this.#sessionGeneration;
+    this.#transitionCapability = Symbol('garmin-session-transition');
     this.#tokens = null;
-    await this.#mutateStorage(() => this.storage.clear());
+    try {
+      await this.#mutateStorage(() => this.storage.clear());
+      this.#transitionGeneration = null;
+      this.#transitionCapability = null;
+    } catch {
+      throw new GarminRequestError({ message: 'Garmin logout cleanup failed.' });
+    }
   }
 
   async invalidateSession(tokens: GarminTokens, generation: number): Promise<void> {
@@ -390,16 +503,31 @@ export class AuthService {
     )
       return;
     this.#sessionGeneration += 1;
+    this.#transitionGeneration = this.#sessionGeneration;
+    this.#transitionCapability = Symbol('garmin-session-transition');
     this.#tokens = null;
-    await this.#mutateStorage(() => this.storage.clear());
+    try {
+      await this.#mutateStorage(() => this.storage.clear());
+      this.#transitionGeneration = null;
+      this.#transitionCapability = null;
+    } catch {
+      throw new GarminRequestError({ message: 'Garmin session cleanup failed.' });
+    }
   }
 
   /**
    * Removes only the in-memory session. Persisted tokens are intentionally
-   * retained so a transient authenticated request failure can be retried.
+   * retained so an explicit restore can retry a transient validation failure.
+   * By default, ordinary authenticated requests remain blocked until that
+   * restore succeeds. A confirmed expired session may opt out after its
+   * persisted tokens have already been invalidated.
    */
-  clearSessionCache(): void {
+  clearSessionCache({ quarantinePersistedSession = true } = {}): void {
     this.#sessionGeneration += 1;
+    this.#transitionGeneration = quarantinePersistedSession ? this.#sessionGeneration : null;
+    this.#transitionCapability = quarantinePersistedSession
+      ? Symbol('garmin-session-transition')
+      : null;
     this.#tokens = null;
   }
 

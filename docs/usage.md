@@ -68,6 +68,12 @@ if (!restored) {
 }
 ```
 
+Calling `login()` starts an account transition: the SDK immediately invalidates the current
+in-memory session, persisted tokens, and cached profile before contacting Garmin. If login or
+new-account profile resolution fails, the instance remains unauthenticated and does not fall
+back to the previous account. Create a separate SDK instance when two account sessions must
+remain active at the same time.
+
 `FileTokenStorage('./.garmin-tokens')` stores tokens in `./.garmin-tokens/tokens.json`.
 It does not store email or password values, but the token file is a bearer secret and can
 include limited session metadata such as display name and client ID. The SDK does not
