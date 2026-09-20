@@ -18,6 +18,7 @@ import type { AuthTokensResponse, GarminTokens, LoginOptions, MfaCodeProvider } 
 const SSO_BASE_URL = 'https://sso.garmin.com';
 const DI_AUTH_BASE_URL = 'https://diauth.garmin.com';
 const EXPIRY_SKEW_MS = 60_000;
+const DEFAULT_ACCESS_TOKEN_EXPIRES_IN_SECONDS = 3_600;
 const SSO_CLIENT_ID = 'GCM_IOS_DARK';
 const MOBILE_SERVICE_URL = 'https://mobile.integration.garmin.com/gcm/ios';
 const MOBILE_USER_AGENT =
@@ -559,17 +560,25 @@ function normalizeTokenResponse(
   }
 
   const now = Date.now();
+  const explicitAccessExpiresAt = expiryFromDuration(payload.expires_in, now, 'expires_in');
+  const refreshTokenExpiresAt = expiryFromDuration(
+    payload.refresh_token_expires_in,
+    now,
+    'refresh_token_expires_in',
+  );
   const jwtExpiresAt = extractJwtExpiry(payload.access_token);
-  const accessExpiresIn = payload.expires_in ?? 3600;
-  const refreshExpiresIn = payload.refresh_token_expires_in;
+  const defaultAccessExpiresAt = isoDateFromMilliseconds(
+    now + DEFAULT_ACCESS_TOKEN_EXPIRES_IN_SECONDS * 1000,
+  );
+  if (!defaultAccessExpiresAt) {
+    throw invalidTokenExpiry('expires_in');
+  }
 
   return {
     accessToken: payload.access_token,
     refreshToken: payload.refresh_token,
-    accessTokenExpiresAt: jwtExpiresAt ?? new Date(now + accessExpiresIn * 1000).toISOString(),
-    refreshTokenExpiresAt: refreshExpiresIn
-      ? new Date(now + refreshExpiresIn * 1000).toISOString()
-      : undefined,
+    accessTokenExpiresAt: jwtExpiresAt ?? explicitAccessExpiresAt ?? defaultAccessExpiresAt,
+    refreshTokenExpiresAt,
     tokenType: payload.token_type,
     scope: payload.scope,
     displayName: payload.displayName ?? payload.display_name ?? existingDisplayName,
@@ -696,7 +705,36 @@ function nativeHeaders(extra: Record<string, string>): Record<string, string> {
 function extractJwtExpiry(token: string): string | undefined {
   const payload = decodeJwtPayload(token);
   const exp = typeof payload?.exp === 'number' ? payload.exp : undefined;
-  return exp ? new Date(exp * 1000).toISOString() : undefined;
+  return exp !== undefined && Number.isFinite(exp) && exp > 0
+    ? isoDateFromMilliseconds(exp * 1000)
+    : undefined;
+}
+
+function expiryFromDuration(
+  value: unknown,
+  now: number,
+  field: 'expires_in' | 'refresh_token_expires_in',
+): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    throw invalidTokenExpiry(field);
+  }
+
+  const expiresAt = isoDateFromMilliseconds(now + value * 1000);
+  if (!expiresAt) throw invalidTokenExpiry(field);
+  return expiresAt;
+}
+
+function isoDateFromMilliseconds(value: number): string | undefined {
+  if (!Number.isFinite(value)) return undefined;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
+}
+
+function invalidTokenExpiry(field: 'expires_in' | 'refresh_token_expires_in'): GarminAuthError {
+  return new GarminAuthError({
+    message: `Garmin token response contained an invalid ${field} value.`,
+  });
 }
 
 function extractClientId(token?: string): string | undefined {
