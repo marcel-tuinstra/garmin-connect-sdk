@@ -35,7 +35,17 @@ export type {
   ListAllActivitiesOptions,
   ListActivitiesOptions,
 } from './types/activity.js';
-export type { BodyBattery, DateRange, HeartRate, HrvStatus, Stress } from './types/health.js';
+export type {
+  BodyBattery,
+  DateRange,
+  HeartRate,
+  HeartRateZone,
+  HeartRateZones,
+  HrvStatus,
+  PowerZone,
+  PowerZones,
+  Stress,
+} from './types/health.js';
 export type { DailySleep, SleepRange } from './types/sleep.js';
 export type { Device, DeviceList, SocialProfile } from './types/user.js';
 export type {

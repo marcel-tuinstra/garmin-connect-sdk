@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { HeartRateZone, HeartRateZones, PowerZone, PowerZones } from '../../src/index.js';
+
 import { GarminValidationError } from '../../src/client/GarminRequestError.js';
 import {
   activityCountSchema,
@@ -11,8 +13,11 @@ import {
 } from '../../src/schemas/activity.schema.js';
 import {
   bodyBatterySchema,
+  heartRateZonesSchema,
   heartRateSchema,
   hrvStatusSchema,
+  powerZoneSchema,
+  powerZonesSchema,
   stressSchema,
 } from '../../src/schemas/health.schema.js';
 import { dailySleepSchema } from '../../src/schemas/sleep.schema.js';
@@ -82,6 +87,69 @@ describe('schemas', () => {
     expect(stress.stressValues).toHaveLength(2);
     expect(bodyBattery).toHaveLength(1);
     expect(hrvStatus.hrvSummary).toMatchObject({ status: 'BALANCED' });
+  });
+
+  it('parses useful zone fields while tolerating nullable, missing, and unknown fields', () => {
+    // Arrange
+    const heartRatePayload = [
+      {
+        trainingMethod: 'HR_MAX',
+        sport: 'RUNNING',
+        restingHeartRateUsed: null,
+        lactateThresholdHeartRateUsed: null,
+        zone1Floor: 133,
+        zone5Floor: 190,
+        maxHeartRateUsed: 205,
+        futureGarminField: { enabled: true },
+      },
+    ];
+    const powerPayload = [
+      {
+        sport: 'CYCLING',
+        functionalThresholdPower: 275,
+        zone1Floor: 100,
+        zone7Floor: null,
+        changeState: 'UNCHANGED',
+      },
+    ];
+
+    // Act
+    const heartRateZones = heartRateZonesSchema.parse(heartRatePayload);
+    const powerZones = powerZonesSchema.parse(powerPayload);
+    const sportPowerZone = powerZoneSchema.parse({ sport: 'RUNNING' });
+    const publicHeartRateZones: HeartRateZones = heartRateZones;
+    const publicPowerZones: PowerZones = powerZones;
+    const publicHeartRateZone: HeartRateZone | undefined = publicHeartRateZones[0];
+    const publicPowerZone: PowerZone | undefined = publicPowerZones[0];
+
+    // Assert
+    expect(heartRateZones[0]).toMatchObject({
+      sport: 'RUNNING',
+      restingHeartRateUsed: null,
+      futureGarminField: { enabled: true },
+    });
+    expect(powerZones[0]).toMatchObject({ sport: 'CYCLING', zone7Floor: null });
+    expect(publicHeartRateZone?.sport).toBe('RUNNING');
+    expect(publicPowerZone?.sport).toBe('CYCLING');
+    expect(sportPowerZone).toEqual({ sport: 'RUNNING' });
+    expect(heartRateZonesSchema.parse([])).toEqual([]);
+    expect(powerZonesSchema.parse([])).toEqual([]);
+  });
+
+  it.each([[{ sport: 'RUNNING', zone1Floor: '133' }], [{ sport: 123 }]])(
+    'rejects malformed zone fields with a controlled schema failure',
+    (payload) => {
+      expect(() => heartRateZonesSchema.parse(payload)).toThrow();
+    },
+  );
+
+  it('rejects non-finite power-zone values', () => {
+    expect(() =>
+      powerZoneSchema.parse({
+        sport: 'CYCLING',
+        functionalThresholdPower: Number.POSITIVE_INFINITY,
+      }),
+    ).toThrow();
   });
 
   it('parses representative Garmin-like user and device payloads', () => {

@@ -150,19 +150,35 @@ Only implemented namespaces are listed. Public package-root methods and exported
 follow Semantic Versioning from `1.0.0`. Workout, calendar, and weight writes remain operationally
 experimental because Garmin does not support the underlying endpoints.
 
-| Namespace           | Methods                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `garmin.activities` | `count()`, `list()`, `listAll()`, `download()`, `get()`, `getDetails()`, `getSplits()`, `getTypes()`                            |
-| `garmin.sleep`      | `getDailySleep()`, `getSleepRange()`                                                                                            |
-| `garmin.health`     | `getHeartRate()`, `getStress()`, `getBodyBattery()`, `getHrvStatus()`                                                           |
-| `garmin.weight`     | `getDailyWeighIns()`, `getWeighIns()`, experimental writes: `addWeighIn()`, `removeWeighIn()`                                   |
-| `garmin.user`       | `getProfile()`                                                                                                                  |
-| `garmin.devices`    | `list()`                                                                                                                        |
-| `garmin.workouts`   | `list()`, `get()`, `getTypes()`, `create()`, `createRaw()`, `update()`, `updateRaw()`, `schedule()`, `unschedule()`, `delete()` |
-| `garmin.calendar`   | `getMonth()`, `getWeek()`, `addWorkout()`, `removeWorkout()`                                                                    |
+| Namespace           | Methods                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `garmin.activities` | `count()`, `list()`, `listAll()`, `download()`, `get()`, `getDetails()`, `getSplits()`, `getTypes()`                                       |
+| `garmin.sleep`      | `getDailySleep()`, `getSleepRange()`                                                                                                       |
+| `garmin.health`     | `getHeartRate()`, `getStress()`, `getBodyBattery()`, `getHrvStatus()`, `getHeartRateZones()`, `getPowerZones()`, `getPowerZonesForSport()` |
+| `garmin.weight`     | `getDailyWeighIns()`, `getWeighIns()`, experimental writes: `addWeighIn()`, `removeWeighIn()`                                              |
+| `garmin.user`       | `getProfile()`                                                                                                                             |
+| `garmin.devices`    | `list()`                                                                                                                                   |
+| `garmin.workouts`   | `list()`, `get()`, `getTypes()`, `create()`, `createRaw()`, `update()`, `updateRaw()`, `schedule()`, `unschedule()`, `delete()`            |
+| `garmin.calendar`   | `getMonth()`, `getWeek()`, `addWorkout()`, `removeWorkout()`                                                                               |
 
 Type declarations ship with the package and are the best source for request and response
 shapes.
+
+## Heart-rate And Power Zones
+
+The health namespace reads your configured heart-rate and power zones. Garmin sport keys use
+uppercase letters and underscores. The SDK trims and normalizes keys such as
+`cross_country_skiing` before sending the request.
+
+```ts
+const heartRateZones = await garmin.health.getHeartRateZones();
+const powerZones = await garmin.health.getPowerZones();
+const cyclingPowerZone = await garmin.health.getPowerZonesForSport('cycling');
+```
+
+Garmin may omit fields for unconfigured zones and may add fields over time. The returned types
+keep known fields optional and preserve unknown fields. Treat zone responses as health data and
+keep them out of logs.
 
 ## Weight Reads And Experimental Writes
 

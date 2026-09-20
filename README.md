@@ -87,7 +87,7 @@ and should be protected like credentials.
 | Area             | Status                      | Examples                                                            |
 | ---------------- | --------------------------- | ------------------------------------------------------------------- |
 | Activities       | Read-oriented               | List, download, details, splits, type metadata                      |
-| Sleep and health | Read-oriented               | Daily sleep, sleep ranges, heart rate, stress, HRV, Body Battery    |
+| Sleep and health | Read-oriented               | Sleep, heart rate, stress, HRV, Body Battery, HR and power zones    |
 | Weight           | Reads + experimental writes | Daily/range weigh-ins plus manual creation and removal              |
 | User and devices | Read-oriented               | Profile and registered devices                                      |
 | Workouts         | Experimental writes         | List, create, replace, schedule, unschedule, delete                 |
