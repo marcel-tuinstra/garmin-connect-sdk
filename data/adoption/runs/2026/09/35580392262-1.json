@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "metricDate": "2026-09-21",
+  "retrievedAt": "2026-09-21T08:55:10.756Z",
+  "runId": "35580392262-1",
+  "runStatus": "partial",
+  "sourceStatuses": [
+    {
+      "source": "github_public_content",
+      "status": "partial"
+    },
+    {
+      "source": "github_public_metadata",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search",
+      "status": "partial"
+    },
+    {
+      "source": "github_public_search_query_1",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search_query_2",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search_query_3",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search_query_4",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search_query_5",
+      "status": "success"
+    },
+    {
+      "source": "github_public_search_query_6",
+      "status": "success"
+    },
+    {
+      "source": "github_traffic_clones",
+      "status": "partial",
+      "reasonCode": "missing_dates"
+    },
+    {
+      "source": "github_traffic_views",
+      "status": "partial",
+      "reasonCode": "missing_dates"
+    },
+    {
+      "source": "npm_downloads",
+      "status": "success"
+    },
+    {
+      "source": "npm_versions",
+      "status": "success"
+    }
+  ],
+  "measurementCount": 81,
+  "adopterObservationCount": 3
+}
