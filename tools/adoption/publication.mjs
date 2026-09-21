@@ -2,6 +2,7 @@ import * as defaultFs from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { combineCollectionResults } from './collector.mjs';
+import { renderAdoptionCharts } from './charts.mjs';
 import { mergeAdopterIndex } from './model.mjs';
 import { renderAdoptionReport } from './report.mjs';
 import { mergeCanonicalMeasurements, persistSnapshot } from './store.mjs';
@@ -75,6 +76,13 @@ export async function publishCollection({ inputDir, dataDir, reportDir, fsApi = 
     adopters: snapshot.adopters,
   });
   const latestReport = renderAdoptionReport(reportSnapshot);
+  const datedCharts = renderAdoptionCharts({
+    ...snapshot,
+    measurements: recentMeasurements(measurements, publishable.metricDate).filter(
+      ({ metricDate }) => metricDate <= publishable.metricDate,
+    ),
+    adopters: snapshot.adopters,
+  });
 
   await writeMeasurementShards(dataDir, measurements, publishable.measurements, fsApi);
   await writeJsonAtomic(join(dataDir, 'adopters', 'index.json'), adopters, fsApi);
@@ -90,6 +98,7 @@ export async function publishCollection({ inputDir, dataDir, reportDir, fsApi = 
     runManifest(publishable),
     fsApi,
   );
+  await writeChartAssets(reportDir, snapshot.metricDate, datedCharts, fsApi);
   await writeTextAtomic(join(reportDir, `${snapshot.metricDate}.md`), datedReport, fsApi);
   if (!currentLatest?.metricDate || publishable.metricDate >= currentLatest.metricDate) {
     await writeJsonAtomic(join(dataDir, 'latest.json'), reportSnapshot, fsApi);
@@ -102,6 +111,19 @@ export async function publishCollection({ inputDir, dataDir, reportDir, fsApi = 
     measurementCount: snapshot.measurements.length,
     adopterCount: adopters.length,
   };
+}
+
+async function writeChartAssets(reportDir, metricDate, assets, fsApi) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(metricDate)) throw new Error('Invalid chart metric date.');
+  const expected = ['github-traffic.svg', 'npm-downloads.svg', 'version-downloads.svg'];
+  const names = Object.keys(assets).sort();
+  if (JSON.stringify(names) !== JSON.stringify(expected)) {
+    throw new Error('Invalid chart asset set.');
+  }
+  for (const name of names) {
+    if (!/^[a-z-]+\.svg$/.test(name)) throw new Error('Invalid chart asset name.');
+    await writeTextAtomic(join(reportDir, 'assets', metricDate, name), assets[name], fsApi);
+  }
 }
 
 function completeSourceSet(results) {
