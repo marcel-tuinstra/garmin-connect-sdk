@@ -3,6 +3,8 @@ name: Adoption metrics
 on:
   schedule:
     - cron: '17 3 * * *'
+  repository_dispatch:
+    types: [adoption-metrics]
 
 permissions:
   contents: read

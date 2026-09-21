@@ -13,7 +13,10 @@ describe('adoption measurement operations contract', () => {
     );
 
     expect(workflow).toContain("cron: '17 3 * * *'");
+    expect(workflow).toContain('repository_dispatch:');
+    expect(workflow).toContain('types: [adoption-metrics]');
     expect(workflow).not.toContain('workflow_dispatch:');
+    expect(workflow).not.toContain('client_payload');
     expect(workflow).toContain('collect-npm:');
     expect(workflow).toContain('collect-traffic:');
     expect(workflow).toContain('collect-adopters:');
@@ -62,6 +65,9 @@ describe('adoption measurement operations contract', () => {
     expect(operations).toContain(
       'https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/adoption-metrics/docs/adoption/latest.md',
     );
+    expect(operations).toContain('gh api --method POST');
+    expect(operations).toContain('repos/marcel-tuinstra/garmin-connect-sdk/dispatches');
+    expect(operations).toContain('event_type=adoption-metrics');
     expect(operations).not.toContain('ADOPTION_AGGREGATE_TOKEN');
     expect(operations).not.toContain('private_opt_in_self_report');
     expect(operations).not.toContain('voluntary private/unindexed');
@@ -80,7 +86,9 @@ describe('adoption measurement operations contract', () => {
     const packageJson = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
 
     expect(packageJson.bin).not.toHaveProperty('garmin-connect-adoption');
-    await expect(readFile(new URL('scripts/garmin-adoption.mjs', root), 'utf8')).rejects.toMatchObject({
+    await expect(
+      readFile(new URL('scripts/garmin-adoption.mjs', root), 'utf8'),
+    ).rejects.toMatchObject({
       code: 'ENOENT',
     });
     await expect(
