@@ -1,14 +1,16 @@
 # SDK adoption overview
 
-Generated from the `2026-09-21` snapshot at `2026-09-21T08:55:10.756Z`.
+Generated from the `2026-09-21` snapshot at `2026-09-21T09:17:38.344Z`.
 
-| npm downloads · 14 days | Unique cloners · GitHub window | Unique viewers · GitHub window | Public projects with usage evidence |
+External-adoption baseline: `2026-09-21`. The raw 14-day lookback overlaps pre-baseline context; only external repository evidence is filtered by owner.
+
+| Raw npm downloads · 14 days | Raw unique cloners · GitHub window | Raw unique viewers · GitHub window | External public projects with usage evidence |
 | ---: | ---: | ---: | ---: |
 | **479** | **64** | **14** | **3** |
 
 **Coverage:** 14/14 npm days observed (success); 52/56 GitHub daily values observed (views partial (missing_dates), clones partial (missing_dates)); public evidence partial. GitHub windows: unique cloners `2026-09-21` (current snapshot), unique viewers `2026-09-21` (current snapshot).
 
-> Active installations are not measured. npm downloads, repository traffic and public-code evidence are separate signals and must not be added together as a user count.
+> Active installations are not measured. Raw signals can include CI, caches, repeat downloads and internal activity. npm downloads, repository traffic and external public-code evidence are separate signals and must not be added together as a user count.
 
 ## Usage and trends
 
@@ -97,9 +99,9 @@ Snapshot date: `2026-09-21` (current snapshot). This is npm's rolling version-le
 | 1\.1\.0 | 182 | observed |
 | 1\.1\.1 | 113 | observed |
 
-### Public repository evidence
+### External public repository evidence
 
-This index contains public repository identifiers and evidence URLs only. Archived and forked repositories remain visible but are excluded from the project count. Static active-use evidence is not runtime proof.
+This index contains independently owned public repository identifiers and evidence URLs only. Public projects with usage evidence exclude repositories owned by `marcel-tuinstra` or `Tuinstra-DEV`. Archived and forked repositories remain visible but are excluded from the project count. Static active-use evidence is not runtime proof.
 
 | Repository | State | Declared | Resolved | Evidence | Confidence | Counted |
 | --- | --- | --- | --- | --- | --- | --- |
