@@ -323,6 +323,50 @@ describe('adoption report', () => {
     expect(report).toContain('| **—** | **—** | **—** | **0** |');
   });
 
+  it('treats only independently owned repositories as external adoption', () => {
+    const model = buildAdoptionReportModel(
+      snapshot({
+        adopters: [
+          { repositoryKey: 'marcel-tuinstra/internal-app', countsAsAdopter: true },
+          { repositoryKey: 'Tuinstra-DEV/wodiq', countsAsAdopter: true },
+          { repositoryKey: 'tuinstra-dev-tools/external-app', countsAsAdopter: true },
+          { repositoryKey: 'cezarsmpio/apple-to-garmin', countsAsAdopter: true },
+          { repositoryKey: 'malformed', countsAsAdopter: true },
+        ],
+      }),
+    );
+
+    expect(model.adopters.map(({ repositoryKey }) => repositoryKey)).toEqual([
+      'tuinstra-dev-tools/external-app',
+      'cezarsmpio/apple-to-garmin',
+    ]);
+    expect(model.kpis.publicProjects.value).toBe(2);
+
+    const report = renderAdoptionReport(model.snapshot);
+    expect(report).toContain('External public projects with usage evidence');
+    expect(report).toContain('cezarsmpio/apple-to-garmin');
+    expect(report).not.toContain('marcel-tuinstra/internal-app');
+    expect(report).not.toContain('Tuinstra-DEV/wodiq');
+    expect(report).not.toContain('| malformed |');
+  });
+
+  it('labels the baseline boundary and overlapping raw lookback windows truthfully', () => {
+    const preBaseline = renderAdoptionReport(snapshot({ metricDate: '2026-09-20' }));
+    expect(preBaseline).toContain('External-adoption baseline: `2026-09-21`');
+    expect(preBaseline).toContain('pre-baseline context');
+
+    const baseline = renderAdoptionReport(snapshot());
+    expect(baseline).toContain('External-adoption baseline: `2026-09-21`');
+    expect(baseline).toContain('overlaps pre-baseline context');
+    expect(baseline).toContain('Raw npm downloads · 14 days');
+    expect(baseline).toContain('Raw unique cloners · GitHub window');
+    expect(baseline).toContain('Raw signals can include CI, caches, repeat downloads');
+
+    const fullyPostBaseline = renderAdoptionReport(snapshot({ metricDate: '2026-10-06' }));
+    expect(fullyPostBaseline).not.toContain('overlaps pre-baseline context');
+    expect(fullyPostBaseline).not.toContain('pre-baseline context and is not part');
+  });
+
   it('escapes untrusted Markdown and spreadsheet-formula prefixes', () => {
     const report = renderAdoptionReport(
       snapshot({

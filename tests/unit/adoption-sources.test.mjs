@@ -411,6 +411,38 @@ describe('adoption source adapters', () => {
     expect(result.adopters).toEqual([]);
   });
 
+  it('skips internal repositories before any repository inspection request', async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      response(200, {
+        incomplete_results: false,
+        total_count: 1,
+        items: [
+          {
+            path: 'package.json',
+            html_url: 'https://github.com/Tuinstra-DEV/wodiq/blob/main/package.json',
+            url: 'https://api.github.com/repositories/2/contents/package.json',
+            repository: {
+              full_name: 'Tuinstra-DEV/wodiq',
+              url: 'https://api.github.com/repos/Tuinstra-DEV/wodiq',
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = await collectPublicRepositoryEvidence({
+      fetchImpl,
+      token: 'public-only-token',
+      retrievedAt,
+      queries: ['"garmin-connect-sdk"'],
+    });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(result.status.status).toBe('success');
+    expect(result.observations).toEqual([]);
+    expect(result.adopters).toEqual([]);
+  });
+
   it('keeps evidence from successful queries when a later search is rate-limited', async () => {
     const fetchImpl = vi
       .fn()

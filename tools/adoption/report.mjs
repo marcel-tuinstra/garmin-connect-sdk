@@ -1,3 +1,5 @@
+import { EXTERNAL_ADOPTION_BASELINE_DATE, isExternalRepositoryKey } from './policy.mjs';
+
 const DAILY_WINDOW_DAYS = 14;
 const DAILY_TRAFFIC_METRICS = ['views', 'unique_viewers', 'clones', 'unique_cloners'];
 const WINDOW_TRAFFIC_METRICS = [
@@ -50,7 +52,9 @@ export function buildAdoptionReportModel(snapshot) {
       ),
     )
     .at(-1);
-  const adopters = Array.isArray(snapshot?.adopters) ? snapshot.adopters : [];
+  const adopters = Array.isArray(snapshot?.adopters)
+    ? snapshot.adopters.filter(({ repositoryKey }) => isExternalRepositoryKey(repositoryKey))
+    : [];
   const observedNpm = npmDaily.filter(({ status }) => status === 'observed');
   const publicEvidenceStatus = sourceStatus(latestRetrieval, 'github_public_search');
   const publicProjectCount = adopters.filter(({ countsAsAdopter }) => countsAsAdopter).length;
@@ -111,13 +115,15 @@ export function renderAdoptionReport(snapshot, options = {}) {
 
 Generated from the ${inline(model.referenceDate)} snapshot at ${inline(model.latestRetrieval?.retrievedAt ?? 'not yet collected')}.
 
-| npm downloads · 14 days | Unique cloners · GitHub window | Unique viewers · GitHub window | Public projects with usage evidence |
+External-adoption baseline: ${inline(EXTERNAL_ADOPTION_BASELINE_DATE)}. ${baselineContext(model.referenceDate, kpis.npmDownloads.startDate)}
+
+| Raw npm downloads · 14 days | Raw unique cloners · GitHub window | Raw unique viewers · GitHub window | External public projects with usage evidence |
 | ---: | ---: | ---: | ---: |
 | **${summaryValue(kpis.npmDownloads.value)}** | **${summaryValue(kpis.uniqueCloners.value)}** | **${summaryValue(kpis.uniqueViewers.value)}** | **${summaryValue(kpis.publicProjects.value)}** |
 
 **Coverage:** ${kpis.npmDownloads.observed}/${kpis.npmDownloads.expected} npm days observed (${statusLabel(npmStatus)}); ${githubObservedCells}/${DAILY_WINDOW_DAYS * DAILY_TRAFFIC_METRICS.length} GitHub daily values observed (views ${statusLabel(viewsStatus)}, clones ${statusLabel(clonesStatus)}); public evidence ${statusLabel(publicStatus)}. GitHub windows: unique cloners ${observationLabel(kpis.uniqueCloners, model.referenceDate)}, unique viewers ${observationLabel(kpis.uniqueViewers, model.referenceDate)}.
 
-> Active installations are not measured. npm downloads, repository traffic and public-code evidence are separate signals and must not be added together as a user count.
+> Active installations are not measured. Raw signals can include CI, caches, repeat downloads and internal activity. npm downloads, repository traffic and external public-code evidence are separate signals and must not be added together as a user count.
 
 ## Usage and trends
 
@@ -194,9 +200,9 @@ ${table(
   model.versionSnapshot.map((item) => [item.dimension ?? '—', displayValue(item), item.status]),
 )}
 
-### Public repository evidence
+### External public repository evidence
 
-This index contains public repository identifiers and evidence URLs only. Archived and forked repositories remain visible but are excluded from the project count. Static active-use evidence is not runtime proof.
+This index contains independently owned public repository identifiers and evidence URLs only. Public projects with usage evidence exclude repositories owned by ${inline('marcel-tuinstra')} or ${inline('Tuinstra-DEV')}. Archived and forked repositories remain visible but are excluded from the project count. Static active-use evidence is not runtime proof.
 
 ${table(
   ['Repository', 'State', 'Declared', 'Resolved', 'Evidence', 'Confidence', 'Counted'],
@@ -324,6 +330,16 @@ function precedingDates(referenceDate, count) {
     dates.push(date.toISOString().slice(0, 10));
   }
   return dates;
+}
+
+function baselineContext(referenceDate, windowStartDate) {
+  if (referenceDate < EXTERNAL_ADOPTION_BASELINE_DATE) {
+    return 'This snapshot is pre-baseline context and is not part of the external-adoption trend.';
+  }
+  if (windowStartDate < EXTERNAL_ADOPTION_BASELINE_DATE) {
+    return 'The raw 14-day lookback overlaps pre-baseline context; only external repository evidence is filtered by owner.';
+  }
+  return 'External public repository evidence is measured from this date onward.';
 }
 
 function sourceStatus(retrieval, source) {

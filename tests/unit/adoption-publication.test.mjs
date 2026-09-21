@@ -356,6 +356,65 @@ describe('adoption publication', () => {
     }
   });
 
+  it('removes internal repositories before every public persistence boundary', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gcs-adoption-internal-policy-'));
+    const inputDir = join(root, 'inputs');
+    const dataDir = join(root, 'data');
+    const reportDir = join(root, 'reports');
+    await mkdir(inputDir, { recursive: true });
+    await writeFile(
+      join(inputDir, 'adopters.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        collectionSource: 'github-adopters',
+        metricDate: '2026-09-21',
+        retrievedAt: '2026-09-21T10:00:00.000Z',
+        runId: 'external-adoption-run',
+        runStatus: 'complete',
+        sourceStatuses: [{ source: 'github_public_search', status: 'success' }],
+        measurements: [],
+        adopterObservations: [
+          {
+            repository: {
+              owner: 'marcel-tuinstra',
+              name: 'internal-app',
+              url: 'https://github.com/marcel-tuinstra/internal-app',
+              visibility: 'public',
+            },
+            evidence: [{ type: 'active_use_evidence' }],
+            observedAt: '2026-09-21T10:00:00.000Z',
+          },
+          {
+            repository: {
+              owner: 'cezarsmpio',
+              name: 'apple-to-garmin',
+              url: 'https://github.com/cezarsmpio/apple-to-garmin',
+              visibility: 'public',
+            },
+            evidence: [{ type: 'active_use_evidence' }],
+            observedAt: '2026-09-21T10:00:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    await publishCollection({ inputDir, dataDir, reportDir });
+
+    for (const path of [
+      join(dataDir, 'snapshots', '2026-09-21.json'),
+      join(dataDir, 'runs', '2026', '09', 'external-adoption-run.json'),
+      join(dataDir, 'adopters', 'index.json'),
+      join(dataDir, 'latest.json'),
+      join(reportDir, 'latest.md'),
+    ]) {
+      const content = (await readFile(path, 'utf8')).toLowerCase();
+      expect(content).not.toContain('marcel-tuinstra/internal-app');
+    }
+    expect(await readFile(join(reportDir, 'latest.md'), 'utf8')).toContain(
+      'cezarsmpio/apple-to-garmin',
+    );
+  });
+
   it('rejects artifacts from different workflow runs', async () => {
     const root = await mkdtemp(join(tmpdir(), 'gcs-adoption-run-mismatch-'));
     const inputDir = join(root, 'inputs');

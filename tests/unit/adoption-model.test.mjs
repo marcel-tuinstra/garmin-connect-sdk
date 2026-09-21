@@ -255,6 +255,38 @@ describe('adoption evidence model', () => {
     ).toEqual([]);
   });
 
+  it('removes legacy internal repositories even when discovery is incomplete', () => {
+    const existing = buildAdopterIndex([
+      {
+        repository: {
+          owner: 'Tuinstra-DEV',
+          name: 'wodiq',
+          url: 'https://github.com/Tuinstra-DEV/wodiq',
+          visibility: 'public',
+        },
+        evidence: [{ type: 'active_use_evidence' }],
+        observedAt,
+      },
+      {
+        repository: {
+          owner: 'cezarsmpio',
+          name: 'apple-to-garmin',
+          url: 'https://github.com/cezarsmpio/apple-to-garmin',
+          visibility: 'public',
+        },
+        evidence: [{ type: 'active_use_evidence' }],
+        observedAt,
+      },
+    ]);
+
+    expect(
+      mergeAdopterIndex(existing, [], {
+        observedAt: '2026-09-21T10:00:00.000Z',
+        completeObservation: false,
+      }).map(({ repositoryKey }) => repositoryKey),
+    ).toEqual(['cezarsmpio/apple-to-garmin']);
+  });
+
   it('uses current repository metadata and the latest observed versions', () => {
     const older = '2026-09-01T10:00:00.000Z';
     const current = mergeAdopterIndex(

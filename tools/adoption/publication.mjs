@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { combineCollectionResults } from './collector.mjs';
 import { renderAdoptionCharts } from './charts.mjs';
 import { mergeAdopterIndex } from './model.mjs';
+import { isExternalRepositoryKey } from './policy.mjs';
 import { renderAdoptionReport } from './report.mjs';
 import { mergeCanonicalMeasurements, persistSnapshot } from './store.mjs';
 
@@ -204,7 +205,11 @@ function applySuppressions(collection, suppressions) {
     adopterObservations: (collection.adopterObservations ?? []).filter((observation) => {
       const owner = observation?.repository?.owner;
       const repository = observation?.repository?.name;
-      return !suppressed.has(`${owner}/${repository}`.toLowerCase());
+      const repositoryKey =
+        typeof owner === 'string' && typeof repository === 'string'
+          ? `${owner}/${repository}`.toLowerCase()
+          : null;
+      return isExternalRepositoryKey(repositoryKey) && !suppressed.has(repositoryKey);
     }),
   };
 }
