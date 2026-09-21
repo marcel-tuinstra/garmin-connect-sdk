@@ -8,6 +8,11 @@ The latest generated report lives on the data branch:
 [SDK adoption evidence](https://github.com/marcel-tuinstra/garmin-connect-sdk/blob/adoption-metrics/docs/adoption/latest.md).
 The underlying dated snapshots are available in the same branch under `data/adoption/snapshots`.
 
+The report starts with four separately sourced indicators and three charts, followed by the exact
+tables used to interpret them. The charts are generated as dependency-free local SVG files under
+`docs/adoption/assets/<snapshot-date>` and are linked at full size from both the dated report and
+`latest.md`. They contain no scripts, external fonts, images, links or remote resources.
+
 ## What the metrics mean
 
 - **npm downloads** count package retrievals reported by npm. They include caches, CI and repeated
@@ -19,6 +24,18 @@ The underlying dated snapshots are available in the same branch under `data/adop
   declarations, lockfile resolutions, SDK imports and strict constructor callsites stay distinct.
   A callsite is active-use evidence, not proof that a deployment is running.
 - **active installations** are not measured. None of the other metrics is used as a substitute.
+
+The 14-day npm summary adds only observed daily package-download values. A partially observed period
+is labeled with its coverage instead of silently treating missing days as zero. GitHub unique-viewer
+and unique-cloner summaries use the newest observed rolling-window total inside the report's recent
+window; daily unique values and repeated rolling windows are never summed. The report shows every
+window value's own observation date so independently delayed sources remain visible.
+
+The version chart uses only the newest recent npm version snapshot. It shows the five versions with
+the highest download values and combines chart-only overflow into `Other versions`; the table keeps
+every exact version row. The highest stable semantic version observed in that snapshot is
+highlighted when it appears among those chart rows. The yellow `#FFD83D` marker always includes a
+text label and outline, so latest-state emphasis does not depend on color alone.
 
 There is no combined “users” number. Missing, delayed, denied, failed and rate-limited observations
 use a `null` value and an explicit status. Only a validated upstream zero is stored as zero.
@@ -70,6 +87,11 @@ missing or rate-limited retry. Canonical observations are split into monthly fil
 `data/adoption/measurements`; dated snapshots preserve each collection date, while compact records
 under `data/adoption/runs` keep run status and counts without duplicating the payload. Reports and
 `latest.json` contain at most the most recent 90 days. Concurrent workflow runs are serialized.
+Each report renders a fixed 14-day daily grid. Missing observations remain `—` in the table and gaps
+in a chart; lines are never drawn through them. Repeating collection on the same date deterministically
+overwrites the three assets in that date's directory. Replaying an older date writes only that dated
+report and its dated assets; it does not move or rewrite `latest.md`, `latest.json` or the assets linked
+by the latest report.
 
 The adopter index keeps its first and most recent positive observation. A repository not found in a
 complete search is labeled `not_observed`; after 30 days without positive evidence it becomes stale
@@ -108,7 +130,10 @@ environment-gated GitHub Actions publisher. Validate those settings before the f
 Public source files are hostile input. The collector caps response sizes and result counts, accepts
 only fixed API hosts, validates repository identities, and never clones, installs, builds or executes
 another repository. Generated Markdown escapes table delimiters, control characters and
-spreadsheet-formula prefixes.
+spreadsheet-formula prefixes. Generated SVG text is control-stripped, length-bounded and XML-escaped.
+The report's normal Markdown tables remain the readable fallback at narrow widths and increased zoom;
+the full-size chart link is provided because proportionally shrinking an SVG cannot make small labels
+readable on its own.
 
 ## Public repository privacy
 

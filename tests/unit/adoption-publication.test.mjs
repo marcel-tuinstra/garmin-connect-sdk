@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -62,7 +62,15 @@ describe('adoption publication', () => {
       '| 2026-09-19 | 8 | observed |',
     );
     expect(await readFile(join(reportDir, '2026-09-20.md'), 'utf8')).toContain(
-      '# SDK adoption evidence',
+      '# SDK adoption overview',
+    );
+    for (const filename of ['npm-downloads.svg', 'github-traffic.svg', 'version-downloads.svg']) {
+      const asset = join(reportDir, 'assets', '2026-09-20', filename);
+      expect((await stat(asset)).isFile()).toBe(true);
+      expect(await readFile(asset, 'utf8')).toContain('role="img"');
+    }
+    expect(await readFile(join(reportDir, 'latest.md'), 'utf8')).toContain(
+      './assets/2026-09-20/npm-downloads.svg',
     );
   });
 
@@ -225,6 +233,10 @@ describe('adoption publication', () => {
     };
 
     await writeRun('2026-09-20', 'newer-run');
+    const latestChartBeforeReplay = await readFile(
+      join(reportDir, 'assets', '2026-09-20', 'npm-downloads.svg'),
+      'utf8',
+    );
     await writeRun('2026-09-19', 'older-run');
 
     expect(JSON.parse(await readFile(join(dataDir, 'latest.json'), 'utf8'))).toMatchObject({
@@ -237,6 +249,61 @@ describe('adoption publication', () => {
     expect(JSON.parse(await readFile(join(dataDir, 'adopters', 'index.json'), 'utf8'))).toEqual([
       expect.objectContaining({ repositoryKey: 'example/app', observationState: 'observed' }),
     ]);
+    expect(
+      await readFile(join(reportDir, 'assets', '2026-09-20', 'npm-downloads.svg'), 'utf8'),
+    ).toBe(latestChartBeforeReplay);
+    expect(await readFile(join(reportDir, '2026-09-19.md'), 'utf8')).toContain(
+      './assets/2026-09-19/npm-downloads.svg',
+    );
+    await access(join(reportDir, 'assets', '2026-09-19', 'npm-downloads.svg'));
+  });
+
+  it('overwrites same-day report assets deterministically without duplicate chart paths', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gcs-adoption-same-day-'));
+    const inputDir = join(root, 'inputs');
+    const dataDir = join(root, 'data');
+    const reportDir = join(root, 'reports');
+    await mkdir(inputDir);
+    const writeRun = async (runId, value, retrievedHour) => {
+      await writeFile(
+        join(inputDir, 'run.json'),
+        JSON.stringify({
+          schemaVersion: 1,
+          metricDate: '2026-09-21',
+          retrievedAt: `2026-09-21T${retrievedHour}:00:00.000Z`,
+          runId,
+          runStatus: 'complete',
+          sourceStatuses: [{ source: 'npm_downloads', status: 'success' }],
+          measurements: [
+            {
+              source: 'npm',
+              metric: 'package_downloads',
+              metricDate: '2026-09-20',
+              dimension: null,
+              status: 'observed',
+              value,
+              unit: 'downloads',
+              retrievedAt: `2026-09-21T${retrievedHour}:00:00.000Z`,
+            },
+          ],
+          adopterObservations: [],
+        }),
+      );
+      await publishCollection({ inputDir, dataDir, reportDir });
+    };
+
+    await writeRun('run-one', 4, '09');
+    await writeRun('run-two', 9, '10');
+
+    const chart = await readFile(
+      join(reportDir, 'assets', '2026-09-21', 'npm-downloads.svg'),
+      'utf8',
+    );
+    expect(chart).toContain('9 downloads');
+    expect(chart).not.toContain('4 downloads');
+    expect(await readFile(join(reportDir, 'latest.md'), 'utf8')).toContain(
+      '| 2026-09-20 | 9 | observed |',
+    );
   });
 
   it('removes suppressed repositories before every public persistence boundary', async () => {
