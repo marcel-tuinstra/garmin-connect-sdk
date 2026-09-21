@@ -1,0 +1,192 @@
+[
+  {
+    "repositoryKey": "bibixx/trenuj-se",
+    "owner": "bibixx",
+    "repository": "trenuj-se",
+    "repositoryUrl": "https://github.com/bibixx/trenuj-se",
+    "repositoryState": "active",
+    "visibility": "public",
+    "defaultBranch": "main",
+    "pushedAt": "2026-09-08T10:25:20.000Z",
+    "observedAt": "2026-09-21T07:14:38.383Z",
+    "declaredVersionRange": "^1.0.0",
+    "resolvedVersion": null,
+    "evidenceTypes": [
+      "active_use_evidence",
+      "dependency_declaration",
+      "sdk_import"
+    ],
+    "sourceUrls": [
+      "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/package.json",
+      "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-login.ts",
+      "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-sync.ts",
+      "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin.ts",
+      "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/tests/unit/garmin-lib.test.ts"
+    ],
+    "confidence": "high",
+    "countsAsAdopter": true,
+    "evidence": [
+      {
+        "type": "active_use_evidence",
+        "path": "server/lib/garmin.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "dependency_declaration",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/package.json",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "^1.0.0",
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin-login.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-login.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin-sync.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-sync.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "tests/unit/garmin-lib.test.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/tests/unit/garmin-lib.test.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      }
+    ],
+    "firstObservedAt": "2026-09-21T07:14:38.383Z",
+    "lastObservedAt": "2026-09-21T07:14:38.383Z",
+    "observationState": "observed",
+    "stale": false
+  },
+  {
+    "repositoryKey": "cezarsmpio/apple-to-garmin",
+    "owner": "cezarsmpio",
+    "repository": "apple-to-garmin",
+    "repositoryUrl": "https://github.com/cezarsmpio/apple-to-garmin",
+    "repositoryState": "active",
+    "visibility": "public",
+    "defaultBranch": "main",
+    "pushedAt": "2026-07-21T07:39:07.000Z",
+    "observedAt": "2026-09-21T07:14:38.383Z",
+    "declaredVersionRange": null,
+    "resolvedVersion": null,
+    "evidenceTypes": [
+      "active_use_evidence",
+      "sdk_import"
+    ],
+    "sourceUrls": [
+      "https://github.com/cezarsmpio/apple-to-garmin/blob/cab5928a6b4362166e3f3ccb03e404ff9f9857c2/main.ts"
+    ],
+    "confidence": "high",
+    "countsAsAdopter": true,
+    "evidence": [
+      {
+        "type": "active_use_evidence",
+        "path": "main.ts",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/cab5928a6b4362166e3f3ccb03e404ff9f9857c2/main.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "main.ts",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/cab5928a6b4362166e3f3ccb03e404ff9f9857c2/main.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      }
+    ],
+    "firstObservedAt": "2026-09-21T07:14:38.383Z",
+    "lastObservedAt": "2026-09-21T07:14:38.383Z",
+    "observationState": "observed",
+    "stale": false
+  },
+  {
+    "repositoryKey": "elfnattaphon/garmin-mcp",
+    "owner": "ElfNattaphon",
+    "repository": "garmin-mcp",
+    "repositoryUrl": "https://github.com/ElfNattaphon/garmin-mcp",
+    "repositoryState": "active",
+    "visibility": "public",
+    "defaultBranch": "main",
+    "pushedAt": "2026-08-28T08:39:17.000Z",
+    "observedAt": "2026-09-21T07:14:38.383Z",
+    "declaredVersionRange": "^1.0.0",
+    "resolvedVersion": null,
+    "evidenceTypes": [
+      "active_use_evidence",
+      "dependency_declaration",
+      "sdk_import"
+    ],
+    "sourceUrls": [
+      "https://github.com/ElfNattaphon/garmin-mcp/blob/2b822937bdbdf9010d56a3c8d003f7e69a9191de/package.json",
+      "https://github.com/ElfNattaphon/garmin-mcp/blob/2b822937bdbdf9010d56a3c8d003f7e69a9191de/src/index.ts"
+    ],
+    "confidence": "high",
+    "countsAsAdopter": true,
+    "evidence": [
+      {
+        "type": "active_use_evidence",
+        "path": "src/index.ts",
+        "sourceUrl": "https://github.com/ElfNattaphon/garmin-mcp/blob/2b822937bdbdf9010d56a3c8d003f7e69a9191de/src/index.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "dependency_declaration",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/ElfNattaphon/garmin-mcp/blob/2b822937bdbdf9010d56a3c8d003f7e69a9191de/package.json",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "^1.0.0",
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "src/index.ts",
+        "sourceUrl": "https://github.com/ElfNattaphon/garmin-mcp/blob/2b822937bdbdf9010d56a3c8d003f7e69a9191de/src/index.ts",
+        "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      }
+    ],
+    "firstObservedAt": "2026-09-21T07:14:38.383Z",
+    "lastObservedAt": "2026-09-21T07:14:38.383Z",
+    "observationState": "observed",
+    "stale": false
+  }
+]
