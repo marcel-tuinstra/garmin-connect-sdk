@@ -25,12 +25,24 @@ use a `null` value and an explicit status. Only a validated upstream zero is sto
 
 ## Schedule and storage
 
-The `Adoption metrics` workflow runs daily at 03:17 UTC from the default branch. It deliberately has
-no branch-selectable manual dispatch because the source jobs use credentials. Daily collection
-re-reads GitHub's rolling traffic data, so observations survive after they leave the source window.
-GitHub can delay scheduled work and may disable public repository schedules after prolonged
-inactivity. Maintainers should check the workflow at least weekly; a gap longer than the traffic
-window cannot be reconstructed.
+The `Adoption metrics` workflow runs daily at 03:17 UTC from the default branch. It also accepts one
+fixed `repository_dispatch` event so a maintainer can bootstrap or diagnose collection without a
+branch-selectable workflow trigger. Run it with an authenticated GitHub CLI session that has write
+access to this repository:
+
+```sh
+gh api --method POST \
+  repos/marcel-tuinstra/garmin-connect-sdk/dispatches \
+  -f event_type=adoption-metrics
+```
+
+GitHub resolves `repository_dispatch` against the default branch. The workflow does not accept or
+read a client payload, so the caller cannot select a ref or influence collector commands. Scheduled
+and manual runs use the same jobs, credentials, concurrency group, validation and publication path.
+Daily collection re-reads GitHub's rolling traffic data, so observations survive after they leave the
+source window. GitHub can delay scheduled work and may disable public repository schedules after
+prolonged inactivity. Maintainers should check the workflow at least weekly; a gap longer than the
+traffic window cannot be reconstructed.
 
 The workflow keeps collection and publication separate:
 
@@ -43,6 +55,13 @@ Suppression loading fails closed: public discovery does not run if the data-bran
 read or validated. On the initial bootstrap run, the publisher can create the data branch and its
 empty suppression file while discovery remains explicitly missing; the next run can collect public
 evidence. A later permissions, network or API failure never falls back to an empty list.
+
+After a manual run, inspect all four jobs on the Actions run page. Confirm that the three sanitized
+source artifacts exist, that their logs and files contain no token values or raw upstream responses,
+and that the publisher updated `docs/adoption/latest.md` plus `data/adoption` on the
+`adoption-metrics` branch. The readable report remains available at the link at the top of this
+document. Repeating a manual run is safe: concurrent runs are serialized and deterministic keys
+update existing observations instead of duplicating metrics.
 
 The key for a measurement is source, metric, metric date and optional dimension. Repeating the same
 collection updates that record instead of appending a duplicate. Retrieval time, run ID and source
@@ -120,10 +139,11 @@ entry is suppressed on the next run.
 The data branch is the canonical store. To recover:
 
 1. Inspect the latest valid commit on `adoption-metrics`; never rewrite or force-push the branch.
-2. Re-run the failed trusted default-branch workflow from its Actions run page. Do not add a
-   branch-selectable dispatch trigger. A rerun records a new retrieval-day snapshot; within their
-   upstream rolling windows, daily measurements can still repair older canonical metric dates.
-   Unrecoverable source days remain explicitly missing. Idempotent keys prevent duplicate metrics.
+2. Re-run the failed trusted default-branch workflow from its Actions run page, or send the fixed
+   `adoption-metrics` repository dispatch shown above. Do not add a branch-selectable dispatch
+   trigger. A rerun records a new retrieval-day snapshot; within their upstream rolling windows,
+   daily measurements can still repair older canonical metric dates. Unrecoverable source days
+   remain explicitly missing. Idempotent keys prevent duplicate metrics.
 3. If source collection succeeded but publication failed, download the retained sanitized artifacts
    and run `tools/adoption/cli.mjs publish` against them before their 30-day expiry.
 4. Mark unrecoverable source days as missing. Do not interpolate them or convert them to zero.
