@@ -2,6 +2,7 @@ import * as defaultFs from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { buildAdopterIndex } from './model.mjs';
+import { isExternalRepositoryKey } from './policy.mjs';
 
 export function mergeSnapshot(existing, incoming, { suppressions = [] } = {}) {
   validateIncoming(incoming);
@@ -38,7 +39,10 @@ export function mergeSnapshot(existing, incoming, { suppressions = [] } = {}) {
   const adopters = buildAdopterIndex([
     ...priorObservations,
     ...(incoming.adopterObservations ?? []),
-  ]).filter(({ repositoryKey }) => !suppressionSet.has(repositoryKey));
+  ]).filter(
+    ({ repositoryKey }) =>
+      isExternalRepositoryKey(repositoryKey) && !suppressionSet.has(repositoryKey),
+  );
 
   return {
     schemaVersion: 1,

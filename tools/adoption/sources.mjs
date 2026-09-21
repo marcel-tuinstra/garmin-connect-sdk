@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer';
 import { URL } from 'node:url';
 
 import { buildAdopterIndex, extractRepositoryEvidence, normalizeSourceStatus } from './model.mjs';
+import { isExternalRepositoryKey } from './policy.mjs';
 
 const NPM_API = 'https://api.npmjs.org';
 const GITHUB_API = 'https://api.github.com';
@@ -236,6 +237,7 @@ export async function collectPublicRepositoryEvidence({
       continue;
     }
     const key = fullName.toLowerCase();
+    if (!isExternalRepositoryKey(key)) continue;
     if (excluded.has(key)) continue;
     if (
       !validApiUrl(match?.repository?.url) ||

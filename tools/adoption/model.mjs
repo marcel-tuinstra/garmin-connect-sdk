@@ -1,5 +1,7 @@
 import { URL } from 'node:url';
 
+import { isExternalRepositoryKey } from './policy.mjs';
+
 const PACKAGE_NAME = 'garmin-connect-sdk';
 const SAFE_REPOSITORY_PART = /^[A-Za-z0-9_.-]{1,100}$/;
 const SAFE_VERSION_RANGE = /^[\x20-\x7e]{1,128}$/;
@@ -142,6 +144,7 @@ export function mergeAdopterIndex(
   const referenceTime = Date.parse(observedAt);
 
   return merged.flatMap((adopter) => {
+    if (!isExternalRepositoryKey(adopter.repositoryKey)) return [];
     if (suppressionSet.has(adopter.repositoryKey)) return [];
     const prior = priorByKey.get(adopter.repositoryKey);
     const firstObservedAt = earliestIso(

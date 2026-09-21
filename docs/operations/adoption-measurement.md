@@ -9,20 +9,24 @@ The latest generated report lives on the data branch:
 The underlying dated snapshots are available in the same branch under `data/adoption/snapshots`.
 
 The report starts with four separately sourced indicators and three charts, followed by the exact
-tables used to interpret them. The charts are generated as dependency-free local SVG files under
+tables used to interpret them. The external-adoption baseline begins on **2026-09-21**. Earlier
+snapshots remain historical context, and a 14-day raw window that crosses that date is labeled as
+overlapping pre-baseline context. The charts are generated as dependency-free local SVG files under
 `docs/adoption/assets/<snapshot-date>` and are linked at full size from both the dated report and
 `latest.md`. They contain no scripts, external fonts, images, links or remote resources.
 
 ## What the metrics mean
 
-- **npm downloads** count package retrievals reported by npm. They include caches, CI and repeated
+- **raw npm downloads** count package retrievals reported by npm. They include caches, CI and repeated
   downloads. The rolling per-version endpoint is treated as a separate, less stable source and is
   labeled by retrieval date because npm does not expose its exact window boundaries.
-- **GitHub repository traffic** contains daily views, viewers, clones and cloners for this repository
-  within GitHub's rolling window. It is repository traffic, not SDK use.
-- **public repository evidence** is static evidence found in indexed public files. Dependency
-  declarations, lockfile resolutions, SDK imports and strict constructor callsites stay distinct.
-  A callsite is active-use evidence, not proof that a deployment is running.
+- **raw GitHub repository traffic** contains daily views, viewers, clones and cloners for this
+  repository within GitHub's rolling window. It is repository traffic, not SDK use.
+- **external public repository evidence** is static evidence found in indexed public files.
+  Repositories owned by `marcel-tuinstra` or `Tuinstra-DEV` are excluded case-insensitively before
+  repository inspection, persistence and reporting. Similarly named owners are not excluded.
+  Dependency declarations, lockfile resolutions, SDK imports and strict constructor callsites stay
+  distinct. A callsite is active-use evidence, not proof that a deployment is running.
 - **active installations** are not measured. None of the other metrics is used as a substitute.
 
 The 14-day npm summary adds only observed daily package-download values. A partially observed period
@@ -37,8 +41,11 @@ every exact version row. The highest stable semantic version observed in that sn
 highlighted when it appears among those chart rows. The yellow `#FFD83D` marker always includes a
 text label and outline, so latest-state emphasis does not depend on color alone.
 
-There is no combined “users” number. Missing, delayed, denied, failed and rate-limited observations
-use a `null` value and an explicit status. Only a validated upstream zero is stored as zero.
+There is no combined “users” number. npm and GitHub traffic aggregates do not identify the actor or
+origin, so they cannot reliably remove the maintainer's local clones, CI checkouts or package
+downloads. Those values therefore remain unchanged and explicitly labeled raw. Missing, delayed,
+denied, failed and rate-limited observations use a `null` value and an explicit status. Only a
+validated upstream zero is stored as zero.
 
 ## Schedule and storage
 
@@ -93,7 +100,9 @@ overwrites the three assets in that date's directory. Replaying an older date wr
 report and its dated assets; it does not move or rewrite `latest.md`, `latest.json` or the assets linked
 by the latest report.
 
-The adopter index keeps its first and most recent positive observation. A repository not found in a
+The adopter index keeps its first and most recent positive observation. The source-controlled owner
+policy is also applied to existing index entries, so historical internal repositories disappear even
+when the latest discovery run is partial or failed. A repository not found in a
 complete search is labeled `not_observed`; after 30 days without positive evidence it becomes stale
 and stops counting as an adopter. A partial run can add positive evidence but cannot advance negative
 or stale state. A fully failed discovery run does not change the index. Maintainers can place
