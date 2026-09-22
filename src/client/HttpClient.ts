@@ -152,7 +152,7 @@ export class HttpClient {
     const headers = new Headers({
       accept: options.responseType === 'bytes' ? '*/*' : 'application/json',
       nk: 'NT',
-      'user-agent': 'garmin-connect-sdk/1.1.1',
+      'user-agent': 'garmin-connect-sdk/1.2.0',
     });
 
     if (!options.skipAuth) {
