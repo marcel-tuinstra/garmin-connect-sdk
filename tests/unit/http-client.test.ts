@@ -72,9 +72,9 @@ describe('HttpClient', () => {
     const http = httpClient(fetchMock, { maxRetries: 3, shouldRetry: () => true });
 
     // Act
-    const error = await http.request('/write', { method: 'post', body: { value: 1 } }).catch(
-      (caught: unknown) => caught,
-    );
+    const error = await http
+      .request('/write', { method: 'post', body: { value: 1 } })
+      .catch((caught: unknown) => caught);
 
     // Assert
     expect(error).toBeInstanceOf(GarminRequestError);
@@ -143,7 +143,7 @@ describe('HttpClient', () => {
       'https://connectapi.garmin.com/write?start=0&limit=20&includePrivate=false',
     );
     expect(init?.method).toBe('POST');
-    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.1.1');
+    expect(new Headers(init?.headers).get('user-agent')).toBe('garmin-connect-sdk/1.2.0');
     expect(new Headers(init?.headers).get('authorization')).toBeNull();
     expect(new Headers(init?.headers).get('accept')).toBe('application/json');
     expect(new Headers(init?.headers).get('content-type')).toBe('application/json');

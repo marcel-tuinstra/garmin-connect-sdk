@@ -1,12 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - 2026-09-22
 
-- Record malformed public GitHub Code Search hits as an explicit `invalid_payload` source failure
-  while keeping the overall discovery run partial instead of treating missing evidence as zero.
-- Add an opt-in maintainer workflow for privacy-preserving npm, GitHub traffic, and public repository
-  evidence collection. Keep the tooling outside the npm package, store explicit source failures, and
-  publish sanitized, idempotent history separately from SDK runtime behavior.
+### SDK and safety
+
+- Tighten token storage permissions and reject symlinks in token, lock, temporary and ancestor paths.
+- Pin CI actions to reviewed commits and audit the locked dependency tree. Update Vitest to
+  4.1.11 to address GHSA-82fw-gwwq-j7x9 in the development toolchain.
 - Make activity-detail `firstMetricRow` use the same row-local descriptor resolution and location
   redaction as the public whole-activity decoder.
 - Limit each sleep-range read to four concurrent daily requests while preserving date order and
@@ -30,6 +30,17 @@
   automatic retry, and documented read-back reconciliation for uncertain outcomes.
 - Add a public `GarminNotFoundError` for plain HTTP `404` responses while preserving stronger
   authentication, challenge, rate-limit, and service-error classifications.
+
+### Maintainer adoption reporting
+
+- Collect npm downloads, GitHub repository traffic and public repository evidence daily. Keep the
+  tooling outside the published package and SDK runtime. A fixed manual trigger uses the same
+  protected workflow and publishes sanitized, idempotent history.
+- Record malformed public GitHub Code Search hits as an explicit `invalid_payload` source failure
+  while keeping the overall discovery run partial instead of treating missing evidence as zero.
+- Publish a visual report with charts and detailed tables. Count independently owned public
+  repositories as external adoption from 2026-09-21; label npm downloads and GitHub traffic as
+  raw signals because their aggregates cannot identify internal activity.
 
 ## 1.1.1 - 2026-09-19
 

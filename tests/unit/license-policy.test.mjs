@@ -11,7 +11,7 @@ const REPOSITORY_ROOT = resolve(import.meta.dirname, '../..');
 const PACKAGE_JSON_PATH = join(REPOSITORY_ROOT, 'package.json');
 const LICENSE_PATH = join(REPOSITORY_ROOT, 'LICENSE');
 const EXPECTED_SPDX = 'PolyForm-Noncommercial-1.0.0';
-const EXPECTED_VERSION = '1.1.1';
+const EXPECTED_VERSION = '1.2.0';
 const REQUIRED_NOTICE = 'Required Notice: Copyright (c) 2026 Marcel Tuinstra\n\n';
 // Official plain-text terms, retrieved from the licensor on 2026-09-03:
 // https://polyformproject.org/licenses/noncommercial/1.0.0.txt
