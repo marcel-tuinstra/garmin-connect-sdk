@@ -7,9 +7,9 @@
     "repositoryState": "active",
     "visibility": "public",
     "defaultBranch": "main",
-    "pushedAt": "2026-10-01T16:57:35.000Z",
-    "observedAt": "2026-10-04T09:47:24.238Z",
-    "declaredVersionRange": "^1.1.0",
+    "pushedAt": "2026-10-04T19:26:51.000Z",
+    "observedAt": "2026-10-05T10:24:25.953Z",
+    "declaredVersionRange": "^1.2.0",
     "resolvedVersion": null,
     "evidenceTypes": [
       "active_use_evidence",
@@ -22,7 +22,10 @@
       "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/server/utils/garminTokenStorage.ts",
       "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/package.json",
       "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/server/utils/garmin.ts",
-      "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/server/utils/garminTokenStorage.ts"
+      "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/server/utils/garminTokenStorage.ts",
+      "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/package.json",
+      "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garmin.ts",
+      "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garminTokenStorage.ts"
     ],
     "confidence": "high",
     "countsAsAdopter": true,
@@ -41,6 +44,15 @@
         "path": "apps/web/server/utils/garmin.ts",
         "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/server/utils/garmin.ts",
         "observedAt": "2026-10-02T09:44:49.619Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "active_use_evidence",
+        "path": "apps/web/server/utils/garmin.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garmin.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -64,6 +76,15 @@
         "resolvedVersion": null
       },
       {
+        "type": "dependency_declaration",
+        "path": "apps/web/package.json",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/package.json",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "^1.2.0",
+        "resolvedVersion": null
+      },
+      {
         "type": "sdk_import",
         "path": "apps/web/server/utils/garmin.ts",
         "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/server/utils/garmin.ts",
@@ -77,6 +98,15 @@
         "path": "apps/web/server/utils/garmin.ts",
         "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/cbfb945f94e3106a0bcca6c1e2c3fa4b8efeff12/apps/web/server/utils/garmin.ts",
         "observedAt": "2026-10-02T09:44:49.619Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "apps/web/server/utils/garmin.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garmin.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -98,10 +128,19 @@
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "apps/web/server/utils/garminTokenStorage.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garminTokenStorage.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
       }
     ],
     "firstObservedAt": "2026-09-23T08:33:36.174Z",
-    "lastObservedAt": "2026-10-04T09:47:24.238Z",
+    "lastObservedAt": "2026-10-05T10:24:25.953Z",
     "observationState": "observed",
     "stale": false
   },
@@ -113,8 +152,8 @@
     "repositoryState": "active",
     "visibility": "public",
     "defaultBranch": "main",
-    "pushedAt": "2026-09-08T10:25:20.000Z",
-    "observedAt": "2026-10-04T09:47:24.238Z",
+    "pushedAt": "2026-10-04T22:10:56.000Z",
+    "observedAt": "2026-10-05T10:24:25.953Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -123,6 +162,11 @@
       "sdk_import"
     ],
     "sourceUrls": [
+      "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/package.json",
+      "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin-login.ts",
+      "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin-sync.ts",
+      "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin.ts",
+      "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/tests/unit/garmin-lib.test.ts",
       "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/package.json",
       "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-login.ts",
       "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-sync.ts",
@@ -135,10 +179,28 @@
       {
         "type": "active_use_evidence",
         "path": "server/lib/garmin.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "active_use_evidence",
+        "path": "server/lib/garmin.ts",
         "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin.ts",
         "observedAt": "2026-09-21T07:14:38.383Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "dependency_declaration",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/package.json",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "^1.0.0",
         "resolvedVersion": null
       },
       {
@@ -153,8 +215,26 @@
       {
         "type": "sdk_import",
         "path": "server/lib/garmin-login.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin-login.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin-login.ts",
         "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin-login.ts",
         "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin-sync.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin-sync.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -171,8 +251,26 @@
       {
         "type": "sdk_import",
         "path": "server/lib/garmin.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/server/lib/garmin.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "server/lib/garmin.ts",
         "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/af9c3de46222d35638eb3c3bfffb21e91a6d0c49/server/lib/garmin.ts",
         "observedAt": "2026-09-21T07:14:38.383Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "tests/unit/garmin-lib.test.ts",
+        "sourceUrl": "https://github.com/bibixx/trenuj-se/blob/972bf4a03f8df09aefbf78acda3076936fd13a63/tests/unit/garmin-lib.test.ts",
+        "observedAt": "2026-10-05T10:24:25.953Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -188,7 +286,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-04T09:47:24.238Z",
+    "lastObservedAt": "2026-10-05T10:24:25.953Z",
     "observationState": "observed",
     "stale": false
   },
@@ -201,7 +299,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-07-21T07:39:07.000Z",
-    "observedAt": "2026-10-04T09:47:24.238Z",
+    "observedAt": "2026-10-05T10:24:25.953Z",
     "declaredVersionRange": null,
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -234,7 +332,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-04T09:47:24.238Z",
+    "lastObservedAt": "2026-10-05T10:24:25.953Z",
     "observationState": "observed",
     "stale": false
   },
@@ -247,7 +345,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-08-28T08:39:17.000Z",
-    "observedAt": "2026-10-04T09:47:24.238Z",
+    "observedAt": "2026-10-05T10:24:25.953Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -291,7 +389,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-04T09:47:24.238Z",
+    "lastObservedAt": "2026-10-05T10:24:25.953Z",
     "observationState": "observed",
     "stale": false
   }
