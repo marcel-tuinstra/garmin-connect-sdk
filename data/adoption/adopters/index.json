@@ -7,8 +7,8 @@
     "repositoryState": "active",
     "visibility": "public",
     "defaultBranch": "main",
-    "pushedAt": "2026-10-08T11:06:58.000Z",
-    "observedAt": "2026-10-09T10:31:36.526Z",
+    "pushedAt": "2026-10-09T13:35:49.000Z",
+    "observedAt": "2026-10-10T09:48:56.858Z",
     "declaredVersionRange": "^1.2.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -17,6 +17,9 @@
       "sdk_import"
     ],
     "sourceUrls": [
+      "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/package.json",
+      "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/server/utils/garmin.ts",
+      "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/server/utils/garminTokenStorage.ts",
       "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/package.json",
       "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/server/utils/garmin.ts",
       "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/server/utils/garminTokenStorage.ts",
@@ -33,6 +36,15 @@
     "confidence": "high",
     "countsAsAdopter": true,
     "evidence": [
+      {
+        "type": "active_use_evidence",
+        "path": "apps/web/server/utils/garmin.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/server/utils/garmin.ts",
+        "observedAt": "2026-10-10T09:48:56.858Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
       {
         "type": "active_use_evidence",
         "path": "apps/web/server/utils/garmin.ts",
@@ -67,6 +79,15 @@
         "observedAt": "2026-10-05T10:24:25.953Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "dependency_declaration",
+        "path": "apps/web/package.json",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/package.json",
+        "observedAt": "2026-10-10T09:48:56.858Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "^1.2.0",
         "resolvedVersion": null
       },
       {
@@ -108,6 +129,15 @@
       {
         "type": "sdk_import",
         "path": "apps/web/server/utils/garmin.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/server/utils/garmin.ts",
+        "observedAt": "2026-10-10T09:48:56.858Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "apps/web/server/utils/garmin.ts",
         "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/38ca3b5ccb2319a90f8bb5fb5d9b0a0f1e419237/apps/web/server/utils/garmin.ts",
         "observedAt": "2026-09-23T08:33:36.174Z",
         "parseStatus": "parsed",
@@ -137,6 +167,15 @@
         "path": "apps/web/server/utils/garmin.ts",
         "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/edf882b9085a5340da0c19ae157fff2b32535f42/apps/web/server/utils/garmin.ts",
         "observedAt": "2026-10-05T10:24:25.953Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "apps/web/server/utils/garminTokenStorage.ts",
+        "sourceUrl": "https://github.com/bentley0098/fitness-app/blob/04306ddf6132dd6cd709661d584a81a6e629de93/apps/web/server/utils/garminTokenStorage.ts",
+        "observedAt": "2026-10-10T09:48:56.858Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -179,7 +218,7 @@
       }
     ],
     "firstObservedAt": "2026-09-23T08:33:36.174Z",
-    "lastObservedAt": "2026-10-09T10:31:36.526Z",
+    "lastObservedAt": "2026-10-10T09:48:56.858Z",
     "observationState": "observed",
     "stale": false
   },
@@ -192,7 +231,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-10-04T22:10:56.000Z",
-    "observedAt": "2026-10-09T10:31:36.526Z",
+    "observedAt": "2026-10-10T09:48:56.858Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -325,7 +364,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-09T10:31:36.526Z",
+    "lastObservedAt": "2026-10-10T09:48:56.858Z",
     "observationState": "observed",
     "stale": false
   },
@@ -338,7 +377,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-07-21T07:39:07.000Z",
-    "observedAt": "2026-10-09T10:31:36.526Z",
+    "observedAt": "2026-10-10T09:48:56.858Z",
     "declaredVersionRange": null,
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -371,7 +410,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-09T10:31:36.526Z",
+    "lastObservedAt": "2026-10-10T09:48:56.858Z",
     "observationState": "observed",
     "stale": false
   },
@@ -384,7 +423,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-08-28T08:39:17.000Z",
-    "observedAt": "2026-10-09T10:31:36.526Z",
+    "observedAt": "2026-10-10T09:48:56.858Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -428,7 +467,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-10-09T10:31:36.526Z",
+    "lastObservedAt": "2026-10-10T09:48:56.858Z",
     "observationState": "observed",
     "stale": false
   }
