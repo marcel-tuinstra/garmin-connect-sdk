@@ -8,7 +8,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-10-20T15:02:59.000Z",
-    "observedAt": "2026-11-02T11:01:55.390Z",
+    "observedAt": "2026-11-03T10:50:37.852Z",
     "declaredVersionRange": "^1.2.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -296,7 +296,7 @@
       }
     ],
     "firstObservedAt": "2026-09-23T08:33:36.174Z",
-    "lastObservedAt": "2026-11-02T11:01:55.390Z",
+    "lastObservedAt": "2026-11-03T10:50:37.852Z",
     "observationState": "observed",
     "stale": false
   },
@@ -309,7 +309,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-10-04T22:10:56.000Z",
-    "observedAt": "2026-11-02T11:01:55.390Z",
+    "observedAt": "2026-11-03T10:50:37.852Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -442,7 +442,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-11-02T11:01:55.390Z",
+    "lastObservedAt": "2026-11-03T10:50:37.852Z",
     "observationState": "observed",
     "stale": false
   },
@@ -454,8 +454,8 @@
     "repositoryState": "active",
     "visibility": "public",
     "defaultBranch": "main",
-    "pushedAt": "2026-11-01T21:46:05.000Z",
-    "observedAt": "2026-11-02T11:01:55.390Z",
+    "pushedAt": "2026-11-02T13:37:41.000Z",
+    "observedAt": "2026-11-03T10:50:37.852Z",
     "declaredVersionRange": "1.0.0",
     "resolvedVersion": "1.0.0",
     "evidenceTypes": [
@@ -469,6 +469,10 @@
       "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/main.ts",
       "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/package-lock.json",
       "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/package.json",
+      "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/main.test.ts",
+      "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/main.ts",
+      "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/package-lock.json",
+      "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/package.json",
       "https://github.com/cezarsmpio/apple-to-garmin/blob/cab5928a6b4362166e3f3ccb03e404ff9f9857c2/main.ts"
     ],
     "confidence": "high",
@@ -479,6 +483,15 @@
         "path": "main.ts",
         "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/main.ts",
         "observedAt": "2026-11-02T11:01:55.390Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "active_use_evidence",
+        "path": "main.ts",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/main.ts",
+        "observedAt": "2026-11-03T10:50:37.852Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -502,6 +515,15 @@
         "resolvedVersion": null
       },
       {
+        "type": "dependency_declaration",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/package.json",
+        "observedAt": "2026-11-03T10:50:37.852Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": "1.0.0",
+        "resolvedVersion": null
+      },
+      {
         "type": "lockfile_resolution",
         "path": "package-lock.json",
         "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/package-lock.json",
@@ -511,10 +533,28 @@
         "resolvedVersion": "1.0.0"
       },
       {
+        "type": "lockfile_resolution",
+        "path": "package-lock.json",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/package-lock.json",
+        "observedAt": "2026-11-03T10:50:37.852Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": "1.0.0"
+      },
+      {
         "type": "sdk_import",
         "path": "main.test.ts",
         "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/b00e61ac448a5ba3874a1edcafd54a11fbf958b2/main.test.ts",
         "observedAt": "2026-11-02T11:01:55.390Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "main.test.ts",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/main.test.ts",
+        "observedAt": "2026-11-03T10:50:37.852Z",
         "parseStatus": "parsed",
         "declaredVersionRange": null,
         "resolvedVersion": null
@@ -531,6 +571,15 @@
       {
         "type": "sdk_import",
         "path": "main.ts",
+        "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/bac00ddc2363afe351d878a49aa25e285b693788/main.ts",
+        "observedAt": "2026-11-03T10:50:37.852Z",
+        "parseStatus": "parsed",
+        "declaredVersionRange": null,
+        "resolvedVersion": null
+      },
+      {
+        "type": "sdk_import",
+        "path": "main.ts",
         "sourceUrl": "https://github.com/cezarsmpio/apple-to-garmin/blob/cab5928a6b4362166e3f3ccb03e404ff9f9857c2/main.ts",
         "observedAt": "2026-09-21T07:14:38.383Z",
         "parseStatus": "parsed",
@@ -539,7 +588,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-11-02T11:01:55.390Z",
+    "lastObservedAt": "2026-11-03T10:50:37.852Z",
     "observationState": "observed",
     "stale": false
   },
@@ -552,7 +601,7 @@
     "visibility": "public",
     "defaultBranch": "main",
     "pushedAt": "2026-08-28T08:39:17.000Z",
-    "observedAt": "2026-11-02T11:01:55.390Z",
+    "observedAt": "2026-11-03T10:50:37.852Z",
     "declaredVersionRange": "^1.0.0",
     "resolvedVersion": null,
     "evidenceTypes": [
@@ -596,7 +645,7 @@
       }
     ],
     "firstObservedAt": "2026-09-21T07:14:38.383Z",
-    "lastObservedAt": "2026-11-02T11:01:55.390Z",
+    "lastObservedAt": "2026-11-03T10:50:37.852Z",
     "observationState": "observed",
     "stale": false
   }
