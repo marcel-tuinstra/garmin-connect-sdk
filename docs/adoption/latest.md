@@ -1,14 +1,14 @@
 # SDK adoption overview
 
-Generated from the `2026-11-05` snapshot at `2026-11-05T10:52:59.099Z`.
+Generated from the `2026-11-06` snapshot at `2026-11-06T10:50:50.130Z`.
 
 External-adoption baseline: `2026-09-21`. External public repository evidence is measured from this date onward.
 
 | Raw npm downloads · 14 days | Raw unique cloners · GitHub window | Raw unique viewers · GitHub window | External public projects with usage evidence |
 | ---: | ---: | ---: | ---: |
-| **380** | **52** | **9** | **4** |
+| **383** | **50** | **11** | **4** |
 
-**Coverage:** 14/14 npm days observed (success); 56/56 GitHub daily values observed (views success, clones success); public evidence partial. GitHub windows: unique cloners `2026-11-05` (current snapshot), unique viewers `2026-11-05` (current snapshot).
+**Coverage:** 14/14 npm days observed (success); 56/56 GitHub daily values observed (views success, clones success); public evidence partial. GitHub windows: unique cloners `2026-11-06` (current snapshot), unique viewers `2026-11-06` (current snapshot).
 
 > Active installations are not measured. Raw signals can include CI, caches, repeat downloads and internal activity. npm downloads, repository traffic and external public-code evidence are separate signals and must not be added together as a user count.
 
@@ -18,15 +18,15 @@ Charts are linked to their full-size local SVG. Their exact values and missing-d
 
 ### Daily npm downloads
 
-[![Daily npm downloads for the 14 days before 2026-11-05; missing days are gaps and the latest observation is labeled.](./assets/2026-11-05/npm-downloads.svg)](./assets/2026-11-05/npm-downloads.svg)
+[![Daily npm downloads for the 14 days before 2026-11-06; missing days are gaps and the latest observation is labeled.](./assets/2026-11-06/npm-downloads.svg)](./assets/2026-11-06/npm-downloads.svg)
 
 ### Daily GitHub activity
 
-[![Daily GitHub clones and views for the 14 days before 2026-11-05; clones use a solid line with circles and views use a dashed line with squares.](./assets/2026-11-05/github-traffic.svg)](./assets/2026-11-05/github-traffic.svg)
+[![Daily GitHub clones and views for the 14 days before 2026-11-06; clones use a solid line with circles and views use a dashed line with squares.](./assets/2026-11-06/github-traffic.svg)](./assets/2026-11-06/github-traffic.svg)
 
 ### Downloads by released version
 
-[![Newest npm rolling version-download snapshot; the highest stable version observed is explicitly labeled and chart overflow is grouped as Other versions.](./assets/2026-11-05/version-downloads.svg)](./assets/2026-11-05/version-downloads.svg)
+[![Newest npm rolling version-download snapshot; the highest stable version observed is explicitly labeled and chart overflow is grouped as Other versions.](./assets/2026-11-06/version-downloads.svg)](./assets/2026-11-06/version-downloads.svg)
 
 ## Drill-down
 
@@ -34,11 +34,10 @@ Missing values remain `—`; they are never converted to zero or joined across g
 
 ### Daily npm downloads
 
-Period: `2026-10-22` through `2026-11-04`. Source status: **success**.
+Period: `2026-10-23` through `2026-11-05`. Source status: **success**.
 
 | Date | Downloads | Status |
 | --- | --- | --- |
-| 2026-10-22 | 34 | observed |
 | 2026-10-23 | 52 | observed |
 | 2026-10-24 | 30 | observed |
 | 2026-10-25 | 5 | observed |
@@ -52,6 +51,7 @@ Period: `2026-10-22` through `2026-11-04`. Source status: **success**.
 | 2026-11-02 | 56 | observed |
 | 2026-11-03 | 33 | observed |
 | 2026-11-04 | 68 | observed |
+| 2026-11-05 | 37 | observed |
 
 ### GitHub traffic by day
 
@@ -59,7 +59,6 @@ One row represents one calendar date. Rolling totals are intentionally kept out 
 
 | Date | Views | Unique viewers | Clones | Unique cloners |
 | --- | --- | --- | --- | --- |
-| 2026-10-22 | 0 | 0 | 7 | 3 |
 | 2026-10-23 | 0 | 0 | 17 | 8 |
 | 2026-10-24 | 0 | 0 | 8 | 3 |
 | 2026-10-25 | 0 | 0 | 5 | 1 |
@@ -73,6 +72,7 @@ One row represents one calendar date. Rolling totals are intentionally kept out 
 | 2026-11-02 | 0 | 0 | 23 | 12 |
 | 2026-11-03 | 0 | 0 | 18 | 7 |
 | 2026-11-04 | 0 | 0 | 19 | 9 |
+| 2026-11-05 | 2 | 2 | 5 | 1 |
 
 ### Current GitHub rolling window
 
@@ -80,25 +80,25 @@ Each value keeps its own observation date because GitHub's rolling endpoints can
 
 | Metric | Observed | Freshness | Value | Status |
 | --- | --- | --- | --- | --- |
-| Views | 2026-11-05 | current snapshot | 23 | observed |
-| Unique viewers | 2026-11-05 | current snapshot | 9 | observed |
-| Clones | 2026-11-05 | current snapshot | 164 | observed |
-| Unique cloners | 2026-11-05 | current snapshot | 52 | observed |
+| Views | 2026-11-06 | current snapshot | 25 | observed |
+| Unique viewers | 2026-11-06 | current snapshot | 11 | observed |
+| Clones | 2026-11-06 | current snapshot | 162 | observed |
+| Unique cloners | 2026-11-06 | current snapshot | 50 | observed |
 
 ### npm version snapshot
 
-Snapshot date: `2026-11-05` (current snapshot). This is npm's rolling version-level snapshot; it is separate from daily package downloads. Every exact version remains in this table even when the chart groups overflow.
+Snapshot date: `2026-11-06` (current snapshot). This is npm's rolling version-level snapshot; it is separate from daily package downloads. Every exact version remains in this table even when the chart groups overflow.
 
 | Version | Downloads | Status |
 | --- | --- | --- |
-| 1\.0\.0 | 32 | observed |
+| 1\.0\.0 | 31 | observed |
 | 1\.0\.0-alpha\.1 | 1 | observed |
 | 1\.0\.0-alpha\.2 | 1 | observed |
 | 1\.0\.0-alpha\.3 | 1 | observed |
-| 1\.0\.0-alpha\.4 | 2 | observed |
+| 1\.0\.0-alpha\.4 | 5 | observed |
 | 1\.1\.0 | 2 | observed |
 | 1\.1\.1 | 3 | observed |
-| 1\.2\.0 | 145 | observed |
+| 1\.2\.0 | 175 | observed |
 
 ### External public repository evidence
 
