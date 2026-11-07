@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "metricDate": "2026-11-06",
+  "metricDate": "2026-11-07",
   "retrievals": [
     {
-      "runId": "42205743638-1",
+      "runId": "42362390657-1",
       "runStatus": "partial",
-      "retrievedAt": "2026-11-06T10:50:50.130Z",
+      "retrievedAt": "2026-11-07T10:04:46.236Z",
       "sourceStatuses": [
         {
           "source": "github_public_content",
@@ -728,6 +728,19 @@
     },
     {
       "source": "github",
+      "metric": "clones_window_total",
+      "metricDate": "2026-11-07",
+      "dimension": null,
+      "status": "observed",
+      "value": 181,
+      "unit": "clones",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
+    },
+    {
+      "source": "github",
       "metric": "clones",
       "metricDate": "2026-09-07",
       "dimension": null,
@@ -1348,7 +1361,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1361,7 +1374,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1374,7 +1387,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1387,7 +1400,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1400,7 +1413,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1413,7 +1426,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1426,7 +1439,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1439,7 +1452,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1452,7 +1465,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1465,7 +1478,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1478,7 +1491,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1491,7 +1504,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -1504,7 +1517,20 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
+    },
+    {
+      "source": "github",
+      "metric": "clones",
+      "metricDate": "2026-11-06",
+      "dimension": null,
+      "status": "observed",
+      "value": 36,
+      "unit": "clones",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2116,6 +2142,19 @@
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
       "retrievedAt": "2026-11-06T10:50:50.130Z"
+    },
+    {
+      "source": "github",
+      "metric": "unique_cloners_window_total",
+      "metricDate": "2026-11-07",
+      "dimension": null,
+      "status": "observed",
+      "value": 59,
+      "unit": "clones",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2739,7 +2778,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2752,7 +2791,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2765,7 +2804,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2778,7 +2817,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2791,7 +2830,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2804,7 +2843,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2817,7 +2856,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2830,7 +2869,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2843,7 +2882,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2856,7 +2895,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2869,7 +2908,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2882,7 +2921,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -2895,7 +2934,20 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
+    },
+    {
+      "source": "github",
+      "metric": "unique_cloners",
+      "metricDate": "2026-11-06",
+      "dimension": null,
+      "status": "observed",
+      "value": 19,
+      "unit": "clones",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/clones?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -3507,6 +3559,19 @@
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
       "retrievedAt": "2026-11-06T10:50:50.130Z"
+    },
+    {
+      "source": "github",
+      "metric": "unique_viewers_window_total",
+      "metricDate": "2026-11-07",
+      "dimension": null,
+      "status": "observed",
+      "value": 11,
+      "unit": "views",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4130,7 +4195,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4143,7 +4208,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4156,7 +4221,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4169,7 +4234,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4182,7 +4247,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4195,7 +4260,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4208,7 +4273,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4221,7 +4286,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4234,7 +4299,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4247,7 +4312,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4260,7 +4325,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4273,7 +4338,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4286,7 +4351,20 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
+    },
+    {
+      "source": "github",
+      "metric": "unique_viewers",
+      "metricDate": "2026-11-06",
+      "dimension": null,
+      "status": "observed",
+      "value": 0,
+      "unit": "views",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -4898,6 +4976,19 @@
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
       "retrievedAt": "2026-11-06T10:50:50.130Z"
+    },
+    {
+      "source": "github",
+      "metric": "views_window_total",
+      "metricDate": "2026-11-07",
+      "dimension": null,
+      "status": "observed",
+      "value": 25,
+      "unit": "views",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5521,7 +5612,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5534,7 +5625,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5547,7 +5638,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5560,7 +5651,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5573,7 +5664,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5586,7 +5677,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5599,7 +5690,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5612,7 +5703,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5625,7 +5716,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5638,7 +5729,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5651,7 +5742,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5664,7 +5755,7 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "github",
@@ -5677,7 +5768,20 @@
       "windowStart": null,
       "windowEnd": null,
       "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
-      "retrievedAt": "2026-11-06T10:50:50.130Z"
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
+    },
+    {
+      "source": "github",
+      "metric": "views",
+      "metricDate": "2026-11-06",
+      "dimension": null,
+      "status": "observed",
+      "value": 0,
+      "unit": "views",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.github.com/repos/marcel-tuinstra/garmin-connect-sdk/traffic/views?per=day",
+      "retrievedAt": "2026-11-07T10:04:43.608Z"
     },
     {
       "source": "npm",
@@ -6300,8 +6404,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6313,8 +6417,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6326,8 +6430,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6339,8 +6443,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6352,8 +6456,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6365,8 +6469,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6378,8 +6482,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6391,8 +6495,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6404,8 +6508,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6417,8 +6521,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6430,8 +6534,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6443,8 +6547,8 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -6456,8 +6560,21 @@
       "unit": "downloads",
       "windowStart": null,
       "windowEnd": null,
-      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-23:2026-11-05/garmin-connect-sdk",
-      "retrievedAt": "2026-11-06T10:50:48.530Z"
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "package_downloads",
+      "metricDate": "2026-11-06",
+      "dimension": null,
+      "status": "observed",
+      "value": 74,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/downloads/range/2026-10-24:2026-11-06/garmin-connect-sdk",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     },
     {
       "source": "npm",
@@ -10514,6 +10631,110 @@
       "windowEnd": null,
       "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
       "retrievedAt": "2026-11-06T10:50:48.530Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.0.0",
+      "status": "observed",
+      "value": 29,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.0.0-alpha.1",
+      "status": "observed",
+      "value": 1,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.0.0-alpha.2",
+      "status": "observed",
+      "value": 1,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.0.0-alpha.3",
+      "status": "observed",
+      "value": 1,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.0.0-alpha.4",
+      "status": "observed",
+      "value": 5,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.1.0",
+      "status": "observed",
+      "value": 2,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.1.1",
+      "status": "observed",
+      "value": 4,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
+    },
+    {
+      "source": "npm",
+      "metric": "version_downloads_last_week",
+      "metricDate": "2026-11-07",
+      "dimension": "1.2.0",
+      "status": "observed",
+      "value": 242,
+      "unit": "downloads",
+      "windowStart": null,
+      "windowEnd": null,
+      "sourceUrl": "https://api.npmjs.org/versions/garmin-connect-sdk/last-week",
+      "retrievedAt": "2026-11-07T10:04:43.312Z"
     }
   ],
   "adopters": [
@@ -10526,7 +10747,7 @@
       "visibility": "public",
       "defaultBranch": "main",
       "pushedAt": "2026-10-20T15:02:59.000Z",
-      "observedAt": "2026-11-06T10:50:49.996Z",
+      "observedAt": "2026-11-07T10:04:46.236Z",
       "declaredVersionRange": "^1.2.0",
       "resolvedVersion": null,
       "evidenceTypes": [
@@ -10814,7 +11035,7 @@
         }
       ],
       "firstObservedAt": "2026-09-23T08:33:36.174Z",
-      "lastObservedAt": "2026-11-06T10:50:49.996Z",
+      "lastObservedAt": "2026-11-07T10:04:46.236Z",
       "observationState": "observed",
       "stale": false
     },
@@ -10827,7 +11048,7 @@
       "visibility": "public",
       "defaultBranch": "main",
       "pushedAt": "2026-10-04T22:10:56.000Z",
-      "observedAt": "2026-11-06T10:50:49.996Z",
+      "observedAt": "2026-11-07T10:04:46.236Z",
       "declaredVersionRange": "^1.0.0",
       "resolvedVersion": null,
       "evidenceTypes": [
@@ -10960,7 +11181,7 @@
         }
       ],
       "firstObservedAt": "2026-09-21T07:14:38.383Z",
-      "lastObservedAt": "2026-11-06T10:50:49.996Z",
+      "lastObservedAt": "2026-11-07T10:04:46.236Z",
       "observationState": "observed",
       "stale": false
     },
@@ -10973,7 +11194,7 @@
       "visibility": "public",
       "defaultBranch": "main",
       "pushedAt": "2026-11-02T13:37:41.000Z",
-      "observedAt": "2026-11-06T10:50:49.996Z",
+      "observedAt": "2026-11-07T10:04:46.236Z",
       "declaredVersionRange": "1.0.0",
       "resolvedVersion": "1.0.0",
       "evidenceTypes": [
@@ -11106,7 +11327,7 @@
         }
       ],
       "firstObservedAt": "2026-09-21T07:14:38.383Z",
-      "lastObservedAt": "2026-11-06T10:50:49.996Z",
+      "lastObservedAt": "2026-11-07T10:04:46.236Z",
       "observationState": "observed",
       "stale": false
     },
@@ -11119,7 +11340,7 @@
       "visibility": "public",
       "defaultBranch": "main",
       "pushedAt": "2026-08-28T08:39:17.000Z",
-      "observedAt": "2026-11-06T10:50:49.996Z",
+      "observedAt": "2026-11-07T10:04:46.236Z",
       "declaredVersionRange": "^1.0.0",
       "resolvedVersion": null,
       "evidenceTypes": [
@@ -11163,7 +11384,7 @@
         }
       ],
       "firstObservedAt": "2026-09-21T07:14:38.383Z",
-      "lastObservedAt": "2026-11-06T10:50:49.996Z",
+      "lastObservedAt": "2026-11-07T10:04:46.236Z",
       "observationState": "observed",
       "stale": false
     }
