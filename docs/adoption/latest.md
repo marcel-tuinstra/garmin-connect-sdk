@@ -1,14 +1,14 @@
 # SDK adoption overview
 
-Generated from the `2026-11-15` snapshot at `2026-11-15T10:50:52.734Z`.
+Generated from the `2026-11-16` snapshot at `2026-11-16T11:14:04.741Z`.
 
 External-adoption baseline: `2026-09-21`. External public repository evidence is measured from this date onward.
 
 | Raw npm downloads · 14 days | Raw unique cloners · GitHub window | Raw unique viewers · GitHub window | External public projects with usage evidence |
 | ---: | ---: | ---: | ---: |
-| **652** | **73** | **7** | **4** |
+| **677** | **73** | **7** | **4** |
 
-**Coverage:** 14/14 npm days observed (success); 56/56 GitHub daily values observed (views success, clones success); public evidence partial. GitHub windows: unique cloners `2026-11-15` (current snapshot), unique viewers `2026-11-15` (current snapshot).
+**Coverage:** 14/14 npm days observed (success); 52/56 GitHub daily values observed (views partial (missing_dates), clones partial (missing_dates)); public evidence partial. GitHub windows: unique cloners `2026-11-16` (current snapshot), unique viewers `2026-11-16` (current snapshot).
 
 > Active installations are not measured. Raw signals can include CI, caches, repeat downloads and internal activity. npm downloads, repository traffic and external public-code evidence are separate signals and must not be added together as a user count.
 
@@ -18,15 +18,15 @@ Charts are linked to their full-size local SVG. Their exact values and missing-d
 
 ### Daily npm downloads
 
-[![Daily npm downloads for the 14 days before 2026-11-15; missing days are gaps and the latest observation is labeled.](./assets/2026-11-15/npm-downloads.svg)](./assets/2026-11-15/npm-downloads.svg)
+[![Daily npm downloads for the 14 days before 2026-11-16; missing days are gaps and the latest observation is labeled.](./assets/2026-11-16/npm-downloads.svg)](./assets/2026-11-16/npm-downloads.svg)
 
 ### Daily GitHub activity
 
-[![Daily GitHub clones and views for the 14 days before 2026-11-15; clones use a solid line with circles and views use a dashed line with squares.](./assets/2026-11-15/github-traffic.svg)](./assets/2026-11-15/github-traffic.svg)
+[![Daily GitHub clones and views for the 14 days before 2026-11-16; clones use a solid line with circles and views use a dashed line with squares.](./assets/2026-11-16/github-traffic.svg)](./assets/2026-11-16/github-traffic.svg)
 
 ### Downloads by released version
 
-[![Newest npm rolling version-download snapshot; the highest stable version observed is explicitly labeled and chart overflow is grouped as Other versions.](./assets/2026-11-15/version-downloads.svg)](./assets/2026-11-15/version-downloads.svg)
+[![Newest npm rolling version-download snapshot; the highest stable version observed is explicitly labeled and chart overflow is grouped as Other versions.](./assets/2026-11-16/version-downloads.svg)](./assets/2026-11-16/version-downloads.svg)
 
 ## Drill-down
 
@@ -34,11 +34,10 @@ Missing values remain `—`; they are never converted to zero or joined across g
 
 ### Daily npm downloads
 
-Period: `2026-11-01` through `2026-11-14`. Source status: **success**.
+Period: `2026-11-02` through `2026-11-15`. Source status: **success**.
 
 | Date | Downloads | Status |
 | --- | --- | --- |
-| 2026-11-01 | 6 | observed |
 | 2026-11-02 | 56 | observed |
 | 2026-11-03 | 33 | observed |
 | 2026-11-04 | 68 | observed |
@@ -52,14 +51,14 @@ Period: `2026-11-01` through `2026-11-14`. Source status: **success**.
 | 2026-11-12 | 35 | observed |
 | 2026-11-13 | 7 | observed |
 | 2026-11-14 | 38 | observed |
+| 2026-11-15 | 31 | observed |
 
 ### GitHub traffic by day
 
-One row represents one calendar date. Rolling totals are intentionally kept out of this table. Source status: views **success**; clones **success**.
+One row represents one calendar date. Rolling totals are intentionally kept out of this table. Source status: views **partial (missing_dates)**; clones **partial (missing_dates)**.
 
 | Date | Views | Unique viewers | Clones | Unique cloners |
 | --- | --- | --- | --- | --- |
-| 2026-11-01 | 9 | 1 | 12 | 4 |
 | 2026-11-02 | 0 | 0 | 23 | 12 |
 | 2026-11-03 | 0 | 0 | 18 | 7 |
 | 2026-11-04 | 0 | 0 | 19 | 9 |
@@ -73,6 +72,7 @@ One row represents one calendar date. Rolling totals are intentionally kept out 
 | 2026-11-12 | 0 | 0 | 7 | 3 |
 | 2026-11-13 | 0 | 0 | 14 | 8 |
 | 2026-11-14 | 0 | 0 | 15 | 7 |
+| 2026-11-15 | — | — | — | — |
 
 ### Current GitHub rolling window
 
@@ -80,25 +80,25 @@ Each value keeps its own observation date because GitHub's rolling endpoints can
 
 | Metric | Observed | Freshness | Value | Status |
 | --- | --- | --- | --- | --- |
-| Views | 2026-11-15 | current snapshot | 17 | observed |
-| Unique viewers | 2026-11-15 | current snapshot | 7 | observed |
-| Clones | 2026-11-15 | current snapshot | 221 | observed |
-| Unique cloners | 2026-11-15 | current snapshot | 73 | observed |
+| Views | 2026-11-16 | current snapshot | 17 | observed |
+| Unique viewers | 2026-11-16 | current snapshot | 7 | observed |
+| Clones | 2026-11-16 | current snapshot | 221 | observed |
+| Unique cloners | 2026-11-16 | current snapshot | 73 | observed |
 
 ### npm version snapshot
 
-Snapshot date: `2026-11-15` (current snapshot). This is npm's rolling version-level snapshot; it is separate from daily package downloads. Every exact version remains in this table even when the chart groups overflow.
+Snapshot date: `2026-11-16` (current snapshot). This is npm's rolling version-level snapshot; it is separate from daily package downloads. Every exact version remains in this table even when the chart groups overflow.
 
 | Version | Downloads | Status |
 | --- | --- | --- |
-| 1\.0\.0 | 20 | observed |
+| 1\.0\.0 | 13 | observed |
 | 1\.0\.0-alpha\.1 | 2 | observed |
 | 1\.0\.0-alpha\.2 | 1 | observed |
 | 1\.0\.0-alpha\.3 | 1 | observed |
-| 1\.0\.0-alpha\.4 | 7 | observed |
+| 1\.0\.0-alpha\.4 | 9 | observed |
 | 1\.1\.0 | 3 | observed |
 | 1\.1\.1 | 2 | observed |
-| 1\.2\.0 | 187 | observed |
+| 1\.2\.0 | 152 | observed |
 
 ### External public repository evidence
 
@@ -125,8 +125,8 @@ This index contains independently owned public repository identifiers and eviden
 | github\_public\_search\_query\_4 | success | — | — |
 | github\_public\_search\_query\_5 | success | — | — |
 | github\_public\_search\_query\_6 | success | — | — |
-| github\_traffic\_clones | success | — | — |
-| github\_traffic\_views | success | — | — |
+| github\_traffic\_clones | partial | — | missing\_dates |
+| github\_traffic\_views | partial | — | missing\_dates |
 | npm\_downloads | success | — | — |
 | npm\_versions | success | — | — |
 
